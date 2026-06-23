@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GeoBot — Location Intelligence</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
     --primary: #6366f1;
@@ -17,6 +17,7 @@
     --bg-glass: rgba(255, 255, 255, 0.03);
     --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
+    --text-dim: #475569;
     --border: rgba(255, 255, 255, 0.08);
     --success: #10b981;
     --warning: #f59e0b;
@@ -298,13 +299,6 @@ body {
     border-bottom-left-radius: 4px;
 }
 
-.msg.bot.info-card {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    padding: 20px;
-    max-width: 95%;
-}
-
 .msg-time {
     font-size: 10px;
     opacity: 0.5;
@@ -472,123 +466,6 @@ body {
     opacity: 0.7;
 }
 
-/* Location card styling */
-.location-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-}
-
-.location-icon {
-    width: 44px;
-    height: 44px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-}
-
-.location-title {
-    font-size: 16px;
-    font-weight: 700;
-}
-
-.location-subtitle {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.data-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 12px;
-}
-
-.data-item {
-    background: rgba(255,255,255,0.03);
-    padding: 12px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    transition: all 0.3s ease;
-}
-
-.data-item:hover {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(99, 102, 241, 0.3);
-}
-
-.data-label {
-    font-size: 11px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-}
-
-.data-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.data-value.good { color: var(--success); }
-.data-value.moderate { color: var(--warning); }
-.data-value.bad { color: var(--error); }
-
-/* Comparison card */
-.compare-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    margin-top: 8px;
-}
-
-.compare-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.compare-row:last-child {
-    border-bottom: none;
-}
-
-.compare-city {
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.compare-bar {
-    flex: 1;
-    height: 6px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 3px;
-    margin: 0 12px;
-    overflow: hidden;
-}
-
-.compare-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 1s ease;
-}
-
-.compare-value {
-    font-size: 13px;
-    font-weight: 600;
-    min-width: 40px;
-    text-align: right;
-}
-
 /* Error state */
 .error-shake {
     animation: shake 0.5s ease-in-out;
@@ -651,6 +528,472 @@ body {
     background: rgba(239, 68, 68, 0.1);
     border-color: var(--error);
     color: var(--error);
+}
+
+/* ==============================
+   FUTURISTIC HUD CARD STYLES
+   ============================== */
+
+/* Compact HUD Card (Single City) */
+.hud-card {
+    width: 100%;
+    max-width: 380px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.1) inset;
+    animation: hudEntry 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: 'Inter', sans-serif;
+}
+
+@keyframes hudEntry {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.hud-city-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hud-city-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.hud-city-name {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+}
+
+.hud-city-sub {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+}
+
+.hud-time {
+    text-align: right;
+}
+
+.hud-time-main {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.hud-time-sub {
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+
+/* Hero section with temp ring */
+.hud-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    gap: 16px;
+    position: relative;
+}
+
+.hud-temp-ring {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hud-temp-ring svg {
+    position: absolute;
+    inset: 0;
+    transform: rotate(-90deg);
+}
+
+.hud-temp-ring circle {
+    fill: none;
+    stroke-width: 4;
+}
+
+.hud-temp-ring .ring-bg {
+    stroke: rgba(255, 255, 255, 0.05);
+}
+
+.hud-temp-ring .ring-fill {
+    stroke: url(#ringGradient);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease;
+    filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.4));
+}
+
+.hud-temp-value {
+    position: relative;
+    z-index: 1;
+    font-size: 28px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+}
+
+.hud-temp-unit {
+    font-size: 12px;
+    color: var(--text-secondary);
+    vertical-align: super;
+}
+
+.hud-weather-icon-main {
+    font-size: 40px;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.15));
+    animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.hud-condition-text {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: -8px;
+    padding-bottom: 14px;
+}
+
+/* AQI Bar */
+.hud-aqi-section {
+    margin: 0 14px 12px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.hud-aqi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.hud-aqi-label {
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+}
+
+.hud-aqi-status {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--warning);
+}
+
+.hud-aqi-status.good { background: rgba(16, 185, 129, 0.12); color: var(--success); }
+.hud-aqi-status.moderate { background: rgba(245, 158, 11, 0.12); color: var(--warning); }
+.hud-aqi-status.bad { background: rgba(239, 68, 68, 0.12); color: var(--error); }
+
+.hud-aqi-track {
+    height: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.hud-aqi-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--success), var(--warning), var(--error));
+    background-size: 200% 100%;
+    animation: barFill 1s ease-out, shimmer 2s infinite;
+    position: relative;
+}
+
+@keyframes barFill {
+    from { width: 0 !important; }
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Metrics grid */
+.hud-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+}
+
+.hud-metric {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 12px 8px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.hud-metric:hover {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.hud-metric-icon {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.hud-metric-value {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+}
+
+.hud-metric-value.good { color: var(--success); }
+.hud-metric-value.moderate { color: var(--warning); }
+.hud-metric-value.bad { color: var(--error); }
+
+.hud-metric-label {
+    font-size: 8px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 3px;
+}
+
+/* Footer */
+.hud-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 9px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.hud-source {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hud-source-dot {
+    width: 5px;
+    height: 5px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: livePulse 2s infinite;
+}
+
+/* Expanded data grid (shown on click) */
+.hud-expanded {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    opacity: 0;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.hud-expanded.open {
+    max-height: 500px;
+    opacity: 1;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+}
+
+.hud-data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.hud-data-cell {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 10px;
+    transition: all 0.2s;
+}
+
+.hud-data-cell:hover {
+    background: rgba(99, 102, 241, 0.04);
+    border-color: rgba(99, 102, 241, 0.15);
+}
+
+.hud-data-label {
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.hud-data-value {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+}
+
+.hud-data-value.small {
+    font-size: 11px;
+}
+
+.hud-expand-btn {
+    width: 100%;
+    padding: 8px;
+    background: rgba(99, 102, 241, 0.08);
+    border: none;
+    border-top: 1px solid var(--border);
+    color: var(--primary);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hud-expand-btn:hover {
+    background: rgba(99, 102, 241, 0.15);
+}
+
+/* Horizontal Compare Cards */
+.compare-strip {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 4px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.compare-strip::-webkit-scrollbar {
+    display: none;
+}
+
+.compare-mini {
+    min-width: 130px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.compare-mini::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.compare-mini:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.compare-mini:hover::before {
+    opacity: 1;
+}
+
+.compare-mini-city {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.compare-mini-temp {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 6px 0;
+    background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.compare-mini-aqi {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.compare-mini-bar {
+    flex: 1;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.compare-mini-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s ease;
+}
+
+.compare-mini-value {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 24px;
+    text-align: right;
 }
 
 /* ==============================
@@ -737,7 +1080,6 @@ body {
     padding: 16px 24px;
 }
 
-/* Server List */
 .server-list {
     display: flex;
     flex-direction: column;
@@ -795,7 +1137,7 @@ body {
 .server-url {
     font-size: 11px;
     color: var(--text-secondary);
-    font-family: monospace;
+    font-family: 'JetBrains Mono', monospace;
     margin-bottom: 10px;
     word-break: break-all;
 }
@@ -812,7 +1154,6 @@ body {
     align-items: center;
 }
 
-/* Toggle Switch */
 .toggle-switch {
     position: relative;
     width: 44px;
@@ -873,7 +1214,6 @@ body {
     background: rgba(239, 68, 68, 0.2);
 }
 
-/* Add Server Form */
 .add-server-section {
     margin-top: 20px;
     padding-top: 20px;
@@ -983,13 +1323,33 @@ body {
     .clear-btn {
         right: 12px;
     }
+    
+    .hud-card {
+        max-width: 100%;
+    }
+    
+    .compare-mini {
+        min-width: 120px;
+        padding: 12px;
+    }
 }
 </style>
+<base target="_blank">
 </head>
 <body>
 
 <div class="bg-mesh"></div>
 <div class="particles" id="particles"></div>
+
+<!-- SVG Gradient Definition for Temp Ring -->
+<svg width="0" height="0" style="position:absolute;">
+    <defs>
+        <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+</svg>
 
 <div class="app">
     <div class="header">
@@ -1073,7 +1433,6 @@ body {
 
 const MCP_STORAGE_KEY = 'geobot_mcp_servers';
 
-// Default servers
 const DEFAULT_SERVERS = [
     {
         id: 'default-weather',
@@ -1085,45 +1444,35 @@ const DEFAULT_SERVERS = [
     }
 ];
 
-// Load servers from localStorage
 function loadServers() {
     const stored = localStorage.getItem(MCP_STORAGE_KEY);
-    if (stored) {
-        return JSON.parse(stored);
-    }
-    // First time: save defaults
+    if (stored) return JSON.parse(stored);
     saveServers(DEFAULT_SERVERS);
     return DEFAULT_SERVERS;
 }
 
-// Save servers to localStorage
 function saveServers(servers) {
     localStorage.setItem(MCP_STORAGE_KEY, JSON.stringify(servers));
 }
 
-// Get enabled servers
 function getEnabledServers() {
     return loadServers().filter(s => s.enabled);
 }
 
-// Generate unique ID
 function generateId() {
     return 'mcp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 }
 
-// Check server status
 async function checkServerStatus(url) {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tool: 'healthCheck' }),
             signal: controller.signal
         });
-        
         clearTimeout(timeoutId);
         return res.ok;
     } catch (e) {
@@ -1131,28 +1480,19 @@ async function checkServerStatus(url) {
     }
 }
 
-// Render server list in modal
 async function renderServerList() {
     const list = document.getElementById('serverList');
     const servers = loadServers();
     
     if (servers.length === 0) {
-        list.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">🔌</div>
-                <div>No MCP servers configured</div>
-            </div>
-        `;
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔌</div><div>No MCP servers configured</div></div>`;
         return;
     }
     
     list.innerHTML = '';
-    
     for (const server of servers) {
         const card = document.createElement('div');
         card.className = 'server-card';
-        
-        // Status indicator
         const statusClass = server.enabled ? 'checking' : 'offline';
         
         card.innerHTML = `
@@ -1162,25 +1502,19 @@ async function renderServerList() {
                     ${server.name}
                 </div>
                 <label class="toggle-switch">
-                    <input type="checkbox" ${server.enabled ? 'checked' : ''} 
-                        onchange="toggleServer('${server.id}', this.checked)"
-                        ${server.isDefault ? '' : ''}>
+                    <input type="checkbox" ${server.enabled ? 'checked' : ''} onchange="toggleServer('${server.id}', this.checked)">
                     <span class="toggle-slider"></span>
                 </label>
             </div>
             <div class="server-url">${server.url}</div>
             ${server.description ? `<div class="server-desc">${server.description}</div>` : ''}
             <div class="server-actions">
-                <span style="font-size:11px;color:var(--text-secondary)">
-                    ${server.isDefault ? '🔒 Built-in' : 'Custom'}
-                </span>
+                <span style="font-size:11px;color:var(--text-secondary)">${server.isDefault ? '🔒 Built-in' : 'Custom'}</span>
                 ${!server.isDefault ? `<button class="delete-btn" onclick="deleteServer('${server.id}')">🗑️ Delete</button>` : ''}
             </div>
         `;
-        
         list.appendChild(card);
         
-        // Check status if enabled
         if (server.enabled) {
             const statusDot = document.getElementById(`status-${server.id}`);
             const isOnline = await checkServerStatus(server.url);
@@ -1189,7 +1523,6 @@ async function renderServerList() {
     }
 }
 
-// Toggle server enable/disable
 function toggleServer(id, enabled) {
     const servers = loadServers();
     const server = servers.find(s => s.id === id);
@@ -1202,19 +1535,15 @@ function toggleServer(id, enabled) {
     }
 }
 
-// Delete server
 function deleteServer(id) {
     if (!confirm('Delete this MCP server?')) return;
-    
-    const servers = loadServers();
-    const filtered = servers.filter(s => s.id !== id);
-    saveServers(filtered);
+    const servers = loadServers().filter(s => s.id !== id);
+    saveServers(servers);
     renderServerList();
     showToast('Server deleted', '🗑️');
     updateActiveCount();
 }
 
-// Add new server
 function addServer() {
     const nameInput = document.getElementById('newServerName');
     const urlInput = document.getElementById('newServerUrl');
@@ -1229,31 +1558,19 @@ function addServer() {
         return;
     }
     
-    // Auto-add /tool if missing
     if (!url.endsWith('/tool')) {
         url = url.replace(/\/$/, '') + '/tool';
     }
     
     const servers = loadServers();
-    
-    // Check for duplicate URL
     if (servers.some(s => s.url === url)) {
         showToast('This URL already exists', '⚠️');
         return;
     }
     
-    servers.push({
-        id: generateId(),
-        name,
-        url,
-        description: desc,
-        enabled: true,
-        isDefault: false
-    });
-    
+    servers.push({ id: generateId(), name, url, description: desc, enabled: true, isDefault: false });
     saveServers(servers);
     
-    // Clear inputs
     nameInput.value = '';
     urlInput.value = '';
     descInput.value = '';
@@ -1263,14 +1580,12 @@ function addServer() {
     updateActiveCount();
 }
 
-// Update active server count in header
 function updateActiveCount() {
     const count = getEnabledServers().length;
     const badge = document.getElementById('statusBadge');
     badge.textContent = count > 0 ? `${count} MCP Active` : 'MCP Offline';
 }
 
-// Modal controls
 function openModal() {
     document.getElementById('modalOverlay').classList.add('active');
     renderServerList();
@@ -1281,9 +1596,7 @@ function closeModal() {
 }
 
 function closeModalOutside(e) {
-    if (e.target === document.getElementById('modalOverlay')) {
-        closeModal();
-    }
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 
 // ==============================
@@ -1292,7 +1605,6 @@ function closeModalOutside(e) {
 
 async function callAllMCPs(tool, city) {
     const servers = getEnabledServers();
-    
     if (servers.length === 0) {
         throw new Error('No MCP servers enabled. Check MCP Connectors settings.');
     }
@@ -1302,17 +1614,11 @@ async function callAllMCPs(tool, city) {
             const res = await fetch(server.url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tool, input: city }),
-                timeout: 15000
+                body: JSON.stringify({ tool, input: city })
             });
-            
-            if (!res.ok) {
-                return { server: server.name, error: `HTTP ${res.status}` };
-            }
-            
+            if (!res.ok) return { server: server.name, error: `HTTP ${res.status}` };
             const data = await res.json();
             return { server: server.name, data };
-            
         } catch (err) {
             return { server: server.name, error: err.message };
         }
@@ -1322,7 +1628,321 @@ async function callAllMCPs(tool, city) {
 }
 
 // ==============================
-// EXISTING CHAT FUNCTIONS (UNCHANGED)
+// DYNAMIC HUD CARD RENDERER
+// ==============================
+
+function getWeatherIcon(code, isDay = 1) {
+    const icons = {
+        0: isDay ? '☀️' : '🌙',
+        1: isDay ? '🌤️' : '☁️',
+        2: '⛅',
+        3: '☁️',
+        45: '🌫️',
+        48: '🌫️',
+        51: '🌦️',
+        53: '🌧️',
+        55: '🌧️',
+        61: '🌧️',
+        63: '🌧️',
+        65: '🌧️',
+        71: '🌨️',
+        73: '🌨️',
+        75: '🌨️',
+        95: '⛈️',
+        96: '⛈️',
+        99: '⛈️'
+    };
+    return icons[code] || (isDay ? '☀️' : '🌙');
+}
+
+function getWeatherLabel(code) {
+    const labels = {
+        0: 'Clear Sky',
+        1: 'Mainly Clear',
+        2: 'Partly Cloudy',
+        3: 'Overcast',
+        45: 'Foggy',
+        48: 'Depositing Rime Fog',
+        51: 'Light Drizzle',
+        53: 'Moderate Drizzle',
+        55: 'Dense Drizzle',
+        61: 'Slight Rain',
+        63: 'Moderate Rain',
+        65: 'Heavy Rain',
+        71: 'Slight Snow',
+        73: 'Moderate Snow',
+        75: 'Heavy Snow',
+        95: 'Thunderstorm',
+        96: 'Thunderstorm & Hail',
+        99: 'Heavy Thunderstorm'
+    };
+    return labels[code] || 'Unknown';
+}
+
+function getAQIStatus(aqi) {
+    if (aqi <= 50) return { label: 'Good', class: 'good', color: 'var(--success)' };
+    if (aqi <= 100) return { label: 'Moderate', class: 'moderate', color: 'var(--warning)' };
+    if (aqi <= 150) return { label: 'Unhealthy (Sens.)', class: 'bad', color: '#f97316' };
+    if (aqi <= 200) return { label: 'Unhealthy', class: 'bad', color: 'var(--error)' };
+    if (aqi <= 300) return { label: 'Very Unhealthy', class: 'bad', color: '#a855f7' };
+    return { label: 'Hazardous', class: 'bad', color: '#7f1d1d' };
+}
+
+function formatValue(key, value, parentKey = '') {
+    // Format specific fields
+    if (key === 'temperature' || key === 'temp' || key === 'temp2m') return `${Math.round(value)}°C`;
+    if (key === 'windspeed' || key === 'wind_speed') return `${value} km/h`;
+    if (key === 'winddirection' || key === 'wind_direction') return `${value}°`;
+    if (key === 'humidity' || key === 'relative_humidity') return `${value}%`;
+    if (key === 'pressure' || key === 'surface_pressure') return `${value} hPa`;
+    if (key === 'visibility') return `${value} km`;
+    if (key === 'uv_index' || key === 'uvi') {
+        const levels = ['Low', 'Moderate', 'High', 'Very High', 'Extreme'];
+        const level = value <= 2 ? 0 : value <= 5 ? 1 : value <= 7 ? 2 : value <= 10 ? 3 : 4;
+        return `${value} (${levels[level]})`;
+    }
+    if (key === 'us_aqi' || key === 'aqi') return value;
+    if (key === 'pm10' || key === 'pm2_5') return `${value} µg/m³`;
+    if (key === 'precipitation' || key === 'rain') return `${value} mm`;
+    if (key === 'cloudcover' || key === 'cloud_cover') return `${value}%`;
+    if (key === 'is_day') return value ? '☀️ Day' : '🌙 Night';
+    if (key === 'elevation') return `${value} m`;
+    
+    // Time formatting
+    if (key.includes('time') && typeof value === 'string' && value.includes('T')) {
+        const date = new Date(value);
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+    
+    return value;
+}
+
+function getFieldIcon(key) {
+    const icons = {
+        temperature: '🌡️', temp: '🌡️', temp2m: '🌡️',
+        windspeed: '💨', wind_speed: '💨',
+        winddirection: '↗️', wind_direction: '↗️',
+        humidity: '💧', relative_humidity: '💧',
+        pressure: '📊', surface_pressure: '📊',
+        visibility: '👁️',
+        uv_index: '☀️', uvi: '☀️',
+        precipitation: '🌧️', rain: '🌧️',
+        cloudcover: '☁️', cloud_cover: '☁️',
+        is_day: '🌅',
+        elevation: '⛰️',
+        pm10: '🌫️', pm2_5: '🌫️',
+        us_aqi: '😷',
+        sunrise: '🌅', sunset: '🌇',
+        latitude: '📍', longitude: '📍'
+    };
+    return icons[key] || '📊';
+}
+
+function renderHUDCard(data, serverName) {
+    const city = data.city || 'Unknown';
+    const country = data.country || '';
+    const weather = data.weather || {};
+    const aqi = data.aqi || {};
+    const currentTime = data.current_time || '';
+    const special = data.today_special || {};
+    
+    // Calculate AQI
+    const aqiValue = aqi.us_aqi || aqi.pm2_5 || aqi.pm10 || 0;
+    const aqiInfo = getAQIStatus(aqiValue);
+    
+    // Weather icon
+    const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 0;
+    const isDay = weather.is_day !== undefined ? weather.is_day : 1;
+    const weatherIcon = getWeatherIcon(weatherCode, isDay);
+    const weatherLabel = getWeatherLabel(weatherCode);
+    
+    // Temperature for ring
+    const temp = weather.temperature !== undefined ? weather.temperature : 0;
+    const tempPercent = Math.min(Math.max((temp + 10) / 50 * 100, 0), 100); // Normalize -10 to 40°C
+    const circumference = 2 * Math.PI * 46;
+    const offset = circumference - (tempPercent / 100) * circumference;
+    
+    // Build metrics from weather data (excluding already shown fields)
+    const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source'];
+    const metrics = [];
+    
+    for (const [key, value] of Object.entries(weather)) {
+        if (excludeKeys.includes(key)) continue;
+        if (value === null || value === undefined) continue;
+        metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
+    }
+    
+    // Build expanded data from all other fields
+    const expandedData = [];
+    const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude'];
+    
+    for (const [key, value] of Object.entries(data)) {
+        if (expandedExclude.includes(key)) continue;
+        if (value === null || value === undefined) continue;
+        if (typeof value === 'object') {
+            // Flatten nested objects
+            for (const [subKey, subValue] of Object.entries(value)) {
+                if (subValue === null || subValue === undefined) continue;
+                expandedData.push({
+                    key: subKey,
+                    value: formatValue(subKey, subValue, key),
+                    icon: getFieldIcon(subKey),
+                    label: `${key}.${subKey}`.replace(/_/g, ' ')
+                });
+            }
+        } else {
+            expandedData.push({
+                key,
+                value: formatValue(key, value),
+                icon: getFieldIcon(key),
+                label: key.replace(/_/g, ' ')
+            });
+        }
+    }
+    
+    // Generate metrics HTML (max 3)
+    const metricsHTML = metrics.slice(0, 3).map(m => `
+        <div class="hud-metric">
+            <div class="hud-metric-icon">${m.icon}</div>
+            <div class="hud-metric-value">${formatValue(m.key, m.value)}</div>
+            <div class="hud-metric-label">${m.label}</div>
+        </div>
+    `).join('');
+    
+    // Generate expanded data HTML
+    const expandedHTML = expandedData.map(d => `
+        <div class="hud-data-cell">
+            <div class="hud-data-label">${d.icon} ${d.label}</div>
+            <div class="hud-data-value small">${d.value}</div>
+        </div>
+    `).join('');
+    
+    const cardId = 'hud-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+    
+    return `
+    <div class="hud-card" id="${cardId}">
+        <div class="hud-header">
+            <div class="hud-city-info">
+                <div class="hud-city-icon">📍</div>
+                <div>
+                    <div class="hud-city-name">${city}</div>
+                    <div class="hud-city-sub">${country} • ${serverName}</div>
+                </div>
+            </div>
+            <div class="hud-time">
+                <div class="hud-time-main">${currentTime.split(',')[1]?.trim() || '--:--'}</div>
+                <div class="hud-time-sub">${currentTime.split(',')[0]?.trim() || ''}</div>
+            </div>
+        </div>
+        
+        <div class="hud-hero">
+            <div class="hud-temp-ring">
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                    <circle class="ring-bg" cx="50" cy="50" r="46"/>
+                    <circle class="ring-fill" cx="50" cy="50" r="46" 
+                        stroke-dasharray="${circumference}" 
+                        stroke-dashoffset="${offset}"/>
+                </svg>
+                <div class="hud-temp-value">
+                    ${Math.round(temp)}<span class="hud-temp-unit">°C</span>
+                </div>
+            </div>
+            <div class="hud-weather-icon-main">${weatherIcon}</div>
+        </div>
+        
+        <div class="hud-condition-text">${weatherLabel}</div>
+        
+        <div class="hud-aqi-section">
+            <div class="hud-aqi-header">
+                <span class="hud-aqi-label">Air Quality</span>
+                <span class="hud-aqi-status ${aqiInfo.class}">${aqiInfo.label} • ${aqiValue}</span>
+            </div>
+            <div class="hud-aqi-track">
+                <div class="hud-aqi-fill" style="width: ${Math.min(aqiValue / 3, 100)}%;"></div>
+            </div>
+        </div>
+        
+        <div class="hud-metrics">
+            ${metricsHTML}
+        </div>
+        
+        <div class="hud-expanded" id="${cardId}-expanded">
+            <div class="hud-data-grid">
+                ${expandedHTML}
+            </div>
+        </div>
+        
+        <button class="hud-expand-btn" onclick="toggleExpanded('${cardId}')">
+            <span id="${cardId}-btn-text">▼ Show All Data</span>
+        </button>
+        
+        <div class="hud-footer">
+            <div class="hud-source">
+                <span class="hud-source-dot"></span>
+                <span>${serverName}</span>
+            </div>
+            <span>${data.latitude?.toFixed(4) || '--'}, ${data.longitude?.toFixed(4) || '--'}</span>
+        </div>
+    </div>
+    `;
+}
+
+function toggleExpanded(cardId) {
+    const expanded = document.getElementById(cardId + '-expanded');
+    const btnText = document.getElementById(cardId + '-btn-text');
+    const isOpen = expanded.classList.contains('open');
+    
+    if (isOpen) {
+        expanded.classList.remove('open');
+        btnText.textContent = '▼ Show All Data';
+    } else {
+        expanded.classList.add('open');
+        btnText.textContent = '▲ Hide Details';
+    }
+}
+
+function renderCompareStrip(results) {
+    const cards = results.filter(r => !r.error && r.data).map(r => {
+        const d = r.data;
+        const temp = d.weather?.temperature || 0;
+        const aqi = d.aqi?.us_aqi || d.aqi?.pm2_5 || 0;
+        const aqiInfo = getAQIStatus(aqi);
+        
+        return `
+        <div class="compare-mini" onclick="expandCompare('${d.city || 'Unknown'}')">
+            <div class="compare-mini-city">
+                <span>${getFlag(d.country)}</span>
+                ${d.city || 'Unknown'}
+            </div>
+            <div class="compare-mini-temp">${Math.round(temp)}°</div>
+            <div class="compare-mini-aqi">
+                <div class="compare-mini-bar">
+                    <div class="compare-mini-fill" style="width: ${Math.min(aqi / 3, 100)}%; background: ${aqiInfo.color};"></div>
+                </div>
+                <span class="compare-mini-value" style="color: ${aqiInfo.color};">${aqi}</span>
+            </div>
+        </div>
+        `;
+    }).join('');
+    
+    return `<div class="compare-strip">${cards}</div>`;
+}
+
+function getFlag(country) {
+    const flags = {
+        'Japan': '🇯🇵', 'United States': '🇺🇸', 'India': '🇮🇳', 'United Kingdom': '🇬🇧',
+        'Germany': '🇩🇪', 'France': '🇫🇷', 'Brazil': '🇧🇷', 'Australia': '🇦🇺',
+        'China': '🇨🇳', 'Russia': '🇷🇺', 'Canada': '🇨🇦', 'Italy': '🇮🇹'
+    };
+    return flags[country] || '🌍';
+}
+
+function expandCompare(city) {
+    showToast(`Click on ${city} to see full details`, '📊');
+}
+
+// ==============================
+// EXISTING CHAT FUNCTIONS
 // ==============================
 
 function createParticles() {
@@ -1355,8 +1975,6 @@ async function checkConnection() {
         showToast('No MCP servers enabled', '❌');
         return;
     }
-    
-    // Check first enabled server as representative
     try {
         const res = await fetch(servers[0].url, { 
             method: 'POST',
@@ -1376,7 +1994,6 @@ async function checkConnection() {
 function updateStatus(online) {
     const badge = document.getElementById('statusBadge');
     const count = getEnabledServers().length;
-    
     if (online && count > 0) {
         badge.classList.remove('offline');
         badge.textContent = `${count} MCP Active`;
@@ -1398,7 +2015,13 @@ function clearChat() {
 function addMsg(text, type, isCard = false) {
     let chat = document.getElementById("chat");
     let div = document.createElement("div");
-    div.className = "msg " + type + (isCard ? " info-card" : "");
+    div.className = "msg " + type;
+    if (isCard) {
+        div.style.padding = '8px';
+        div.style.maxWidth = '95%';
+        div.style.background = 'transparent';
+        div.style.border = 'none';
+    }
     
     const time = new Date().toLocaleTimeString('en-US', { 
         hour: '2-digit', 
@@ -1406,12 +2029,7 @@ function addMsg(text, type, isCard = false) {
         hour12: true 
     });
     
-    if (isCard) {
-        div.innerHTML = text;
-    } else {
-        div.innerHTML = text + `<div class="msg-time">${time}</div>`;
-    }
-    
+    div.innerHTML = text + `<div class="msg-time">${time}</div>`;
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
     return div;
@@ -1421,7 +2039,6 @@ function addSuggestions(options) {
     let chat = document.getElementById("chat");
     let div = document.createElement("div");
     div.className = "suggestions-row";
-    
     options.forEach(opt => {
         let chip = document.createElement("span");
         chip.className = "chip";
@@ -1432,7 +2049,6 @@ function addSuggestions(options) {
         };
         div.appendChild(chip);
     });
-    
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
 }
@@ -1470,51 +2086,63 @@ async function send() {
     let input = document.getElementById("msg");
     let text = input.value.trim();
     input.value = "";
-    
+
     if (!text) return;
-    
+
     setInputEnabled(false);
     addMsg(text, "user");
     showTyping();
-    
+
     try {
-        // Extract city from text (simple approach)
-        const city = extractCityFromText(text);
-        
-        // Call all enabled MCP servers in parallel
-        const mcpResults = await callAllMCPs('getFullInsights', city);
-        
+        // Call YOUR backend /chat (not MCP directly)
+        let res = await fetch("/chat", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({message: text})
+        });
+
+        if (!res.ok) throw new Error('Server error');
+
+        let data = await res.json();
         hideTyping();
-        
-        // Process and display results from each server
-        let hasValidData = false;
-        
-        for (const result of mcpResults) {
-            if (result.error) {
-                addMsg(`⚠️ ${result.server}: ${result.error}`, "bot");
-                continue;
-            }
-            
-            hasValidData = true;
-            
-            // Format data for display
-            const data = result.data;
-            if (data.city || data.weather || data.aqi) {
-                renderLocationCard(data, result.server);
-            } else {
-                addMsg(`📊 ${result.server}: ${JSON.stringify(data, null, 2)}`, "bot");
-            }
+
+        // Show MCP logs if available
+        if (data.mcp_logs && data.mcp_logs.length > 0) {
+            showMCPLogs(data.mcp_logs);
         }
-        
-        if (!hasValidData) {
-            addMsg("❌ No valid data from any MCP server", "bot");
+
+        // Route based on response type
+        if (data.type === "hud") {
+            // Single city → Render HUD card
+            const hudHTML = renderHUDCard(data.response, "Weather MCP");
+            addMsg(hudHTML, "bot", true);
+
+        } else if (data.type === "compare") {
+            // Multi-city → Render compare strip
+            const compareHTML = renderCompareStrip(data.response);
+            addMsg(`<div style="margin-top:8px;">${compareHTML}</div>`, "bot", true);
+
+        } else {
+            // Text response (LLM or error)
+            addMsg(data.response || "No response", "bot");
         }
-        
+
+        // Suggestions after response
+        if (data.type !== "error") {
+            addMsg("🌍 Explore another location or compare cities!", "bot");
+            addSuggestions([
+                { text: "Kolkata", icon: "🇮🇳" },
+                { text: "Delhi", icon: "🇮🇳" },
+                { text: "Mumbai", icon: "🇮🇳" },
+                { text: "Compare", icon: "⚖️" }
+            ]);
+        }
+
         updateStatus(true);
-        
+
     } catch (err) {
         hideTyping();
-        let errorDiv = addMsg("⚠️ " + err.message, "bot");
+        let errorDiv = addMsg("⚠️ Connection failed. Agent server may be offline.", "bot");
         errorDiv.classList.add('error-shake');
         updateStatus(false);
     } finally {
@@ -1522,55 +2150,48 @@ async function send() {
     }
 }
 
-// Simple city extraction (same logic as your agent.py)
+function showMCPLogs(logs) {
+    let chat = document.getElementById("chat");
+    let div = document.createElement("div");
+    div.className = "msg bot";
+    div.style.background = "rgba(99, 102, 241, 0.05)";
+    div.style.border = "1px dashed rgba(99, 102, 241, 0.2)";
+    div.style.fontSize = "11px";
+    div.style.fontFamily = "'JetBrains Mono', monospace";
+    div.style.color = "var(--text-secondary)";
+    div.style.padding = "10px 14px";
+
+    const logHTML = logs.map(log => {
+        if (log.includes("❌")) return `<div style="color: var(--error);">${log}</div>`;
+        if (log.includes("✅")) return `<div style="color: var(--success);">${log}</div>`;
+        if (log.includes("🔄")) return `<div style="color: var(--warning);">${log}</div>`;
+        return `<div>${log}</div>`;
+    }).join('');
+
+    div.innerHTML = `
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;color:var(--primary);">MCP Call Log</div>
+        ${logHTML}
+    `;
+
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
 function extractCityFromText(text) {
     const ignore = new Set([
         "weather", "today", "tell", "me", "what", "is",
         "the", "in", "show", "give", "details", "and",
-        "compare", "vs", "versus", "between"
+        "compare", "vs", "versus", "between", "aqi", "air",
+        "quality", "time", "coordinate", "holiday", "about"
     ]);
-    
-    const words = text.match(/[A-Za-z]+/g) || [];
-    const cities = words.filter(w => !ignore.has(w.toLowerCase()));
-    
-    return cities.length > 0 ? cities[0] : text.trim();
-}
 
-function renderLocationCard(data, serverName) {
-    const aqi = data.aqi?.us_aqi || data.aqi?.pm2_5 || '--';
-    const aqiColor = aqi <= 50 ? 'good' : aqi <= 100 ? 'moderate' : 'bad';
-    const aqiLabel = aqi <= 50 ? 'Good' : aqi <= 100 ? 'Moderate' : 'Unhealthy';
-    
-    const cardHTML = `
-        <div class="location-header">
-            <div class="location-icon">📍</div>
-            <div>
-                <div class="location-title">${data.city || 'Unknown'}</div>
-                <div class="location-subtitle">${data.country || ''} • ${serverName}</div>
-            </div>
-        </div>
-        <div class="data-grid">
-            <div class="data-item">
-                <div class="data-label">Temperature</div>
-                <div class="data-value">${data.weather?.temperature || '--'}°C</div>
-            </div>
-            <div class="data-item">
-                <div class="data-label">Condition</div>
-                <div class="data-value" style="font-size:14px">${data.weather?.weathercode !== undefined ? 'Code: ' + data.weather.weathercode : '--'}</div>
-            </div>
-            <div class="data-item">
-                <div class="data-label">Air Quality</div>
-                <div class="data-value ${aqiColor}">${aqi}</div>
-            </div>
-            <div class="data-item">
-                <div class="data-label">AQI Status</div>
-                <div class="data-value ${aqiColor}" style="font-size:14px">${aqiLabel}</div>
-            </div>
-        </div>
-        <div class="msg-time" style="margin-top:12px;text-align:right">${new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true})}</div>
-    `;
-    
-    addMsg(cardHTML, "bot", true);
+    const words = text.match(/[A-Za-z]+/g) || [];
+    const cities = words.filter(w => {
+        const lower = w.toLowerCase();
+        return !ignore.has(lower) && w.length > 2;
+    });
+
+    return cities.length > 0 ? cities[0] : "";
 }
 
 document.getElementById("msg").addEventListener("keydown", function(e) {
