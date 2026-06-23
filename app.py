@@ -3,6 +3,8 @@ import asyncio
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+import httpx
+import logging
 
 # 🔥 import your existing agent functions
 from agent import (
@@ -17,6 +19,15 @@ from agent import (
 app = FastAPI(title="MCP AI Agent 🌍")
 
 # ==============================
+# 🪵 LOGGING
+# ==============================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+logger = logging.getLogger("AGENT_APP")
+
+# ==============================
 # ✅ CORS (allow frontend calls)
 # ==============================
 app.add_middleware(
@@ -26,6 +37,52 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ==============================
+# ♻️ KEEP-ALIVE (Self-ping to prevent Render sleep)
+# ==============================
+
+AGENT_URL = os.environ.get("AGENT_URL", "https://first-agent-6wlz.onrender.com")
+KEEP_ALIVE_INTERVAL = 540  # 9 minutes (in seconds)
+
+async def keep_alive_loop():
+    """
+    Background task that pings this server's /health every 9 minutes
+    to prevent Render.com from spinning down the free tier instance.
+    Zero LLM tokens used — only hits the health check endpoint.
+    """
+    logger.info(f"♻️ Keep-alive started — pinging {AGENT_URL}/health every {KEEP_ALIVE_INTERVAL // 60} minutes")
+    
+    # Wait a bit on first startup so the server is fully ready
+    await asyncio.sleep(30)
+    
+    while True:
+        try:
+            async with httpx.AsyncClient(timeout=15) as ping_client:
+                response = await ping_client.get(
+                    f"{AGENT_URL}/health",
+                    headers={"Content-Type": "application/json"}
+                )
+                
+                if response.status_code == 200:
+                    logger.info("♻️ Keep-alive ping successful — agent is awake")
+                else:
+                    logger.warning(f"♻️ Keep-alive ping returned status {response.status_code}")
+                    
+        except Exception as e:
+            logger.warning(f"♻️ Keep-alive ping failed: {e}")
+        
+        await asyncio.sleep(KEEP_ALIVE_INTERVAL)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Start the keep-alive background task when the server boots up.
+    """
+    asyncio.create_task(keep_alive_loop())
+    logger.info("🚀 Agent App startup complete — keep-alive task registered")
+
 
 # ==============================
 # 🏠 HOME (NO JINJA → NO ERROR)
