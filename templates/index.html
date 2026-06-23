@@ -41,6 +41,8 @@ body {
     align-items: center;
     overflow: hidden;
     position: relative;
+    margin: 0;
+    padding: 0;
 }
 
 /* Animated background mesh */
@@ -90,19 +92,62 @@ body {
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 480px;
-    height: 95vh;
-    max-height: 900px;
+    max-width: 100%;          /* full width on desktop */
+    height: 100vh;            /* full height on desktop */
+    max-height: none;
     background: var(--bg-glass);
     backdrop-filter: blur(20px);
     border: 1px solid var(--border);
-    border-radius: 28px;
+    border-radius: 0;         /* no radius on desktop */
     display: flex;
     flex-direction: column;
     overflow: hidden;
     box-shadow: 
         0 25px 50px -12px rgba(0, 0, 0, 0.5),
         0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Mobile: card style */
+@media (max-width: 520px) {
+    .app {
+        max-width: 480px;     /* card width on mobile */
+        height: 95vh;
+        max-height: 900px;
+        border-radius: 28px;  /* rounded corners on mobile */
+        margin: auto;
+    }
+    
+    body {
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .bg-mesh, .particles {
+        display: none;
+    }
+    
+    .clear-btn, .settings-btn {
+        top: 12px;
+    }
+    
+    .settings-btn {
+        left: 12px;
+    }
+    
+    .clear-btn {
+        right: 12px;
+    }
+    
+    .hud-card {
+        max-width: 100%;
+    }
+    
+    .compare-mini {
+        min-width: 120px;
+        padding: 12px;
+    }
 }
 
 /* Header */
