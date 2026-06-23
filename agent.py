@@ -19,7 +19,8 @@ class Color:
 # ==============================
 # 🔗 CONFIG
 # ==============================
-MCP_URL = "https://mcp-weather-s1s0.onrender.com/tool"
+DEFAULT_MCP_URL = "https://mcp-weather-s1s0.onrender.com/tool"
+MCP_URL = DEFAULT_MCP_URL  # can be overridden dynamically
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 
@@ -86,14 +87,16 @@ def extract_cities(user_input):
 # ==============================
 # 🔧 MCP CALL WITH LOGS
 # ==============================
-def call_mcp(tool, city):
+def call_mcp(tool, city, custom_url=None):
     logs = []
+    url = custom_url or MCP_URL
+    
     try:
-        log_msg = f"🔄 Calling MCP: {tool} → {city}"
+        log_msg = f"🔄 Calling MCP: {tool} → {city} @ {url}"
         logs.append(log_msg)
         print(f"{Color.CYAN}{log_msg}{Color.END}")
 
-        res = requests.post(MCP_URL, json={"tool": tool, "input": city}, timeout=15)
+        res = requests.post(url, json={"tool": tool, "input": city}, timeout=15)
 
         if res.status_code != 200:
             error_msg = f"❌ MCP failed: HTTP {res.status_code}"
@@ -203,10 +206,10 @@ def start_cli():
         if len(cities) > 1:
             print(f"{Color.YELLOW}🔍 Multi-city mode{Color.END}")
             results = []
-            for city in cities:
-                result = call_mcp("getFullInsights", city)
-                if "error" not in result:
-                    results.append({city: clean_data(result["data"])})
+        for city in cities:
+            result = call_mcp("getFullInsights", city)
+            if "error" not in result:
+                results.append(clean_data(result["data"]))
             if not results:
                 print("❌ No valid data")
                 continue
