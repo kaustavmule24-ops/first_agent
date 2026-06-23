@@ -2109,6 +2109,7 @@ async function send() {
         // Show MCP logs if available
         if (data.mcp_logs && data.mcp_logs.length > 0) {
             showMCPLogs(data.mcp_logs);
+            setTimeout(function() { removeMCPLogs(); }, 2000);
         }
 
         // Route based on response type
