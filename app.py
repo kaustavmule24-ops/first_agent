@@ -1,5 +1,6 @@
 import os
 import asyncio
+import json
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +11,8 @@ from agent import (
     call_mcp,
     clean_data,
     generate_city_insights,
-    generate_general_response
+    generate_general_response,
+    generate_llm_text
 )
 
 app = FastAPI(title="MCP AI Agent 🌍")
@@ -60,7 +62,6 @@ def process_query(user_input: str, llm_enabled: bool):
     # ======================
     if not cities:
         if llm_enabled:
-            # LLM answers general question
             response_text = generate_general_response(user_input)
             return {
                 "type": "text",
@@ -68,7 +69,6 @@ def process_query(user_input: str, llm_enabled: bool):
                 "mcp_logs": ["🤖 No city detected — routing to LLM for general answer"]
             }
         else:
-            # LLM disabled + no city = ask user to enable LLM or provide city
             return {
                 "type": "need_llm",
                 "response": "I need a city name to fetch weather data. Please mention a city (e.g., 'Weather in Delhi').\n\nOr enable 🤖 LLM in Settings for AI-powered answers to general questions.",
@@ -93,9 +93,19 @@ def process_query(user_input: str, llm_enabled: bool):
                 "mcp_logs": all_logs
             }
 
+        # Generate LLM comparison summary
+        llm_text = ""
+        if llm_enabled:
+            compare_prompt = f"""Compare these cities based on the data:
+{json.dumps(results, indent=2)}
+
+Provide a brief comparison (2-3 sentences) highlighting key differences in weather, air quality, and any interesting observations."""
+            llm_text = generate_llm_text(compare_prompt)
+
         return {
             "type": "compare",
             "response": results,
+            "llm_text": llm_text,
             "mcp_logs": all_logs
         }
 
@@ -117,7 +127,6 @@ def process_query(user_input: str, llm_enabled: bool):
 
     cleaned = clean_data(result["data"])
 
-    # Generate LLM insights if enabled
     llm_text = ""
     if llm_enabled:
         llm_text = generate_city_insights(user_input, cleaned)
