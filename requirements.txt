@@ -4,3 +4,4 @@ groq
 jinja2
 python-multipart
 requests
+httpx
