@@ -1294,6 +1294,89 @@ body {
     font-size: 11px;
     color: var(--text-secondary);
 }
+/* ==============================
+   SETTINGS MODAL NEW STYLES
+   ============================== */
+
+.settings-section { margin-bottom: 24px; }
+
+.settings-section-title {
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
+}
+
+.setting-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; background: var(--bg-glass);
+    border: 1px solid var(--border); border-radius: 14px;
+    margin-bottom: 10px; transition: all 0.3s ease;
+}
+
+.setting-item:hover { border-color: rgba(99, 102, 241, 0.2); }
+
+.setting-item-info { display: flex; align-items: center; gap: 12px; }
+
+.setting-item-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; background: rgba(99, 102, 241, 0.1);
+}
+
+.setting-item-text { display: flex; flex-direction: column; }
+
+.setting-item-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+
+.setting-item-desc { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+.mcp-server-list { display: flex; flex-direction: column; gap: 8px; }
+
+.mcp-server-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border); border-radius: 10px; font-size: 12px;
+}
+
+.mcp-server-name { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+
+.mcp-server-status {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success); box-shadow: 0 0 6px var(--success);
+}
+
+.mcp-server-status.offline { background: var(--error); box-shadow: 0 0 6px var(--error); }
+
+/* Temporary status messages */
+.msg.status {
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px dashed rgba(99, 102, 241, 0.3);
+    color: var(--text-secondary); font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 10px 14px; max-width: 90%;
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+
+.msg.status .status-icon { margin-right: 6px; }
+
+/* Temporary MCP logs */
+.msg.log {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed rgba(99, 102, 241, 0.2);
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text-secondary); padding: 10px 14px; max-width: 95%;
+}
+
+.msg.log .log-title {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 6px; color: var(--primary); font-weight: 600;
+}
+
+.msg.log .log-entry { margin: 2px 0; padding: 2px 0; }
+.msg.log .log-entry.success { color: var(--success); }
+.msg.log .log-entry.error { color: var(--error); }
+.msg.log .log-entry.warning { color: var(--warning); }
+.msg.log .log-entry.info { color: var(--info); }
 
 /* Responsive */
 @media (max-width: 520px) {
@@ -1335,6 +1418,7 @@ body {
 }
 </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -1353,8 +1437,8 @@ body {
 
 <div class="app">
     <div class="header">
-        <button class="settings-btn" onclick="openModal()" title="MCP Connectors">⚙️ MCP</button>
-        <div class="header-badge" id="statusBadge" onclick="checkConnection()">MCP Connected</div>
+        <button class="settings-btn" onclick="openModal()" title="Settings">⚙️</button>
+        <div class="header-badge" id="statusBadge" onclick="checkConnection()">AI Mode</div>
         <h1>GeoBot</h1>
         <div class="header-sub">Location Intelligence Assistant</div>
         <button class="clear-btn" onclick="clearChat()" title="Clear conversation">🗑️ Clear</button>
@@ -1375,7 +1459,7 @@ body {
     <div class="input-area">
         <div class="input-box">
             <div class="input-wrapper">
-                <input id="msg" placeholder="Enter a city name (e.g., Tokyo, Paris)..." autocomplete="off" />
+                <input id="msg" placeholder="Ask about weather, AQI, or anything..." autocomplete="off" />
             </div>
             <button class="send-btn" onclick="send()" id="sendBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1384,7 +1468,7 @@ body {
                 </svg>
             </button>
         </div>
-        <div class="input-hint" id="inputHint">Connected to your MCP server for real-time data</div>
+        <div class="input-hint" id="inputHint">AI Mode: LLM will analyze your query first</div>
     </div>
 </div>
 
@@ -1392,27 +1476,57 @@ body {
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
     <div class="modal" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <h2>🔌 MCP Connectors</h2>
+            <h2>⚙️ Settings</h2>
             <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <div class="modal-body">
-            <div class="server-list" id="serverList"></div>
-            
-            <div class="add-server-section">
-                <h3>➕ Add New Server</h3>
-                <div class="form-group">
-                    <label>Server Name</label>
-                    <input type="text" id="newServerName" placeholder="e.g., Stock MCP" />
+            <div class="settings-section">
+                <div class="settings-section-title">🧠 AI Engine</div>
+                <div class="setting-item">
+                    <div class="setting-item-info">
+                        <div class="setting-item-icon">🤖</div>
+                        <div class="setting-item-text">
+                            <div class="setting-item-name">LLM (Groq)</div>
+                            <div class="setting-item-desc">Analyze queries & format responses</div>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="llmToggle" checked onchange="toggleLLM(this)">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div class="form-group">
-                    <label>Server URL</label>
-                    <input type="text" id="newServerUrl" placeholder="e.g., https://api.example.com/tool" />
+                <div class="setting-item">
+                    <div class="setting-item-info">
+                        <div class="setting-item-icon">🌐</div>
+                        <div class="setting-item-text">
+                            <div class="setting-item-name">MCP Server</div>
+                            <div class="setting-item-desc">Weather, AQI & location data</div>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mcpToggle" checked disabled>
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div class="form-group">
-                    <label>Description (optional)</label>
-                    <input type="text" id="newServerDesc" placeholder="What does this server do?" />
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">🔗 MCP Servers</div>
+                <div class="mcp-server-list" id="mcpServerList">
+                    <div class="mcp-server-item">
+                        <div class="mcp-server-name">
+                            <span class="mcp-server-status" id="serverStatus1"></span>
+                            Weather MCP
+                        </div>
+                        <span style="font-size:11px;color:var(--text-secondary)">Default</span>
+                    </div>
                 </div>
-                <button class="add-btn" onclick="addServer()">Add MCP Server</button>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">ℹ️ About</div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;padding:0 4px;">
+                    <p><strong>AI Mode ON:</strong> LLM analyzes your query first, then calls MCP if location-related.</p>
+                    <p style="margin-top:8px"><strong>AI Mode OFF:</strong> Direct MCP calls for faster responses.</p>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -1581,9 +1695,8 @@ function addServer() {
 }
 
 function updateActiveCount() {
-    const count = getEnabledServers().length;
-    const badge = document.getElementById('statusBadge');
-    badge.textContent = count > 0 ? `${count} MCP Active` : 'MCP Offline';
+    // Mode badge is handled by updateModeBadge() - this function is for server count only
+    // Kept for compatibility but does not override AI/MCP mode badge
 }
 
 function openModal() {
@@ -1969,39 +2082,24 @@ function showToast(text, icon = 'ℹ️', duration = 3000) {
 
 let isConnected = true;
 async function checkConnection() {
-    const servers = getEnabledServers();
-    if (servers.length === 0) {
-        updateStatus(false);
-        showToast('No MCP servers enabled', '❌');
-        return;
-    }
     try {
-        const res = await fetch(servers[0].url, { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tool: 'healthCheck' })
-        });
+        const res = await fetch('/health');
         isConnected = res.ok;
         updateStatus(res.ok);
-        showToast(res.ok ? 'MCP servers online' : 'MCP server error', res.ok ? '✅' : '❌');
+        showToast(res.ok ? 'Server online' : 'Server error', res.ok ? '✅' : '❌');
     } catch (err) {
         isConnected = false;
         updateStatus(false);
-        showToast('MCP server is offline', '❌');
+        showToast('Server is offline', '❌');
     }
 }
 
 function updateStatus(online) {
-    const badge = document.getElementById('statusBadge');
-    const count = getEnabledServers().length;
-    if (online && count > 0) {
-        badge.classList.remove('offline');
-        badge.textContent = `${count} MCP Active`;
-        document.getElementById('inputHint').textContent = `${count} MCP server${count > 1 ? 's' : ''} connected`;
+    const hint = document.getElementById('inputHint');
+    if (!online) {
+        hint.textContent = '⚠️ Connection lost — check your server';
     } else {
-        badge.classList.add('offline');
-        badge.textContent = 'MCP Offline';
-        document.getElementById('inputHint').textContent = 'No MCP servers enabled — check settings';
+        updateModeBadge();
     }
 }
 
@@ -2009,7 +2107,16 @@ function clearChat() {
     const chat = document.getElementById('chat');
     chat.innerHTML = '';
     showToast('Conversation cleared', '🗑️');
-    window.onload();
+    initWelcome();
+}
+function initWelcome() {
+    addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
+    addSuggestions([
+        { text: "What is AQI?", icon: "❓" },
+        { text: "Weather in Tokyo", icon: "🌤️" },
+        { text: "Compare Delhi vs Mumbai", icon: "⚖️" },
+        { text: "Time in London", icon: "🕒" }
+    ]);
 }
 
 function addMsg(text, type, isCard = false) {
@@ -2069,131 +2176,191 @@ function setInputEnabled(enabled) {
     btn.disabled = !enabled;
 }
 
-window.onload = () => {
+// ==============================
+// SETTINGS & STATE
+// ==============================
+const SETTINGS_KEY = 'geobot_settings';
+
+function loadSettings() {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    if (stored) return JSON.parse(stored);
+    return { llmEnabled: true, mcpEnabled: true };
+}
+
+function saveSettings(s) {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+let settings = loadSettings();
+
+function applySettings() {
+    document.getElementById('llmToggle').checked = settings.llmEnabled;
+    document.getElementById('mcpToggle').checked = settings.mcpEnabled;
+    updateModeBadge();
+}
+
+function toggleLLM(checkbox) {
+    settings.llmEnabled = checkbox.checked;
+    saveSettings(settings);
+    updateModeBadge();
+    showToast(settings.llmEnabled ? 'AI Mode enabled' : 'MCP Mode enabled', settings.llmEnabled ? '🤖' : '🌐');
+}
+
+function updateModeBadge() {
+    const badge = document.getElementById('statusBadge');
+    const hint = document.getElementById('inputHint');
+    if (settings.llmEnabled) {
+        badge.textContent = 'AI Mode'; badge.classList.remove('offline');
+        hint.textContent = 'AI Mode: LLM will analyze your query first';
+    } else {
+        badge.textContent = 'MCP Mode'; badge.classList.add('offline');
+        hint.textContent = 'MCP Mode: Direct weather & location data';
+    }
+}
+
+// ==============================
+// TEMPORARY STATUS & LOGS
+// ==============================
+function showStatus(text, icon) {
+    const chat = document.getElementById('chat');
+    removeStatus();
+    const div = document.createElement('div');
+    div.className = 'msg status';
+    div.id = 'active-status';
+    div.innerHTML = '<span class="status-icon">' + icon + '</span>' + text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function removeStatus() {
+    const existing = document.getElementById('active-status');
+    if (existing) existing.remove();
+}
+
+function showMCPLogs(logs) {
+    const chat = document.getElementById('chat');
+    removeMCPLogs();
+    const div = document.createElement('div');
+    div.className = 'msg log';
+    div.id = 'active-log';
+    const logHTML = logs.map(function(log) {
+        let cls = 'log-entry';
+        if (log.includes('❌')) cls += ' error';
+        else if (log.includes('✅')) cls += ' success';
+        else if (log.includes('🔄')) cls += ' warning';
+        else cls += ' info';
+        return '<div class="' + cls + '">' + log + '</div>';
+    }).join('');
+    div.innerHTML = '<div class="log-title">🔧 MCP Call Log</div>' + logHTML;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function removeMCPLogs() {
+    const existing = document.getElementById('active-log');
+    if (existing) existing.remove();
+}
+
+// ==============================
+// INIT
+// ==============================
+window.onload = function() {
+    applySettings();
     addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
     addSuggestions([
-        { text: "Kolkata", icon: "🇮🇳" },
-        { text: "Tokyo", icon: "🇯🇵" },
-        { text: "New York", icon: "🇺🇸" },
-        { text: "London", icon: "🇬🇧" },
-        { text: "Compare", icon: "⚖️" }
+        { text: "What is AQI?", icon: "❓" },
+        { text: "Weather in Tokyo", icon: "🌤️" },
+        { text: "Compare Delhi vs Mumbai", icon: "⚖️" },
+        { text: "Time in London", icon: "🕒" }
     ]);
     updateActiveCount();
     checkConnection();
 };
 
 async function send() {
-    let input = document.getElementById("msg");
-    let text = input.value.trim();
+    const input = document.getElementById("msg");
+    const text = input.value.trim();
     input.value = "";
-
     if (!text) return;
 
     setInputEnabled(false);
     addMsg(text, "user");
-    showTyping();
+
+    if (settings.llmEnabled) {
+        showStatus("🤖 LLM analyzing your query...", "🧠");
+    } else {
+        showStatus("🔄 Calling MCP server...", "🌐");
+    }
 
     try {
-        // Call YOUR backend /chat (not MCP directly)
-        let res = await fetch("/chat", {
+        const res = await fetch("/chat", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({message: text})
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text, llm_enabled: settings.llmEnabled })
         });
 
         if (!res.ok) throw new Error('Server error');
 
-        let data = await res.json();
-        hideTyping();
+        const data = await res.json();
+        removeStatus();
 
-        // Show MCP logs if available
         if (data.mcp_logs && data.mcp_logs.length > 0) {
             showMCPLogs(data.mcp_logs);
             setTimeout(function() { removeMCPLogs(); }, 2000);
         }
 
-        // Route based on response type
+        await new Promise(function(r) { setTimeout(r, data.mcp_logs && data.mcp_logs.length > 0 ? 500 : 0); });
+
         if (data.type === "hud") {
-            // Single city → Render HUD card
+            // City query → Show HUD card
             const hudHTML = renderHUDCard(data.response, "Weather MCP");
             addMsg(hudHTML, "bot", true);
-
+            // Show LLM insights if available
+            if (data.llm_text) {
+                addMsg(data.llm_text, "bot");
+            }
         } else if (data.type === "compare") {
-            // Multi-city → Render compare strip
+            // Multi-city → Show compare strip
             const compareHTML = renderCompareStrip(data.response);
-            addMsg(`<div style="margin-top:8px;">${compareHTML}</div>`, "bot", true);
-
-        } else {
-            // Text response (LLM or error)
-            addMsg(data.response || "No response", "bot");
+            addMsg('<div style="margin-top:8px;">' + compareHTML + '</div>', "bot", true);
+        } else if (data.type === "text") {
+            // General LLM response (no city needed)
+            addMsg(data.response, "bot");
+        } else if (data.type === "need_llm") {
+            // LLM disabled + no city → Ask user to enable LLM or provide city
+            addMsg(data.response, "bot");
+            addSuggestions([
+                { text: "Weather in Delhi", icon: "🌤️" },
+                { text: "AQI in Mumbai", icon: "😷" },
+                { text: "Time in Tokyo", icon: "🕒" }
+            ]);
+        } else if (data.type === "error") {
+            const errorDiv = addMsg(data.response, "bot");
+            errorDiv.classList.add('error-shake');
         }
 
-        // Suggestions after response
-        if (data.type !== "error") {
-            addMsg("🌍 Explore another location or compare cities!", "bot");
+        // Show suggestions after successful response (except need_llm which has its own)
+        if (data.type !== "error" && data.type !== "need_llm") {
+            addMsg("🌍 Explore another location or ask me anything!", "bot");
             addSuggestions([
-                { text: "Kolkata", icon: "🇮🇳" },
-                { text: "Delhi", icon: "🇮🇳" },
-                { text: "Mumbai", icon: "🇮🇳" },
-                { text: "Compare", icon: "⚖️" }
+                { text: "What is AQI?", icon: "❓" },
+                { text: "Weather in Delhi", icon: "🌤️" },
+                { text: "Compare Tokyo vs London", icon: "⚖️" },
+                { text: "Tell me about Kolkata", icon: "🌏" }
             ]);
         }
 
-        updateStatus(true);
-
     } catch (err) {
-        hideTyping();
-        let errorDiv = addMsg("⚠️ Connection failed. Agent server may be offline.", "bot");
+        removeStatus();
+        removeMCPLogs();
+        const errorDiv = addMsg("⚠️ Connection failed. Agent server may be offline.", "bot");
         errorDiv.classList.add('error-shake');
-        updateStatus(false);
     } finally {
         setInputEnabled(true);
     }
 }
 
-function showMCPLogs(logs) {
-    let chat = document.getElementById("chat");
-    let div = document.createElement("div");
-    div.className = "msg bot";
-    div.style.background = "rgba(99, 102, 241, 0.05)";
-    div.style.border = "1px dashed rgba(99, 102, 241, 0.2)";
-    div.style.fontSize = "11px";
-    div.style.fontFamily = "'JetBrains Mono', monospace";
-    div.style.color = "var(--text-secondary)";
-    div.style.padding = "10px 14px";
 
-    const logHTML = logs.map(log => {
-        if (log.includes("❌")) return `<div style="color: var(--error);">${log}</div>`;
-        if (log.includes("✅")) return `<div style="color: var(--success);">${log}</div>`;
-        if (log.includes("🔄")) return `<div style="color: var(--warning);">${log}</div>`;
-        return `<div>${log}</div>`;
-    }).join('');
-
-    div.innerHTML = `
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;color:var(--primary);">MCP Call Log</div>
-        ${logHTML}
-    `;
-
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-}
-
-function extractCityFromText(text) {
-    const ignore = new Set([
-        "weather", "today", "tell", "me", "what", "is",
-        "the", "in", "show", "give", "details", "and",
-        "compare", "vs", "versus", "between", "aqi", "air",
-        "quality", "time", "coordinate", "holiday", "about"
-    ]);
-
-    const words = text.match(/[A-Za-z]+/g) || [];
-    const cities = words.filter(w => {
-        const lower = w.toLowerCase();
-        return !ignore.has(lower) && w.length > 2;
-    });
-
-    return cities.length > 0 ? cities[0] : "";
-}
 
 document.getElementById("msg").addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
