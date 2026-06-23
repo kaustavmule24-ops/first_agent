@@ -1,7 +1,5 @@
 import os
 import asyncio
-import json
-import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,18 +11,9 @@ from agent import (
     call_mcp,
     clean_data,
     build_prompt,
-    generate_llm_response
+    generate_llm_response,
+    generate_llm_text
 )
-
-# ==============================
-# 🪵 LOGGING CONFIG
-# ==============================
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
-)
-logger = logging.getLogger("AGENT_APP")
 
 app = FastAPI(title="MCP AI Agent 🌍")
 
@@ -40,54 +29,7 @@ app.add_middleware(
 )
 
 # ==============================
-# ♻️ KEEP-ALIVE (Self-ping to prevent Render sleep)
-# ==============================
-
-AGENT_URL = os.environ.get("AGENT_URL", "https://mcp-agent-1s2s.onrender.com")
-KEEP_ALIVE_INTERVAL = 540  # 9 minutes (in seconds)
-
-async def keep_alive_loop():
-    """
-    Background task that pings this server's /health every 9 minutes
-    to prevent Render.com from spinning down the free tier instance.
-    Zero LLM tokens used — only hits the health check endpoint.
-    """
-    logger.info(f"♻️ Keep-alive started — pinging {AGENT_URL}/health every {KEEP_ALIVE_INTERVAL // 60} minutes")
-    
-    # Wait a bit on first startup so the server is fully ready
-    await asyncio.sleep(30)
-    
-    while True:
-        try:
-            import httpx
-            async with httpx.AsyncClient(timeout=15) as ping_client:
-                response = await ping_client.get(
-                    f"{AGENT_URL}/health",
-                    headers={"Content-Type": "application/json"}
-                )
-                
-                if response.status_code == 200:
-                    logger.info("♻️ Keep-alive ping successful — agent is awake")
-                else:
-                    logger.warning(f"♻️ Keep-alive ping returned status {response.status_code}")
-                    
-        except Exception as e:
-            logger.warning(f"♻️ Keep-alive ping failed: {e}")
-        
-        await asyncio.sleep(KEEP_ALIVE_INTERVAL)
-
-
-@app.on_event("startup")
-async def startup_event():
-    """
-    Start the keep-alive background task when the server boots up.
-    """
-    asyncio.create_task(keep_alive_loop())
-    logger.info("🚀 Agent App startup complete — keep-alive task registered")
-
-
-# ==============================
-# 🏠 HOME (NO JINJA → NO ERROR)
+# 🏠 HOME
 # ==============================
 @app.get("/")
 def home():
@@ -95,9 +37,8 @@ def home():
 
 
 # ==============================
-# 💬 CHAT API — MAIN ENTRY POINT
+# 💬 CHAT API — STRUCTURED RESPONSE
 # ==============================
-
 @app.post("/chat")
 async def chat(request: Request):
     try:
@@ -105,242 +46,124 @@ async def chat(request: Request):
         user_input = body.get("message", "").strip()
 
         if not user_input:
-            return {"response": "❌ Empty message", "type": "text"}
+            return JSONResponse(
+                status_code=400,
+                content={"type": "error", "response": "❌ Empty message", "mcp_logs": []}
+            )
 
         # run blocking agent in thread
         result = await asyncio.to_thread(process_query, user_input)
-
-        return result  # Returns dict with response, type, mcp_logs
+        return result
 
     except Exception as e:
-        logger.exception(f"💥 CHAT ERROR: {e}")
         return JSONResponse(
             status_code=500,
-            content={"response": f"❌ {str(e)}", "type": "error"}
+            content={"type": "error", "response": f"❌ Server error: {str(e)}", "mcp_logs": []}
         )
 
 
 # ==============================
-# 🧠 CORE LOGIC — ROUTES TO LLM OR MCP
+# 🧠 CORE LOGIC
 # ==============================
-
-def process_query(user_input: str) -> dict:
-    """
-    Main routing logic:
-    - No city found → LLM (general question)
-    - City found → MCP (weather data) → optional LLM formatting
-    - MCP fails → Retry once → Error (NO LLM for retry)
-    """
+def process_query(user_input: str):
     try:
         cities = extract_cities(user_input)
-        logger.info(f"🔍 Cities detected: {cities}")
+        all_logs = []
 
         # ======================
-        # NO CITY → GENERAL QUESTION → LLM
+        # NO CITY → GENERAL LLM
         # ======================
         if not cities:
-            logger.info("🤖 No city found → Routing to LLM")
-            llm_response = generate_llm_response(
-                f"You are GeoBot, a helpful location intelligence assistant. "
-                f"Answer the user's question naturally and concisely.\n\n"
-                f"User: {user_input}"
-            )
+            response_text = generate_llm_text(user_input)
             return {
-                "response": llm_response,
                 "type": "text",
-                "mcp_logs": []
+                "response": response_text,
+                "mcp_logs": ["🤖 No city detected — routing to general LLM"]
             }
 
         # ======================
-        # MULTI-CITY → MCP FOR EACH
+        # MULTI-CITY
         # ======================
         if len(cities) > 1:
-            logger.info(f"🌍 Multi-city mode: {cities}")
-            return process_multi_city(user_input, cities)
+            results = []
+
+            for city in cities:
+                result = call_mcp("getFullInsights", city)
+                all_logs.extend(result.get("logs", []))
+
+                if "error" in result:
+                    continue
+
+                results.append({city: clean_data(result["data"])})
+
+            if not results:
+                return {
+                    "type": "error",
+                    "response": "❌ Could not fetch data for any of the requested cities. Please check the city names and try again.",
+                    "mcp_logs": all_logs
+                }
+
+            # For multi-city, return compare data
+            compare_data = []
+            for r in results:
+                for city_name, city_data in r.items():
+                    compare_data.append(city_data)
+
+            return {
+                "type": "compare",
+                "response": compare_data,
+                "mcp_logs": all_logs
+            }
 
         # ======================
-        # SINGLE CITY → MCP → DATA
+        # SINGLE CITY
         # ======================
         city = cities[0]
         tool = choose_tool(user_input)
-        logger.info(f"🌍 Single city: {city} | Tool: {tool}")
 
-        return process_single_city(user_input, city, tool)
+        result = call_mcp(tool, city)
+        all_logs.extend(result.get("logs", []))
 
-    except Exception as e:
-        logger.exception(f"💥 PROCESSING ERROR: {e}")
-        return {
-            "response": f"❌ Processing error: {str(e)}",
-            "type": "error",
-            "mcp_logs": []
-        }
-
-
-def process_single_city(user_input: str, city: str, tool: str) -> dict:
-    """
-    Single city flow:
-    1. Call MCP with selected tool
-    2. If fails, retry with getFullInsights
-    3. If still fails, return error (NO LLM)
-    4. If success, return structured data for HUD
-    """
-    mcp_logs = []
-
-    # --- Attempt 1: Selected tool ---
-    log1 = f"📡 Calling MCP: {tool} → {city}"
-    logger.info(log1)
-    mcp_logs.append(log1)
-
-    data = call_mcp(tool, city)
-
-    # Check if failed
-    if isinstance(data, dict) and "error" in data:
-        log_err = f"❌ MCP failed: {data['error']}"
-        logger.warning(log_err)
-        mcp_logs.append(log_err)
-
-        # --- Attempt 2: Retry with getFullInsights ---
-        log_retry = "🔄 Retrying with getFullInsights..."
-        logger.info(log_retry)
-        mcp_logs.append(log_retry)
-
-        data = call_mcp("getFullInsights", city)
-
-        if isinstance(data, dict) and "error" in data:
-            log_fail = f"❌ Retry also failed: {data['error']}"
-            logger.error(log_fail)
-            mcp_logs.append(log_fail)
-
-            # NO LLM FOR RETRY — Return error
+        if "error" in result:
             return {
-                "response": f"❌ Could not fetch data for **{city}**. The weather service may be temporarily unavailable. Please try again later.",
-                "type": "text",
-                "mcp_logs": mcp_logs
+                "type": "error",
+                "response": f"❌ {result['error']}",
+                "mcp_logs": all_logs
             }
 
-    # --- Success! ---
-    log_success = f"✅ MCP success for {city}"
-    logger.info(log_success)
-    mcp_logs.append(log_success)
+        cleaned = clean_data(result["data"])
 
-    cleaned = clean_data(data)
-    logger.info(f"📊 Data: {json.dumps(cleaned, indent=2)}")
+        # Generate LLM-formatted response from MCP data
+        prompt = build_prompt(user_input, cleaned)
+        llm_text = generate_llm_response(prompt)
 
-    # Return structured data for frontend HUD
-    return {
-        "response": cleaned,  # JSON object for HUD rendering
-        "type": "hud",
-        "city": city,
-        "mcp_logs": mcp_logs,
-        "raw_data": cleaned
-    }
-
-
-def process_multi_city(user_input: str, cities: list) -> dict:
-    """
-    Multi-city flow:
-    - Call getFullInsights for each city in parallel
-    - Return compare data for frontend
-    """
-    mcp_logs = []
-    results = []
-
-    for city in cities:
-        log = f"📡 Calling MCP: getFullInsights → {city}"
-        logger.info(log)
-        mcp_logs.append(log)
-
-        data = call_mcp("getFullInsights", city)
-
-        if isinstance(data, dict) and "error" in data:
-            log_err = f"❌ {city}: {data['error']}"
-            logger.warning(log_err)
-            mcp_logs.append(log_err)
-            continue
-
-        log_ok = f"✅ {city}: Data received"
-        logger.info(log_ok)
-        mcp_logs.append(log_ok)
-
-        results.append({
-            "city": city,
-            "data": clean_data(data)
-        })
-
-    if not results:
+        # Return HUD-compatible data + LLM text
         return {
-            "response": "❌ No valid data found for any city. Please check the city names and try again.",
-            "type": "text",
-            "mcp_logs": mcp_logs
+            "type": "hud",
+            "response": cleaned,
+            "llm_text": llm_text,
+            "mcp_logs": all_logs
         }
 
-    # Return compare data for frontend
-    return {
-        "response": results,
-        "type": "compare",
-        "cities": cities,
-        "mcp_logs": mcp_logs
-    }
-
-
-# ==============================
-# 🧠 LLM-ONLY ENDPOINT (Optional)
-# ==============================
-
-@app.post("/ask")
-async def ask_llm(request: Request):
-    """
-    Direct LLM endpoint — no MCP calls.
-    Use this when you want pure AI responses.
-    """
-    try:
-        body = await request.json()
-        user_input = body.get("message", "").strip()
-
-        if not user_input:
-            return {"response": "❌ Empty message"}
-
-        result = await asyncio.to_thread(generate_llm_response, user_input)
-
-        return {"response": result, "type": "text"}
-
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"response": f"❌ {str(e)}"}
-        )
+        return {
+            "type": "error",
+            "response": f"❌ Processing error: {str(e)}",
+            "mcp_logs": all_logs if 'all_logs' in locals() else []
+        }
 
 
 # ==============================
 # ❤️ HEALTH CHECK
 # ==============================
-
 @app.get("/health")
 def health():
-    return {"status": "ok", "agent": "running", "version": "V2-HUD"}
-
-
-# ==============================
-# 📊 MCP STATUS (for frontend)
-# ==============================
-
-@app.get("/mcp-status")
-def mcp_status():
-    """
-    Returns current MCP connection status for frontend display.
-    """
-    # You could store last MCP call status here
-    return {
-        "mcp_weather": "connected",  # or "disconnected"
-        "last_call": None,
-        "fallback_active": False
-    }
+    return {"status": "ok"}
 
 
 # ==============================
 # ▶️ RUN SERVER
 # ==============================
-
 if __name__ == "__main__":
     import uvicorn
 
