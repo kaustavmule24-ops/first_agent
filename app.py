@@ -64,12 +64,18 @@ async def chat(request: Request):
         body = await request.json()
         user_input = body.get("message", "").strip()
         llm_enabled = body.get("llm_enabled", True)
+        mcp_servers = body.get("mcp_servers", [])  # ← custom MCP servers from frontend
 
         if not user_input:
             return JSONResponse(
                 status_code=400,
                 content={"type": "error", "response": "❌ Empty message", "mcp_logs": []}
             )
+
+        # If custom MCP servers provided, use first enabled one
+        if mcp_servers and len(mcp_servers) > 0:
+            import agent
+            agent.MCP_URL = mcp_servers[0]["url"]
 
         result = await asyncio.to_thread(process_query, user_input, llm_enabled)
         return result
