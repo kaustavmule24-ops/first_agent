@@ -2527,10 +2527,16 @@ async function send() {
     }
 
     try {
+        const enabledServers = getEnabledServers();
+        
         const res = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: text, llm_enabled: settings.llmEnabled })
+            body: JSON.stringify({ 
+                message: text, 
+                llm_enabled: settings.llmEnabled,
+                mcp_servers: enabledServers  // ← send custom MCP servers
+            })
         });
 
         if (!res.ok) throw new Error('Server error');
