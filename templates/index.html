@@ -25,11 +25,7 @@
     --info: #3b82f6;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     font-family: 'Inter', -apple-system, sans-serif;
@@ -43,11 +39,8 @@ body {
     position: relative;
 }
 
-/* Animated background mesh */
 .bg-mesh {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
+    position: fixed; inset: 0; z-index: 0;
     background: 
         radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
         radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
@@ -61,93 +54,53 @@ body {
     66% { transform: translate(-20px, 20px) scale(0.9); }
 }
 
-/* Floating particles */
-.particles {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-}
+.particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
 .particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: var(--primary);
-    border-radius: 50%;
-    opacity: 0.3;
+    position: absolute; width: 4px; height: 4px;
+    background: var(--primary); border-radius: 50%; opacity: 0.3;
     animation: float 15s infinite;
 }
 
 @keyframes float {
     0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
-    10% { opacity: 0.3; }
-    90% { opacity: 0.3; }
+    10% { opacity: 0.3; } 90% { opacity: 0.3; }
     100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
 }
 
 .app {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 480px;
-    height: 95vh;
-    max-height: 900px;
-    background: var(--bg-glass);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
-    border-radius: 28px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 
-        0 25px 50px -12px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    position: relative; z-index: 1;
+    width: 100%; max-width: 480px; height: 95vh; max-height: 900px;
+    background: var(--bg-glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: 28px;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
-/* Header */
 .header {
-    padding: 20px 20px 12px;
-    text-align: center;
-    border-bottom: 1px solid var(--border);
-    position: relative;
+    padding: 20px 20px 12px; text-align: center;
+    border-bottom: 1px solid var(--border); position: relative;
 }
 
 .header-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    display: inline-flex; align-items: center; gap: 6px;
     background: rgba(99, 102, 241, 0.15);
     border: 1px solid rgba(99, 102, 241, 0.3);
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; color: var(--primary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 10px; cursor: pointer; transition: all 0.3s ease;
 }
 
-.header-badge:hover {
-    background: rgba(99, 102, 241, 0.25);
-}
+.header-badge:hover { background: rgba(99, 102, 241, 0.25); }
 
 .header-badge::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    background: var(--success);
-    border-radius: 50%;
+    content: ''; width: 6px; height: 6px;
+    background: var(--success); border-radius: 50%;
     animation: livePulse 2s infinite;
 }
 
-.header-badge.offline::before {
-    background: var(--error);
-    animation: none;
-}
+.header-badge.offline::before { background: var(--error); animation: none; }
 
 @keyframes livePulse {
     0%, 100% { opacity: 1; transform: scale(1); }
@@ -155,181 +108,144 @@ body {
 }
 
 .header h1 {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 22px; font-weight: 700;
     background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     margin-bottom: 4px;
 }
 
-.header-sub {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 400;
-}
+.header-sub { font-size: 13px; color: var(--text-secondary); font-weight: 400; }
 
-/* Settings button */
 .settings-btn {
-    position: absolute;
-    top: 20px;
-    left: 16px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    position: absolute; top: 20px; left: 16px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: var(--text-secondary); padding: 6px 10px; border-radius: 8px;
+    font-size: 11px; cursor: pointer; transition: all 0.3s ease;
+    display: flex; align-items: center; gap: 4px;
 }
 
 .settings-btn:hover {
     background: rgba(99, 102, 241, 0.15);
-    border-color: var(--primary);
-    color: var(--primary);
+    border-color: var(--primary); color: var(--primary);
 }
 
-/* Orb */
-.orb-container {
-    display: flex;
-    justify-content: center;
-    padding: 6px 0 2px;
+.clear-btn {
+    position: absolute; top: 20px; right: 16px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: var(--text-secondary); padding: 6px 10px; border-radius: 8px;
+    font-size: 11px; cursor: pointer; transition: all 0.3s ease;
+    display: flex; align-items: center; gap: 4px;
 }
+
+.clear-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--error); color: var(--error);
+}
+
+.orb-container { display: flex; justify-content: center; padding: 6px 0 2px; }
 
 .orb {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
+    width: 70px; height: 70px; border-radius: 50%;
     background: conic-gradient(from 0deg, var(--primary), var(--secondary), var(--accent), var(--primary));
-    position: relative;
-    animation: orbSpin 8s linear infinite;
+    position: relative; animation: orbSpin 8s linear infinite;
     box-shadow: 0 0 40px var(--primary-glow);
 }
 
 .orb::before {
-    content: '';
-    position: absolute;
-    inset: 3px;
-    border-radius: 50%;
-    background: var(--bg-dark);
-    z-index: 1;
+    content: ''; position: absolute; inset: 3px;
+    border-radius: 50%; background: var(--bg-dark); z-index: 1;
 }
 
 .orb::after {
-    content: '🌍';
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    z-index: 2;
+    content: '🌍'; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; z-index: 2;
     animation: orbSpin 8s linear infinite reverse;
 }
 
-@keyframes orbSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
+@keyframes orbSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* Chat area */
 .chat {
-    flex: 1;
-    padding: 16px 20px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex: 1; padding: 16px 20px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 12px;
     scroll-behavior: smooth;
 }
 
-.chat::-webkit-scrollbar {
-    width: 4px;
-}
+.chat::-webkit-scrollbar { width: 4px; }
+.chat::-webkit-scrollbar-track { background: transparent; }
+.chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
-.chat::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.chat::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1);
-    border-radius: 4px;
-}
-
-/* Messages */
 .msg {
-    padding: 14px 18px;
-    border-radius: 18px;
-    max-width: 85%;
-    font-size: 14px;
-    line-height: 1.6;
+    padding: 14px 18px; border-radius: 18px;
+    max-width: 85%; font-size: 14px; line-height: 1.6;
     animation: msgSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
-    word-wrap: break-word;
+    position: relative; word-wrap: break-word;
 }
 
 @keyframes msgSlide {
-    from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .msg.user {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-    margin-left: auto;
-    border-bottom-right-radius: 4px;
+    color: white; margin-left: auto; border-bottom-right-radius: 4px;
     box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
 
 .msg.bot {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text-primary);
-    margin-right: auto;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-primary); margin-right: auto;
     border-bottom-left-radius: 4px;
 }
 
-.msg-time {
-    font-size: 10px;
-    opacity: 0.5;
-    margin-top: 6px;
-    text-align: right;
+.msg-time { font-size: 10px; opacity: 0.5; margin-top: 6px; text-align: right; }
+
+/* Temporary status messages */
+.msg.status {
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px dashed rgba(99, 102, 241, 0.3);
+    color: var(--text-secondary); font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 10px 14px; max-width: 90%;
+    animation: statusPulse 2s ease-in-out infinite;
 }
 
-/* Typing indicator */
+@keyframes statusPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+
+.msg.status .status-icon { margin-right: 6px; }
+
+/* Temporary MCP logs */
+.msg.log {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed rgba(99, 102, 241, 0.2);
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text-secondary); padding: 10px 14px; max-width: 95%;
+}
+
+.msg.log .log-title {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 6px; color: var(--primary); font-weight: 600;
+}
+
+.msg.log .log-entry { margin: 2px 0; padding: 2px 0; }
+.msg.log .log-entry.success { color: var(--success); }
+.msg.log .log-entry.error { color: var(--error); }
+.msg.log .log-entry.warning { color: var(--warning); }
+.msg.log .log-entry.info { color: var(--info); }
+
 .typing-container {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    border-bottom-left-radius: 4px;
-    margin-right: auto;
-    max-width: 100px;
+    display: none; align-items: center; gap: 8px;
+    padding: 12px 16px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 18px;
+    border-bottom-left-radius: 4px; margin-right: auto; max-width: 100px;
 }
 
-.typing-container.active {
-    display: flex;
-}
+.typing-container.active { display: flex; }
 
 .typing-dot {
-    width: 8px;
-    height: 8px;
-    background: var(--primary);
-    border-radius: 50%;
-    animation: typingBounce 1.4s infinite ease-in-out both;
+    width: 8px; height: 8px; background: var(--primary);
+    border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out both;
 }
 
 .typing-dot:nth-child(1) { animation-delay: -0.32s; }
@@ -340,101 +256,54 @@ body {
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Suggestions */
-.suggestions-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin: 4px 0;
-}
+.suggestions-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0; }
 
 .chip {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border);
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    user-select: none;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: 20px; font-size: 12px;
+    color: var(--text-secondary); cursor: pointer; transition: all 0.3s ease;
+    font-weight: 500; display: flex; align-items: center; gap: 4px; user-select: none;
 }
 
 .chip:hover {
-    background: rgba(99, 102, 241, 0.15);
-    border-color: var(--primary);
-    color: var(--text-primary);
-    transform: translateY(-1px);
+    background: rgba(99, 102, 241, 0.15); border-color: var(--primary);
+    color: var(--text-primary); transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
 }
 
-.chip:active {
-    transform: scale(0.95);
-}
+.chip:active { transform: scale(0.95); }
 
-/* Input area */
 .input-area {
-    padding: 16px 20px 20px;
-    border-top: 1px solid var(--border);
+    padding: 16px 20px 20px; border-top: 1px solid var(--border);
     background: rgba(15, 23, 42, 0.8);
 }
 
-.input-box {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
+.input-box { display: flex; gap: 10px; align-items: center; }
 
-.input-wrapper {
-    flex: 1;
-    position: relative;
-}
+.input-wrapper { flex: 1; position: relative; }
 
 .input-wrapper input {
-    width: 100%;
-    padding: 14px 18px;
-    border-radius: 24px;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text-primary);
-    font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    transition: all 0.3s ease;
+    width: 100%; padding: 14px 18px; border-radius: 24px;
+    border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary); font-size: 14px; font-family: inherit;
+    outline: none; transition: all 0.3s ease;
 }
 
-.input-wrapper input::placeholder {
-    color: var(--text-secondary);
-}
+.input-wrapper input::placeholder { color: var(--text-secondary); }
 
 .input-wrapper input:focus {
-    border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.05);
+    border-color: var(--primary); background: rgba(99, 102, 241, 0.05);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.input-wrapper input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+.input-wrapper input:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .send-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: none;
+    width: 48px; height: 48px; border-radius: 50%; border: none;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
+    color: white; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: all 0.3s ease; flex-shrink: 0;
     box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
 
@@ -443,33 +312,18 @@ body {
     box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
-.send-btn:active:not(:disabled) {
-    transform: scale(0.95);
-}
+.send-btn:active:not(:disabled) { transform: scale(0.95); }
 
-.send-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.send-btn svg {
-    width: 20px;
-    height: 20px;
-    margin-left: 2px;
-}
+.send-btn svg { width: 20px; height: 20px; margin-left: 2px; }
 
 .input-hint {
-    text-align: center;
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-top: 10px;
-    opacity: 0.7;
+    text-align: center; font-size: 11px; color: var(--text-secondary);
+    margin-top: 10px; opacity: 0.7;
 }
 
-/* Error state */
-.error-shake {
-    animation: shake 0.5s ease-in-out;
-}
+.error-shake { animation: shake 0.5s ease-in-out; }
 
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
@@ -477,71 +331,28 @@ body {
     75% { transform: translateX(8px); }
 }
 
-/* Toast notification */
 .toast {
-    position: fixed;
-    top: 20px;
-    left: 50%;
+    position: fixed; top: 20px; left: 50%;
     transform: translateX(-50%) translateY(-100px);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    padding: 12px 20px;
-    border-radius: 12px;
-    font-size: 13px;
-    color: var(--text-primary);
-    z-index: 1000;
+    background: var(--bg-card); border: 1px solid var(--border);
+    padding: 12px 20px; border-radius: 12px; font-size: 13px;
+    color: var(--text-primary); z-index: 1000;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    backdrop-filter: blur(10px); display: flex;
+    align-items: center; gap: 8px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-.toast.show {
-    transform: translateX(-50%) translateY(0);
-}
+.toast.show { transform: translateX(-50%) translateY(0); }
 
-.toast-icon {
-    font-size: 16px;
-}
+.toast-icon { font-size: 16px; }
 
-/* Clear chat button */
-.clear-btn {
-    position: absolute;
-    top: 20px;
-    right: 16px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
+/* ============================== HUD CARD STYLES ============================== */
 
-.clear-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: var(--error);
-    color: var(--error);
-}
-
-/* ==============================
-   FUTURISTIC HUD CARD STYLES
-   ============================== */
-
-/* Compact HUD Card (Single City) */
 .hud-card {
-    width: 100%;
-    max-width: 380px;
+    width: 100%; max-width: 380px;
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    overflow: hidden;
+    border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
     backdrop-filter: blur(20px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.1) inset;
     animation: hudEntry 0.5s cubic-bezier(0.16, 1, 0.3, 1);
@@ -554,121 +365,65 @@ body {
 }
 
 .hud-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
     background: rgba(99, 102, 241, 0.05);
 }
 
-.hud-city-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+.hud-city-info { display: flex; align-items: center; gap: 10px; }
 
 .hud-city-icon {
-    width: 32px;
-    height: 32px;
+    width: 32px; height: 32px;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-.hud-city-name {
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    color: var(--text-primary);
-}
+.hud-city-name { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-primary); }
 
-.hud-city-sub {
-    font-size: 10px;
-    color: var(--text-secondary);
-    margin-top: 1px;
-}
+.hud-city-sub { font-size: 10px; color: var(--text-secondary); margin-top: 1px; }
 
-.hud-time {
-    text-align: right;
-}
+.hud-time { text-align: right; }
 
 .hud-time-main {
-    font-size: 18px;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text-primary);
-    line-height: 1;
+    font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary); line-height: 1;
 }
 
 .hud-time-sub {
-    font-size: 9px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 2px;
+    font-size: 9px; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 1px; margin-top: 2px;
 }
 
-/* Hero section with temp ring */
 .hud-hero {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px 16px;
-    gap: 16px;
-    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px 16px; gap: 16px; position: relative;
 }
 
 .hud-temp-ring {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100px; height: 100px; border-radius: 50%;
+    position: relative; display: flex; align-items: center; justify-content: center;
 }
 
-.hud-temp-ring svg {
-    position: absolute;
-    inset: 0;
-    transform: rotate(-90deg);
-}
+.hud-temp-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
 
-.hud-temp-ring circle {
-    fill: none;
-    stroke-width: 4;
-}
+.hud-temp-ring circle { fill: none; stroke-width: 4; }
 
-.hud-temp-ring .ring-bg {
-    stroke: rgba(255, 255, 255, 0.05);
-}
+.hud-temp-ring .ring-bg { stroke: rgba(255, 255, 255, 0.05); }
 
 .hud-temp-ring .ring-fill {
-    stroke: url(#ringGradient);
-    stroke-linecap: round;
+    stroke: url(#ringGradient); stroke-linecap: round;
     transition: stroke-dashoffset 1s ease;
     filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.4));
 }
 
 .hud-temp-value {
-    position: relative;
-    z-index: 1;
-    font-size: 28px;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    position: relative; z-index: 1;
+    font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
     color: var(--text-primary);
 }
 
-.hud-temp-unit {
-    font-size: 12px;
-    color: var(--text-secondary);
-    vertical-align: super;
-}
+.hud-temp-unit { font-size: 12px; color: var(--text-secondary); vertical-align: super; }
 
 .hud-weather-icon-main {
     font-size: 40px;
@@ -676,52 +431,30 @@ body {
     animation: floatIcon 3s ease-in-out infinite;
 }
 
-@keyframes floatIcon {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-}
+@keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
 .hud-condition-text {
-    text-align: center;
-    font-size: 11px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-top: -8px;
-    padding-bottom: 14px;
+    text-align: center; font-size: 11px; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 2px;
+    margin-top: -8px; padding-bottom: 14px;
 }
 
-/* AQI Bar */
 .hud-aqi-section {
-    margin: 0 14px 12px;
-    padding: 10px 12px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
+    margin: 0 14px 12px; padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.2); border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.hud-aqi-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-}
+.hud-aqi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 
 .hud-aqi-label {
-    font-size: 9px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 500;
+    font-size: 9px; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 1.5px; font-weight: 500;
 }
 
 .hud-aqi-status {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 20px;
-    background: rgba(245, 158, 11, 0.12);
-    color: var(--warning);
+    font-size: 10px; font-weight: 600; padding: 2px 8px;
+    border-radius: 20px; background: rgba(245, 158, 11, 0.12); color: var(--warning);
 }
 
 .hud-aqi-status.good { background: rgba(16, 185, 129, 0.12); color: var(--success); }
@@ -729,61 +462,38 @@ body {
 .hud-aqi-status.bad { background: rgba(239, 68, 68, 0.12); color: var(--error); }
 
 .hud-aqi-track {
-    height: 5px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-    overflow: hidden;
-    position: relative;
+    height: 5px; background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px; overflow: hidden; position: relative;
 }
 
 .hud-aqi-fill {
-    height: 100%;
-    border-radius: 3px;
+    height: 100%; border-radius: 3px;
     background: linear-gradient(90deg, var(--success), var(--warning), var(--error));
     background-size: 200% 100%;
     animation: barFill 1s ease-out, shimmer 2s infinite;
     position: relative;
 }
 
-@keyframes barFill {
-    from { width: 0 !important; }
-}
+@keyframes barFill { from { width: 0 !important; } }
 
-@keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-/* Metrics grid */
 .hud-metrics {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border-top: 1px solid var(--border);
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1px; background: var(--border); border-top: 1px solid var(--border);
 }
 
 .hud-metric {
-    background: rgba(15, 23, 42, 0.6);
-    padding: 12px 8px;
-    text-align: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
+    background: rgba(15, 23, 42, 0.6); padding: 12px 8px;
+    text-align: center; transition: all 0.3s ease; cursor: pointer;
 }
 
-.hud-metric:hover {
-    background: rgba(99, 102, 241, 0.08);
-}
+.hud-metric:hover { background: rgba(99, 102, 241, 0.08); }
 
-.hud-metric-icon {
-    font-size: 14px;
-    margin-bottom: 4px;
-}
+.hud-metric-icon { font-size: 14px; margin-bottom: 4px; }
 
 .hud-metric-value {
-    font-size: 14px;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
     color: var(--text-primary);
 }
 
@@ -792,67 +502,40 @@ body {
 .hud-metric-value.bad { color: var(--error); }
 
 .hud-metric-label {
-    font-size: 8px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 3px;
+    font-size: 8px; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 1px; margin-top: 3px;
 }
 
-/* Footer */
 .hud-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 16px;
-    border-top: 1px solid var(--border);
-    font-size: 9px;
-    color: var(--text-dim);
-    font-family: 'JetBrains Mono', monospace;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; border-top: 1px solid var(--border);
+    font-size: 9px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;
 }
 
-.hud-source {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
+.hud-source { display: flex; align-items: center; gap: 6px; }
 
 .hud-source-dot {
-    width: 5px;
-    height: 5px;
-    background: var(--success);
-    border-radius: 50%;
-    animation: livePulse 2s infinite;
+    width: 5px; height: 5px; background: var(--success);
+    border-radius: 50%; animation: livePulse 2s infinite;
 }
 
-/* Expanded data grid (shown on click) */
 .hud-expanded {
-    max-height: 0;
-    overflow: hidden;
+    max-height: 0; overflow: hidden;
     transition: max-height 0.4s ease, opacity 0.3s ease;
-    opacity: 0;
-    background: rgba(0, 0, 0, 0.15);
+    opacity: 0; background: rgba(0, 0, 0, 0.15);
 }
 
 .hud-expanded.open {
-    max-height: 500px;
-    opacity: 1;
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
+    max-height: 500px; opacity: 1;
+    padding: 12px 16px; border-top: 1px solid var(--border);
 }
 
-.hud-data-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-}
+.hud-data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
 .hud-data-cell {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: 10px;
-    padding: 10px;
-    transition: all 0.2s;
+    border-radius: 10px; padding: 10px; transition: all 0.2s;
 }
 
 .hud-data-cell:hover {
@@ -861,82 +544,48 @@ body {
 }
 
 .hud-data-label {
-    font-size: 9px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    font-size: 9px; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 4px; display: flex; align-items: center; gap: 4px;
 }
 
 .hud-data-value {
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono', monospace;
     color: var(--text-primary);
 }
 
-.hud-data-value.small {
-    font-size: 11px;
-}
+.hud-data-value.small { font-size: 11px; }
 
 .hud-expand-btn {
-    width: 100%;
-    padding: 8px;
-    background: rgba(99, 102, 241, 0.08);
-    border: none;
-    border-top: 1px solid var(--border);
-    color: var(--primary);
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.2s;
+    width: 100%; padding: 8px;
+    background: rgba(99, 102, 241, 0.08); border: none;
+    border-top: 1px solid var(--border); color: var(--primary);
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
 }
 
-.hud-expand-btn:hover {
-    background: rgba(99, 102, 241, 0.15);
-}
+.hud-expand-btn:hover { background: rgba(99, 102, 241, 0.15); }
 
-/* Horizontal Compare Cards */
 .compare-strip {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    padding: 4px 0;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    display: flex; gap: 10px; overflow-x: auto;
+    padding: 4px 0; scrollbar-width: none; -ms-overflow-style: none;
 }
 
-.compare-strip::-webkit-scrollbar {
-    display: none;
-}
+.compare-strip::-webkit-scrollbar { display: none; }
 
 .compare-mini {
     min-width: 130px;
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 14px; cursor: pointer; transition: all 0.3s ease;
+    position: relative; overflow: hidden;
 }
 
 .compare-mini::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
     height: 2px;
     background: linear-gradient(90deg, var(--primary), var(--secondary));
-    opacity: 0;
-    transition: opacity 0.3s;
+    opacity: 0; transition: opacity 0.3s;
 }
 
 .compare-mini:hover {
@@ -945,403 +594,179 @@ body {
     border-color: rgba(99, 102, 241, 0.3);
 }
 
-.compare-mini:hover::before {
-    opacity: 1;
-}
+.compare-mini:hover::before { opacity: 1; }
 
 .compare-mini-city {
-    font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 2px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    font-size: 13px; font-weight: 700;
+    margin-bottom: 2px; display: flex; align-items: center; gap: 6px;
 }
 
 .compare-mini-temp {
-    font-size: 24px;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
     margin: 6px 0;
     background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-.compare-mini-aqi {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
+.compare-mini-aqi { display: flex; align-items: center; gap: 6px; }
 
 .compare-mini-bar {
-    flex: 1;
-    height: 3px;
+    flex: 1; height: 3px;
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 2px;
-    overflow: hidden;
+    border-radius: 2px; overflow: hidden;
 }
 
 .compare-mini-fill {
-    height: 100%;
-    border-radius: 2px;
+    height: 100%; border-radius: 2px;
     transition: width 0.8s ease;
 }
 
 .compare-mini-value {
-    font-size: 11px;
-    font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
-    min-width: 24px;
-    text-align: right;
+    font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+    min-width: 24px; text-align: right;
 }
 
-/* ==============================
-   MCP CONNECTOR MODAL STYLES
-   ============================== */
+/* ============================== SETTINGS MODAL ============================== */
 
 .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
-    z-index: 100;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
+    z-index: 100; display: none; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.3s ease;
 }
 
-.modal-overlay.active {
-    display: flex;
-    opacity: 1;
-}
+.modal-overlay.active { display: flex; opacity: 1; }
 
 .modal {
-    width: 90%;
-    max-width: 440px;
-    max-height: 85vh;
+    width: 90%; max-width: 400px; max-height: 85vh;
     background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    border: 1px solid var(--border); border-radius: 24px;
+    overflow: hidden; display: flex; flex-direction: column;
     transform: scale(0.9) translateY(20px);
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-.modal-overlay.active .modal {
-    transform: scale(1) translateY(0);
-}
+.modal-overlay.active .modal { transform: scale(1) translateY(0); }
 
 .modal-header {
-    padding: 20px 24px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
 }
 
-.modal-header h2 {
-    font-size: 18px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.modal-header h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 
 .modal-close {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: var(--text-secondary); width: 32px; height: 32px;
+    border-radius: 10px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 18px;
     transition: all 0.2s ease;
 }
 
 .modal-close:hover {
     background: rgba(239, 68, 68, 0.1);
-    border-color: var(--error);
-    color: var(--error);
+    border-color: var(--error); color: var(--error);
 }
 
-.modal-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 24px;
+.modal-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+.settings-section { margin-bottom: 24px; }
+
+.settings-section-title {
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
 }
 
-.server-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.setting-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; background: var(--bg-glass);
+    border: 1px solid var(--border); border-radius: 14px;
+    margin-bottom: 10px; transition: all 0.3s ease;
 }
 
-.server-card {
-    background: var(--bg-glass);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 14px 16px;
-    transition: all 0.3s ease;
+.setting-item:hover { border-color: rgba(99, 102, 241, 0.2); }
+
+.setting-item-info { display: flex; align-items: center; gap: 12px; }
+
+.setting-item-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; background: rgba(99, 102, 241, 0.1);
 }
 
-.server-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-}
+.setting-item-text { display: flex; flex-direction: column; }
 
-.server-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
+.setting-item-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 
-.server-name {
-    font-weight: 600;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.server-status {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--text-secondary);
-}
-
-.server-status.online {
-    background: var(--success);
-    box-shadow: 0 0 8px var(--success);
-}
-
-.server-status.offline {
-    background: var(--error);
-}
-
-.server-status.checking {
-    background: var(--warning);
-    animation: pulse 1s infinite;
-}
-
-.server-url {
-    font-size: 11px;
-    color: var(--text-secondary);
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 10px;
-    word-break: break-all;
-}
-
-.server-desc {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 10px;
-}
-
-.server-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+.setting-item-desc { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 
 .toggle-switch {
-    position: relative;
-    width: 44px;
-    height: 24px;
-    cursor: pointer;
+    position: relative; width: 48px; height: 26px;
+    cursor: pointer; flex-shrink: 0;
 }
 
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
 
 .toggle-slider {
-    position: absolute;
-    inset: 0;
-    background: rgba(255,255,255,0.1);
-    border-radius: 24px;
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.1); border-radius: 26px;
     transition: all 0.3s ease;
 }
 
 .toggle-slider::before {
-    content: '';
-    position: absolute;
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background: white;
-    border-radius: 50%;
+    content: ''; position: absolute;
+    height: 20px; width: 20px; left: 3px; bottom: 3px;
+    background: white; border-radius: 50%;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.toggle-switch input:checked + .toggle-slider {
-    background: var(--primary);
+.toggle-switch input:checked + .toggle-slider { background: var(--primary); }
+
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+
+.toggle-switch input:disabled + .toggle-slider { opacity: 0.4; cursor: not-allowed; }
+
+.mcp-server-list { display: flex; flex-direction: column; gap: 8px; }
+
+.mcp-server-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border); border-radius: 10px; font-size: 12px;
 }
 
-.toggle-switch input:checked + .toggle-slider::before {
-    transform: translateX(20px);
+.mcp-server-name { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+
+.mcp-server-status {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success); box-shadow: 0 0 6px var(--success);
 }
 
-.delete-btn {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    color: var(--error);
-    padding: 5px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.delete-btn:hover {
-    background: rgba(239, 68, 68, 0.2);
-}
-
-.add-server-section {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-}
-
-.add-server-section h3 {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    color: var(--text-secondary);
-}
-
-.form-group {
-    margin-bottom: 12px;
-}
-
-.form-group label {
-    display: block;
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-    font-weight: 500;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 10px 14px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: rgba(255,255,255,0.03);
-    color: var(--text-primary);
-    font-size: 13px;
-    font-family: inherit;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-.form-group input:focus {
-    border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.05);
-}
-
-.add-btn {
-    width: 100%;
-    padding: 12px;
-    border-radius: 12px;
-    border: none;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.add-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-}
-
-.empty-state {
-    text-align: center;
-    padding: 30px 20px;
-    color: var(--text-secondary);
-    font-size: 13px;
-}
-
-.empty-state-icon {
-    font-size: 32px;
-    margin-bottom: 8px;
-}
+.mcp-server-status.offline { background: var(--error); box-shadow: 0 0 6px var(--error); }
 
 .modal-footer {
-    padding: 12px 24px;
-    border-top: 1px solid var(--border);
-    text-align: center;
-    font-size: 11px;
-    color: var(--text-secondary);
+    padding: 12px 24px; border-top: 1px solid var(--border);
+    text-align: center; font-size: 11px; color: var(--text-secondary);
 }
 
-/* Responsive */
 @media (max-width: 520px) {
-    .app {
-        height: 100vh;
-        max-height: none;
-        border-radius: 0;
-        border: none;
-    }
-    
-    body {
-        padding: 0;
-    }
-    
-    .bg-mesh, .particles {
-        display: none;
-    }
-    
-    .clear-btn, .settings-btn {
-        top: 12px;
-    }
-    
-    .settings-btn {
-        left: 12px;
-    }
-    
-    .clear-btn {
-        right: 12px;
-    }
-    
-    .hud-card {
-        max-width: 100%;
-    }
-    
-    .compare-mini {
-        min-width: 120px;
-        padding: 12px;
-    }
+    .app { height: 100vh; max-height: none; border-radius: 0; border: none; }
+    body { padding: 0; }
+    .bg-mesh, .particles { display: none; }
+    .clear-btn, .settings-btn { top: 12px; }
+    .settings-btn { left: 12px; }
+    .clear-btn { right: 12px; }
+    .hud-card { max-width: 100%; }
+    .compare-mini { min-width: 120px; padding: 12px; }
 }
 </style>
-<base target="_blank">
 </head>
 <body>
 
 <div class="bg-mesh"></div>
 <div class="particles" id="particles"></div>
 
-<!-- SVG Gradient Definition for Temp Ring -->
 <svg width="0" height="0" style="position:absolute;">
     <defs>
         <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1353,8 +778,8 @@ body {
 
 <div class="app">
     <div class="header">
-        <button class="settings-btn" onclick="openModal()" title="MCP Connectors">⚙️ MCP</button>
-        <div class="header-badge" id="statusBadge" onclick="checkConnection()">MCP Connected</div>
+        <button class="settings-btn" onclick="openModal()" title="Settings">⚙️</button>
+        <div class="header-badge" id="statusBadge">AI Mode</div>
         <h1>GeoBot</h1>
         <div class="header-sub">Location Intelligence Assistant</div>
         <button class="clear-btn" onclick="clearChat()" title="Clear conversation">🗑️ Clear</button>
@@ -1375,7 +800,7 @@ body {
     <div class="input-area">
         <div class="input-box">
             <div class="input-wrapper">
-                <input id="msg" placeholder="Enter a city name (e.g., Tokyo, Paris)..." autocomplete="off" />
+                <input id="msg" placeholder="Ask about weather, AQI, or anything..." autocomplete="off" />
             </div>
             <button class="send-btn" onclick="send()" id="sendBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1384,40 +809,68 @@ body {
                 </svg>
             </button>
         </div>
-        <div class="input-hint" id="inputHint">Connected to your MCP server for real-time data</div>
+        <div class="input-hint" id="inputHint">AI Mode: LLM will analyze your query first</div>
     </div>
 </div>
 
-<!-- MCP Connector Modal -->
+<!-- Settings Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
     <div class="modal" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <h2>🔌 MCP Connectors</h2>
+            <h2>⚙️ Settings</h2>
             <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <div class="modal-body">
-            <div class="server-list" id="serverList"></div>
-            
-            <div class="add-server-section">
-                <h3>➕ Add New Server</h3>
-                <div class="form-group">
-                    <label>Server Name</label>
-                    <input type="text" id="newServerName" placeholder="e.g., Stock MCP" />
+            <div class="settings-section">
+                <div class="settings-section-title">🧠 AI Engine</div>
+                <div class="setting-item">
+                    <div class="setting-item-info">
+                        <div class="setting-item-icon">🤖</div>
+                        <div class="setting-item-text">
+                            <div class="setting-item-name">LLM (Groq)</div>
+                            <div class="setting-item-desc">Analyze queries & format responses</div>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="llmToggle" checked onchange="toggleLLM(this)">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div class="form-group">
-                    <label>Server URL</label>
-                    <input type="text" id="newServerUrl" placeholder="e.g., https://api.example.com/tool" />
+                <div class="setting-item">
+                    <div class="setting-item-info">
+                        <div class="setting-item-icon">🌐</div>
+                        <div class="setting-item-text">
+                            <div class="setting-item-name">MCP Server</div>
+                            <div class="setting-item-desc">Weather, AQI & location data</div>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mcpToggle" checked disabled>
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div class="form-group">
-                    <label>Description (optional)</label>
-                    <input type="text" id="newServerDesc" placeholder="What does this server do?" />
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">🔗 MCP Servers</div>
+                <div class="mcp-server-list" id="mcpServerList">
+                    <div class="mcp-server-item">
+                        <div class="mcp-server-name">
+                            <span class="mcp-server-status" id="serverStatus1"></span>
+                            Weather MCP
+                        </div>
+                        <span style="font-size:11px;color:var(--text-secondary)">Default</span>
+                    </div>
                 </div>
-                <button class="add-btn" onclick="addServer()">Add MCP Server</button>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">ℹ️ About</div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;padding:0 4px;">
+                    <p><strong>AI Mode ON:</strong> LLM analyzes your query first, then calls MCP if location-related.</p>
+                    <p style="margin-top:8px"><strong>AI Mode OFF:</strong> Direct MCP calls for faster responses.</p>
+                </div>
             </div>
         </div>
-        <div class="modal-footer">
-            Servers are stored locally in your browser
-        </div>
+        <div class="modal-footer">Settings saved locally in your browser</div>
     </div>
 </div>
 
@@ -1428,167 +881,50 @@ body {
 
 <script>
 // ==============================
-// MCP CONNECTOR MANAGER
+// SETTINGS & STATE
 // ==============================
+const SETTINGS_KEY = 'geobot_settings';
 
-const MCP_STORAGE_KEY = 'geobot_mcp_servers';
-
-const DEFAULT_SERVERS = [
-    {
-        id: 'default-weather',
-        name: 'Weather MCP',
-        url: 'https://mcp-weather-s1s0.onrender.com/tool',
-        description: 'Weather, AQI, time & holiday data',
-        enabled: true,
-        isDefault: true
-    }
-];
-
-function loadServers() {
-    const stored = localStorage.getItem(MCP_STORAGE_KEY);
+function loadSettings() {
+    const stored = localStorage.getItem(SETTINGS_KEY);
     if (stored) return JSON.parse(stored);
-    saveServers(DEFAULT_SERVERS);
-    return DEFAULT_SERVERS;
+    return { llmEnabled: true, mcpEnabled: true };
 }
 
-function saveServers(servers) {
-    localStorage.setItem(MCP_STORAGE_KEY, JSON.stringify(servers));
+function saveSettings(s) {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 }
 
-function getEnabledServers() {
-    return loadServers().filter(s => s.enabled);
+let settings = loadSettings();
+
+function applySettings() {
+    document.getElementById('llmToggle').checked = settings.llmEnabled;
+    document.getElementById('mcpToggle').checked = settings.mcpEnabled;
+    updateModeBadge();
 }
 
-function generateId() {
-    return 'mcp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+function toggleLLM(checkbox) {
+    settings.llmEnabled = checkbox.checked;
+    saveSettings(settings);
+    updateModeBadge();
+    showToast(settings.llmEnabled ? 'AI Mode enabled' : 'MCP Mode enabled', settings.llmEnabled ? '🤖' : '🌐');
 }
 
-async function checkServerStatus(url) {
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tool: 'healthCheck' }),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        return res.ok;
-    } catch (e) {
-        return false;
-    }
-}
-
-async function renderServerList() {
-    const list = document.getElementById('serverList');
-    const servers = loadServers();
-    
-    if (servers.length === 0) {
-        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔌</div><div>No MCP servers configured</div></div>`;
-        return;
-    }
-    
-    list.innerHTML = '';
-    for (const server of servers) {
-        const card = document.createElement('div');
-        card.className = 'server-card';
-        const statusClass = server.enabled ? 'checking' : 'offline';
-        
-        card.innerHTML = `
-            <div class="server-card-header">
-                <div class="server-name">
-                    <span class="server-status ${statusClass}" id="status-${server.id}"></span>
-                    ${server.name}
-                </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" ${server.enabled ? 'checked' : ''} onchange="toggleServer('${server.id}', this.checked)">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="server-url">${server.url}</div>
-            ${server.description ? `<div class="server-desc">${server.description}</div>` : ''}
-            <div class="server-actions">
-                <span style="font-size:11px;color:var(--text-secondary)">${server.isDefault ? '🔒 Built-in' : 'Custom'}</span>
-                ${!server.isDefault ? `<button class="delete-btn" onclick="deleteServer('${server.id}')">🗑️ Delete</button>` : ''}
-            </div>
-        `;
-        list.appendChild(card);
-        
-        if (server.enabled) {
-            const statusDot = document.getElementById(`status-${server.id}`);
-            const isOnline = await checkServerStatus(server.url);
-            statusDot.className = `server-status ${isOnline ? 'online' : 'offline'}`;
-        }
-    }
-}
-
-function toggleServer(id, enabled) {
-    const servers = loadServers();
-    const server = servers.find(s => s.id === id);
-    if (server) {
-        server.enabled = enabled;
-        saveServers(servers);
-        renderServerList();
-        showToast(`${server.name} ${enabled ? 'enabled' : 'disabled'}`, enabled ? '✅' : '⏸️');
-        updateActiveCount();
-    }
-}
-
-function deleteServer(id) {
-    if (!confirm('Delete this MCP server?')) return;
-    const servers = loadServers().filter(s => s.id !== id);
-    saveServers(servers);
-    renderServerList();
-    showToast('Server deleted', '🗑️');
-    updateActiveCount();
-}
-
-function addServer() {
-    const nameInput = document.getElementById('newServerName');
-    const urlInput = document.getElementById('newServerUrl');
-    const descInput = document.getElementById('newServerDesc');
-    
-    const name = nameInput.value.trim();
-    let url = urlInput.value.trim();
-    const desc = descInput.value.trim();
-    
-    if (!name || !url) {
-        showToast('Name and URL are required', '⚠️');
-        return;
-    }
-    
-    if (!url.endsWith('/tool')) {
-        url = url.replace(/\/$/, '') + '/tool';
-    }
-    
-    const servers = loadServers();
-    if (servers.some(s => s.url === url)) {
-        showToast('This URL already exists', '⚠️');
-        return;
-    }
-    
-    servers.push({ id: generateId(), name, url, description: desc, enabled: true, isDefault: false });
-    saveServers(servers);
-    
-    nameInput.value = '';
-    urlInput.value = '';
-    descInput.value = '';
-    
-    renderServerList();
-    showToast('Server added successfully', '✅');
-    updateActiveCount();
-}
-
-function updateActiveCount() {
-    const count = getEnabledServers().length;
+function updateModeBadge() {
     const badge = document.getElementById('statusBadge');
-    badge.textContent = count > 0 ? `${count} MCP Active` : 'MCP Offline';
+    const hint = document.getElementById('inputHint');
+    if (settings.llmEnabled) {
+        badge.textContent = 'AI Mode'; badge.classList.remove('offline');
+        hint.textContent = 'AI Mode: LLM will analyze your query first';
+    } else {
+        badge.textContent = 'MCP Mode'; badge.classList.add('offline');
+        hint.textContent = 'MCP Mode: Direct weather & location data';
+    }
 }
 
 function openModal() {
     document.getElementById('modalOverlay').classList.add('active');
-    renderServerList();
+    checkServerStatus();
 }
 
 function closeModal() {
@@ -1599,352 +935,63 @@ function closeModalOutside(e) {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 
-// ==============================
-// PARALLEL MCP CALLS
-// ==============================
-
-async function callAllMCPs(tool, city) {
-    const servers = getEnabledServers();
-    if (servers.length === 0) {
-        throw new Error('No MCP servers enabled. Check MCP Connectors settings.');
+async function checkServerStatus() {
+    const dot = document.getElementById('serverStatus1');
+    dot.className = 'mcp-server-status';
+    try {
+        const res = await fetch('/health');
+        dot.className = res.ok ? 'mcp-server-status' : 'mcp-server-status offline';
+    } catch (e) {
+        dot.className = 'mcp-server-status offline';
     }
-    
-    const promises = servers.map(async (server) => {
-        try {
-            const res = await fetch(server.url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tool, input: city })
-            });
-            if (!res.ok) return { server: server.name, error: `HTTP ${res.status}` };
-            const data = await res.json();
-            return { server: server.name, data };
-        } catch (err) {
-            return { server: server.name, error: err.message };
-        }
-    });
-    
-    return await Promise.all(promises);
 }
 
 // ==============================
-// DYNAMIC HUD CARD RENDERER
+// TEMPORARY STATUS & LOGS
 // ==============================
-
-function getWeatherIcon(code, isDay = 1) {
-    const icons = {
-        0: isDay ? '☀️' : '🌙',
-        1: isDay ? '🌤️' : '☁️',
-        2: '⛅',
-        3: '☁️',
-        45: '🌫️',
-        48: '🌫️',
-        51: '🌦️',
-        53: '🌧️',
-        55: '🌧️',
-        61: '🌧️',
-        63: '🌧️',
-        65: '🌧️',
-        71: '🌨️',
-        73: '🌨️',
-        75: '🌨️',
-        95: '⛈️',
-        96: '⛈️',
-        99: '⛈️'
-    };
-    return icons[code] || (isDay ? '☀️' : '🌙');
+function showStatus(text, icon) {
+    const chat = document.getElementById('chat');
+    removeStatus();
+    const div = document.createElement('div');
+    div.className = 'msg status';
+    div.id = 'active-status';
+    div.innerHTML = '<span class="status-icon">' + icon + '</span>' + text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
 }
 
-function getWeatherLabel(code) {
-    const labels = {
-        0: 'Clear Sky',
-        1: 'Mainly Clear',
-        2: 'Partly Cloudy',
-        3: 'Overcast',
-        45: 'Foggy',
-        48: 'Depositing Rime Fog',
-        51: 'Light Drizzle',
-        53: 'Moderate Drizzle',
-        55: 'Dense Drizzle',
-        61: 'Slight Rain',
-        63: 'Moderate Rain',
-        65: 'Heavy Rain',
-        71: 'Slight Snow',
-        73: 'Moderate Snow',
-        75: 'Heavy Snow',
-        95: 'Thunderstorm',
-        96: 'Thunderstorm & Hail',
-        99: 'Heavy Thunderstorm'
-    };
-    return labels[code] || 'Unknown';
+function removeStatus() {
+    const existing = document.getElementById('active-status');
+    if (existing) existing.remove();
 }
 
-function getAQIStatus(aqi) {
-    if (aqi <= 50) return { label: 'Good', class: 'good', color: 'var(--success)' };
-    if (aqi <= 100) return { label: 'Moderate', class: 'moderate', color: 'var(--warning)' };
-    if (aqi <= 150) return { label: 'Unhealthy (Sens.)', class: 'bad', color: '#f97316' };
-    if (aqi <= 200) return { label: 'Unhealthy', class: 'bad', color: 'var(--error)' };
-    if (aqi <= 300) return { label: 'Very Unhealthy', class: 'bad', color: '#a855f7' };
-    return { label: 'Hazardous', class: 'bad', color: '#7f1d1d' };
-}
-
-function formatValue(key, value, parentKey = '') {
-    // Format specific fields
-    if (key === 'temperature' || key === 'temp' || key === 'temp2m') return `${Math.round(value)}°C`;
-    if (key === 'windspeed' || key === 'wind_speed') return `${value} km/h`;
-    if (key === 'winddirection' || key === 'wind_direction') return `${value}°`;
-    if (key === 'humidity' || key === 'relative_humidity') return `${value}%`;
-    if (key === 'pressure' || key === 'surface_pressure') return `${value} hPa`;
-    if (key === 'visibility') return `${value} km`;
-    if (key === 'uv_index' || key === 'uvi') {
-        const levels = ['Low', 'Moderate', 'High', 'Very High', 'Extreme'];
-        const level = value <= 2 ? 0 : value <= 5 ? 1 : value <= 7 ? 2 : value <= 10 ? 3 : 4;
-        return `${value} (${levels[level]})`;
-    }
-    if (key === 'us_aqi' || key === 'aqi') return value;
-    if (key === 'pm10' || key === 'pm2_5') return `${value} µg/m³`;
-    if (key === 'precipitation' || key === 'rain') return `${value} mm`;
-    if (key === 'cloudcover' || key === 'cloud_cover') return `${value}%`;
-    if (key === 'is_day') return value ? '☀️ Day' : '🌙 Night';
-    if (key === 'elevation') return `${value} m`;
-    
-    // Time formatting
-    if (key.includes('time') && typeof value === 'string' && value.includes('T')) {
-        const date = new Date(value);
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-    }
-    
-    return value;
-}
-
-function getFieldIcon(key) {
-    const icons = {
-        temperature: '🌡️', temp: '🌡️', temp2m: '🌡️',
-        windspeed: '💨', wind_speed: '💨',
-        winddirection: '↗️', wind_direction: '↗️',
-        humidity: '💧', relative_humidity: '💧',
-        pressure: '📊', surface_pressure: '📊',
-        visibility: '👁️',
-        uv_index: '☀️', uvi: '☀️',
-        precipitation: '🌧️', rain: '🌧️',
-        cloudcover: '☁️', cloud_cover: '☁️',
-        is_day: '🌅',
-        elevation: '⛰️',
-        pm10: '🌫️', pm2_5: '🌫️',
-        us_aqi: '😷',
-        sunrise: '🌅', sunset: '🌇',
-        latitude: '📍', longitude: '📍'
-    };
-    return icons[key] || '📊';
-}
-
-function renderHUDCard(data, serverName) {
-    const city = data.city || 'Unknown';
-    const country = data.country || '';
-    const weather = data.weather || {};
-    const aqi = data.aqi || {};
-    const currentTime = data.current_time || '';
-    const special = data.today_special || {};
-    
-    // Calculate AQI
-    const aqiValue = aqi.us_aqi || aqi.pm2_5 || aqi.pm10 || 0;
-    const aqiInfo = getAQIStatus(aqiValue);
-    
-    // Weather icon
-    const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 0;
-    const isDay = weather.is_day !== undefined ? weather.is_day : 1;
-    const weatherIcon = getWeatherIcon(weatherCode, isDay);
-    const weatherLabel = getWeatherLabel(weatherCode);
-    
-    // Temperature for ring
-    const temp = weather.temperature !== undefined ? weather.temperature : 0;
-    const tempPercent = Math.min(Math.max((temp + 10) / 50 * 100, 0), 100); // Normalize -10 to 40°C
-    const circumference = 2 * Math.PI * 46;
-    const offset = circumference - (tempPercent / 100) * circumference;
-    
-    // Build metrics from weather data (excluding already shown fields)
-    const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source'];
-    const metrics = [];
-    
-    for (const [key, value] of Object.entries(weather)) {
-        if (excludeKeys.includes(key)) continue;
-        if (value === null || value === undefined) continue;
-        metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
-    }
-    
-    // Build expanded data from all other fields
-    const expandedData = [];
-    const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude'];
-    
-    for (const [key, value] of Object.entries(data)) {
-        if (expandedExclude.includes(key)) continue;
-        if (value === null || value === undefined) continue;
-        if (typeof value === 'object') {
-            // Flatten nested objects
-            for (const [subKey, subValue] of Object.entries(value)) {
-                if (subValue === null || subValue === undefined) continue;
-                expandedData.push({
-                    key: subKey,
-                    value: formatValue(subKey, subValue, key),
-                    icon: getFieldIcon(subKey),
-                    label: `${key}.${subKey}`.replace(/_/g, ' ')
-                });
-            }
-        } else {
-            expandedData.push({
-                key,
-                value: formatValue(key, value),
-                icon: getFieldIcon(key),
-                label: key.replace(/_/g, ' ')
-            });
-        }
-    }
-    
-    // Generate metrics HTML (max 3)
-    const metricsHTML = metrics.slice(0, 3).map(m => `
-        <div class="hud-metric">
-            <div class="hud-metric-icon">${m.icon}</div>
-            <div class="hud-metric-value">${formatValue(m.key, m.value)}</div>
-            <div class="hud-metric-label">${m.label}</div>
-        </div>
-    `).join('');
-    
-    // Generate expanded data HTML
-    const expandedHTML = expandedData.map(d => `
-        <div class="hud-data-cell">
-            <div class="hud-data-label">${d.icon} ${d.label}</div>
-            <div class="hud-data-value small">${d.value}</div>
-        </div>
-    `).join('');
-    
-    const cardId = 'hud-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
-    
-    return `
-    <div class="hud-card" id="${cardId}">
-        <div class="hud-header">
-            <div class="hud-city-info">
-                <div class="hud-city-icon">📍</div>
-                <div>
-                    <div class="hud-city-name">${city}</div>
-                    <div class="hud-city-sub">${country} • ${serverName}</div>
-                </div>
-            </div>
-            <div class="hud-time">
-                <div class="hud-time-main">${currentTime.split(',')[1]?.trim() || '--:--'}</div>
-                <div class="hud-time-sub">${currentTime.split(',')[0]?.trim() || ''}</div>
-            </div>
-        </div>
-        
-        <div class="hud-hero">
-            <div class="hud-temp-ring">
-                <svg width="100" height="100" viewBox="0 0 100 100">
-                    <circle class="ring-bg" cx="50" cy="50" r="46"/>
-                    <circle class="ring-fill" cx="50" cy="50" r="46" 
-                        stroke-dasharray="${circumference}" 
-                        stroke-dashoffset="${offset}"/>
-                </svg>
-                <div class="hud-temp-value">
-                    ${Math.round(temp)}<span class="hud-temp-unit">°C</span>
-                </div>
-            </div>
-            <div class="hud-weather-icon-main">${weatherIcon}</div>
-        </div>
-        
-        <div class="hud-condition-text">${weatherLabel}</div>
-        
-        <div class="hud-aqi-section">
-            <div class="hud-aqi-header">
-                <span class="hud-aqi-label">Air Quality</span>
-                <span class="hud-aqi-status ${aqiInfo.class}">${aqiInfo.label} • ${aqiValue}</span>
-            </div>
-            <div class="hud-aqi-track">
-                <div class="hud-aqi-fill" style="width: ${Math.min(aqiValue / 3, 100)}%;"></div>
-            </div>
-        </div>
-        
-        <div class="hud-metrics">
-            ${metricsHTML}
-        </div>
-        
-        <div class="hud-expanded" id="${cardId}-expanded">
-            <div class="hud-data-grid">
-                ${expandedHTML}
-            </div>
-        </div>
-        
-        <button class="hud-expand-btn" onclick="toggleExpanded('${cardId}')">
-            <span id="${cardId}-btn-text">▼ Show All Data</span>
-        </button>
-        
-        <div class="hud-footer">
-            <div class="hud-source">
-                <span class="hud-source-dot"></span>
-                <span>${serverName}</span>
-            </div>
-            <span>${data.latitude?.toFixed(4) || '--'}, ${data.longitude?.toFixed(4) || '--'}</span>
-        </div>
-    </div>
-    `;
-}
-
-function toggleExpanded(cardId) {
-    const expanded = document.getElementById(cardId + '-expanded');
-    const btnText = document.getElementById(cardId + '-btn-text');
-    const isOpen = expanded.classList.contains('open');
-    
-    if (isOpen) {
-        expanded.classList.remove('open');
-        btnText.textContent = '▼ Show All Data';
-    } else {
-        expanded.classList.add('open');
-        btnText.textContent = '▲ Hide Details';
-    }
-}
-
-function renderCompareStrip(results) {
-    const cards = results.filter(r => !r.error && r.data).map(r => {
-        const d = r.data;
-        const temp = d.weather?.temperature || 0;
-        const aqi = d.aqi?.us_aqi || d.aqi?.pm2_5 || 0;
-        const aqiInfo = getAQIStatus(aqi);
-        
-        return `
-        <div class="compare-mini" onclick="expandCompare('${d.city || 'Unknown'}')">
-            <div class="compare-mini-city">
-                <span>${getFlag(d.country)}</span>
-                ${d.city || 'Unknown'}
-            </div>
-            <div class="compare-mini-temp">${Math.round(temp)}°</div>
-            <div class="compare-mini-aqi">
-                <div class="compare-mini-bar">
-                    <div class="compare-mini-fill" style="width: ${Math.min(aqi / 3, 100)}%; background: ${aqiInfo.color};"></div>
-                </div>
-                <span class="compare-mini-value" style="color: ${aqiInfo.color};">${aqi}</span>
-            </div>
-        </div>
-        `;
+function showMCPLogs(logs) {
+    const chat = document.getElementById('chat');
+    removeMCPLogs();
+    const div = document.createElement('div');
+    div.className = 'msg log';
+    div.id = 'active-log';
+    const logHTML = logs.map(function(log) {
+        let cls = 'log-entry';
+        if (log.includes('❌')) cls += ' error';
+        else if (log.includes('✅')) cls += ' success';
+        else if (log.includes('🔄')) cls += ' warning';
+        else cls += ' info';
+        return '<div class="' + cls + '">' + log + '</div>';
     }).join('');
-    
-    return `<div class="compare-strip">${cards}</div>`;
+    div.innerHTML = '<div class="log-title">🔧 MCP Call Log</div>' + logHTML;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
 }
 
-function getFlag(country) {
-    const flags = {
-        'Japan': '🇯🇵', 'United States': '🇺🇸', 'India': '🇮🇳', 'United Kingdom': '🇬🇧',
-        'Germany': '🇩🇪', 'France': '🇫🇷', 'Brazil': '🇧🇷', 'Australia': '🇦🇺',
-        'China': '🇨🇳', 'Russia': '🇷🇺', 'Canada': '🇨🇦', 'Italy': '🇮🇹'
-    };
-    return flags[country] || '🌍';
-}
-
-function expandCompare(city) {
-    showToast(`Click on ${city} to see full details`, '📊');
+function removeMCPLogs() {
+    const existing = document.getElementById('active-log');
+    if (existing) existing.remove();
 }
 
 // ==============================
-// EXISTING CHAT FUNCTIONS
+// PARTICLES
 // ==============================
-
 function createParticles() {
     const container = document.getElementById('particles');
     for (let i = 0; i < 20; i++) {
@@ -1959,92 +1006,55 @@ function createParticles() {
 }
 createParticles();
 
-function showToast(text, icon = 'ℹ️', duration = 3000) {
+// ==============================
+// TOAST
+// ==============================
+function showToast(text, icon, duration) {
+    duration = duration || 3000;
     const toast = document.getElementById('toast');
     document.getElementById('toastText').textContent = text;
-    document.getElementById('toastIcon').textContent = icon;
+    document.getElementById('toastIcon').textContent = icon || 'ℹ️';
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), duration);
+    setTimeout(function() { toast.classList.remove('show'); }, duration);
 }
 
-let isConnected = true;
-async function checkConnection() {
-    const servers = getEnabledServers();
-    if (servers.length === 0) {
-        updateStatus(false);
-        showToast('No MCP servers enabled', '❌');
-        return;
-    }
-    try {
-        const res = await fetch(servers[0].url, { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tool: 'healthCheck' })
-        });
-        isConnected = res.ok;
-        updateStatus(res.ok);
-        showToast(res.ok ? 'MCP servers online' : 'MCP server error', res.ok ? '✅' : '❌');
-    } catch (err) {
-        isConnected = false;
-        updateStatus(false);
-        showToast('MCP server is offline', '❌');
-    }
-}
-
-function updateStatus(online) {
-    const badge = document.getElementById('statusBadge');
-    const count = getEnabledServers().length;
-    if (online && count > 0) {
-        badge.classList.remove('offline');
-        badge.textContent = `${count} MCP Active`;
-        document.getElementById('inputHint').textContent = `${count} MCP server${count > 1 ? 's' : ''} connected`;
-    } else {
-        badge.classList.add('offline');
-        badge.textContent = 'MCP Offline';
-        document.getElementById('inputHint').textContent = 'No MCP servers enabled — check settings';
-    }
-}
-
+// ==============================
+// CHAT FUNCTIONS
+// ==============================
 function clearChat() {
     const chat = document.getElementById('chat');
     chat.innerHTML = '';
     showToast('Conversation cleared', '🗑️');
-    window.onload();
+    initWelcome();
 }
 
-function addMsg(text, type, isCard = false) {
-    let chat = document.getElementById("chat");
-    let div = document.createElement("div");
-    div.className = "msg " + type;
+function addMsg(text, type, isCard) {
+    const chat = document.getElementById('chat');
+    const div = document.createElement('div');
+    div.className = 'msg ' + type;
     if (isCard) {
         div.style.padding = '8px';
         div.style.maxWidth = '95%';
         div.style.background = 'transparent';
         div.style.border = 'none';
     }
-    
-    const time = new Date().toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-    });
-    
-    div.innerHTML = text + `<div class="msg-time">${time}</div>`;
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    div.innerHTML = text + '<div class="msg-time">' + time + '</div>';
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
     return div;
 }
 
 function addSuggestions(options) {
-    let chat = document.getElementById("chat");
-    let div = document.createElement("div");
-    div.className = "suggestions-row";
-    options.forEach(opt => {
-        let chip = document.createElement("span");
-        chip.className = "chip";
-        chip.innerHTML = opt.icon ? `${opt.icon} ${opt.text}` : opt.text;
-        chip.onclick = () => {
-            document.getElementById("msg").value = opt.text;
+    const chat = document.getElementById('chat');
+    const div = document.createElement('div');
+    div.className = 'suggestions-row';
+    options.forEach(function(opt) {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.innerHTML = opt.icon ? opt.icon + ' ' + opt.text : opt.text;
+        chip.onclick = function() {
+            document.getElementById('msg').value = opt.text;
             send();
         };
         div.appendChild(chip);
@@ -2063,139 +1073,328 @@ function hideTyping() {
 }
 
 function setInputEnabled(enabled) {
-    const input = document.getElementById('msg');
-    const btn = document.getElementById('sendBtn');
-    input.disabled = !enabled;
-    btn.disabled = !enabled;
+    document.getElementById('msg').disabled = !enabled;
+    document.getElementById('sendBtn').disabled = !enabled;
 }
 
-window.onload = () => {
-    addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
+function initWelcome() {
+    addMsg('👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.', 'bot');
     addSuggestions([
-        { text: "Kolkata", icon: "🇮🇳" },
-        { text: "Tokyo", icon: "🇯🇵" },
-        { text: "New York", icon: "🇺🇸" },
-        { text: "London", icon: "🇬🇧" },
-        { text: "Compare", icon: "⚖️" }
+        { text: 'What is AQI?', icon: '❓' },
+        { text: 'Weather in Tokyo', icon: '🌤️' },
+        { text: 'Compare Delhi vs Mumbai', icon: '⚖️' },
+        { text: 'Time in London', icon: '🕒' }
     ]);
-    updateActiveCount();
-    checkConnection();
-};
+}
 
+// ==============================
+// MAIN SEND FUNCTION
+// ==============================
 async function send() {
-    let input = document.getElementById("msg");
-    let text = input.value.trim();
-    input.value = "";
-
+    const input = document.getElementById('msg');
+    const text = input.value.trim();
+    input.value = '';
     if (!text) return;
 
     setInputEnabled(false);
-    addMsg(text, "user");
-    showTyping();
+    addMsg(text, 'user');
+
+    if (settings.llmEnabled) {
+        showStatus('🤖 LLM analyzing your query...', '🧠');
+    } else {
+        showStatus('🔄 Calling MCP server...', '🌐');
+    }
 
     try {
-        // Call YOUR backend /chat (not MCP directly)
-        let res = await fetch("/chat", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({message: text})
+        const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, llm_enabled: settings.llmEnabled })
         });
 
         if (!res.ok) throw new Error('Server error');
 
-        let data = await res.json();
-        hideTyping();
+        const data = await res.json();
+        removeStatus();
 
-        // Show MCP logs if available
         if (data.mcp_logs && data.mcp_logs.length > 0) {
             showMCPLogs(data.mcp_logs);
+            setTimeout(function() { removeMCPLogs(); }, 2000);
         }
 
-        // Route based on response type
-        if (data.type === "hud") {
-            // Single city → Render HUD card
-            const hudHTML = renderHUDCard(data.response, "Weather MCP");
-            addMsg(hudHTML, "bot", true);
+        await new Promise(function(r) { setTimeout(r, data.mcp_logs && data.mcp_logs.length > 0 ? 500 : 0); });
 
-        } else if (data.type === "compare") {
-            // Multi-city → Render compare strip
+        if (data.type === 'hud') {
+            const hudHTML = renderHUDCard(data.response, 'Weather MCP');
+            addMsg(hudHTML, 'bot', true);
+            if (data.llm_text) addMsg(data.llm_text, 'bot');
+        } else if (data.type === 'compare') {
             const compareHTML = renderCompareStrip(data.response);
-            addMsg(`<div style="margin-top:8px;">${compareHTML}</div>`, "bot", true);
-
-        } else {
-            // Text response (LLM or error)
-            addMsg(data.response || "No response", "bot");
+            addMsg('<div style="margin-top:8px;">' + compareHTML + '</div>', 'bot', true);
+        } else if (data.type === 'text') {
+            addMsg(data.response, 'bot');
+        } else if (data.type === 'error') {
+            const errorDiv = addMsg(data.response, 'bot');
+            errorDiv.classList.add('error-shake');
         }
 
-        // Suggestions after response
-        if (data.type !== "error") {
-            addMsg("🌍 Explore another location or compare cities!", "bot");
+        if (data.type !== 'error') {
+            addMsg('🌍 Explore another location or ask me anything!', 'bot');
             addSuggestions([
-                { text: "Kolkata", icon: "🇮🇳" },
-                { text: "Delhi", icon: "🇮🇳" },
-                { text: "Mumbai", icon: "🇮🇳" },
-                { text: "Compare", icon: "⚖️" }
+                { text: 'What is AQI?', icon: '❓' },
+                { text: 'Weather in Delhi', icon: '🌤️' },
+                { text: 'Compare Tokyo vs London', icon: '⚖️' },
+                { text: 'Tell me about monsoons', icon: '🌧️' }
             ]);
         }
 
-        updateStatus(true);
-
     } catch (err) {
-        hideTyping();
-        let errorDiv = addMsg("⚠️ Connection failed. Agent server may be offline.", "bot");
+        removeStatus();
+        removeMCPLogs();
+        const errorDiv = addMsg('⚠️ Connection failed. Agent server may be offline.', 'bot');
         errorDiv.classList.add('error-shake');
-        updateStatus(false);
     } finally {
         setInputEnabled(true);
     }
 }
 
-function showMCPLogs(logs) {
-    let chat = document.getElementById("chat");
-    let div = document.createElement("div");
-    div.className = "msg bot";
-    div.style.background = "rgba(99, 102, 241, 0.05)";
-    div.style.border = "1px dashed rgba(99, 102, 241, 0.2)";
-    div.style.fontSize = "11px";
-    div.style.fontFamily = "'JetBrains Mono', monospace";
-    div.style.color = "var(--text-secondary)";
-    div.style.padding = "10px 14px";
+// ==============================
+// HUD CARD RENDERER
+// ==============================
+function getWeatherIcon(code, isDay) {
+    isDay = isDay !== undefined ? isDay : 1;
+    const icons = {
+        0: isDay ? '☀️' : '🌙', 1: isDay ? '🌤️' : '☁️', 2: '⛅', 3: '☁️',
+        45: '🌫️', 48: '🌫️', 51: '🌦️', 53: '🌧️', 55: '🌧️',
+        61: '🌧️', 63: '🌧️', 65: '🌧️', 71: '🌨️', 73: '🌨️', 75: '🌨️',
+        95: '⛈️', 96: '⛈️', 99: '⛈️'
+    };
+    return icons[code] || (isDay ? '☀️' : '🌙');
+}
 
-    const logHTML = logs.map(log => {
-        if (log.includes("❌")) return `<div style="color: var(--error);">${log}</div>`;
-        if (log.includes("✅")) return `<div style="color: var(--success);">${log}</div>`;
-        if (log.includes("🔄")) return `<div style="color: var(--warning);">${log}</div>`;
-        return `<div>${log}</div>`;
+function getWeatherLabel(code) {
+    const labels = {
+        0: 'Clear Sky', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
+        45: 'Foggy', 48: 'Depositing Rime Fog', 51: 'Light Drizzle',
+        53: 'Moderate Drizzle', 55: 'Dense Drizzle', 61: 'Slight Rain',
+        63: 'Moderate Rain', 65: 'Heavy Rain', 71: 'Slight Snow',
+        73: 'Moderate Snow', 75: 'Heavy Snow', 95: 'Thunderstorm',
+        96: 'Thunderstorm & Hail', 99: 'Heavy Thunderstorm'
+    };
+    return labels[code] || 'Unknown';
+}
+
+function getAQIStatus(aqi) {
+    if (aqi <= 50) return { label: 'Good', class: 'good', color: 'var(--success)' };
+    if (aqi <= 100) return { label: 'Moderate', class: 'moderate', color: 'var(--warning)' };
+    if (aqi <= 150) return { label: 'Unhealthy (Sens.)', class: 'bad', color: '#f97316' };
+    if (aqi <= 200) return { label: 'Unhealthy', class: 'bad', color: 'var(--error)' };
+    if (aqi <= 300) return { label: 'Very Unhealthy', class: 'bad', color: '#a855f7' };
+    return { label: 'Hazardous', class: 'bad', color: '#7f1d1d' };
+}
+
+function formatValue(key, value) {
+    if (key === 'temperature' || key === 'temp' || key === 'temp2m') return Math.round(value) + '°C';
+    if (key === 'windspeed' || key === 'wind_speed') return value + ' km/h';
+    if (key === 'winddirection' || key === 'wind_direction') return value + '°';
+    if (key === 'humidity' || key === 'relative_humidity') return value + '%';
+    if (key === 'pressure' || key === 'surface_pressure') return value + ' hPa';
+    if (key === 'visibility') return value + ' km';
+    if (key === 'uv_index' || key === 'uvi') {
+        const levels = ['Low', 'Moderate', 'High', 'Very High', 'Extreme'];
+        const level = value <= 2 ? 0 : value <= 5 ? 1 : value <= 7 ? 2 : value <= 10 ? 3 : 4;
+        return value + ' (' + levels[level] + ')';
+    }
+    if (key === 'us_aqi' || key === 'aqi') return value;
+    if (key === 'pm10' || key === 'pm2_5') return value + ' µg/m³';
+    if (key === 'precipitation' || key === 'rain') return value + ' mm';
+    if (key === 'cloudcover' || key === 'cloud_cover') return value + '%';
+    if (key === 'is_day') return value ? '☀️ Day' : '🌙 Night';
+    if (key === 'elevation') return value + ' m';
+    if (key.includes('time') && typeof value === 'string' && value.includes('T')) {
+        const date = new Date(value);
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+    return value;
+}
+
+function getFieldIcon(key) {
+    const icons = {
+        temperature: '🌡️', temp: '🌡️', temp2m: '🌡️',
+        windspeed: '💨', wind_speed: '💨',
+        winddirection: '↗️', wind_direction: '↗️',
+        humidity: '💧', relative_humidity: '💧',
+        pressure: '📊', surface_pressure: '📊',
+        visibility: '👁️', uv_index: '☀️', uvi: '☀️',
+        precipitation: '🌧️', rain: '🌧️',
+        cloudcover: '☁️', cloud_cover: '☁️',
+        is_day: '🌅', elevation: '⛰️',
+        pm10: '🌫️', pm2_5: '🌫️', us_aqi: '😷',
+        sunrise: '🌅', sunset: '🌇',
+        latitude: '📍', longitude: '📍'
+    };
+    return icons[key] || '📊';
+}
+
+function renderHUDCard(data, serverName) {
+    const city = data.city || 'Unknown';
+    const country = data.country || '';
+    const weather = data.weather || {};
+    const aqi = data.aqi || {};
+    const currentTime = data.current_time || '';
+    const special = data.today_special || {};
+
+    const aqiValue = aqi.us_aqi || aqi.pm2_5 || aqi.pm10 || 0;
+    const aqiInfo = getAQIStatus(aqiValue);
+
+    const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 0;
+    const isDay = weather.is_day !== undefined ? weather.is_day : 1;
+    const weatherIcon = getWeatherIcon(weatherCode, isDay);
+    const weatherLabel = getWeatherLabel(weatherCode);
+
+    const temp = weather.temperature !== undefined ? weather.temperature : 0;
+    const tempPercent = Math.min(Math.max((temp + 10) / 50 * 100, 0), 100);
+    const circumference = 2 * Math.PI * 46;
+    const offset = circumference - (tempPercent / 100) * circumference;
+
+    const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source'];
+    const metrics = [];
+    for (const key in weather) {
+        if (excludeKeys.includes(key)) continue;
+        const value = weather[key];
+        if (value === null || value === undefined) continue;
+        metrics.push({ key: key, value: value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
+    }
+
+    const expandedData = [];
+    const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude'];
+    for (const key in data) {
+        if (expandedExclude.includes(key)) continue;
+        const value = data[key];
+        if (value === null || value === undefined) continue;
+        if (typeof value === 'object') {
+            for (const subKey in value) {
+                const subValue = value[subKey];
+                if (subValue === null || subValue === undefined) continue;
+                expandedData.push({
+                    key: subKey, value: formatValue(subKey, subValue),
+                    icon: getFieldIcon(subKey), label: (key + '.' + subKey).replace(/_/g, ' ')
+                });
+            }
+        } else {
+            expandedData.push({
+                key: key, value: formatValue(key, value),
+                icon: getFieldIcon(key), label: key.replace(/_/g, ' ')
+            });
+        }
+    }
+
+    const metricsHTML = metrics.slice(0, 3).map(function(m) {
+        return '<div class="hud-metric"><div class="hud-metric-icon">' + m.icon + '</div><div class="hud-metric-value">' + formatValue(m.key, m.value) + '</div><div class="hud-metric-label">' + m.label + '</div></div>';
     }).join('');
 
-    div.innerHTML = `
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;color:var(--primary);">MCP Call Log</div>
-        ${logHTML}
-    `;
+    const expandedHTML = expandedData.map(function(d) {
+        return '<div class="hud-data-cell"><div class="hud-data-label">' + d.icon + ' ' + d.label + '</div><div class="hud-data-value small">' + d.value + '</div></div>';
+    }).join('');
 
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+    const cardId = 'hud-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+
+    return '<div class="hud-card" id="' + cardId + '">' +
+        '<div class="hud-header">' +
+            '<div class="hud-city-info">' +
+                '<div class="hud-city-icon">📍</div>' +
+                '<div><div class="hud-city-name">' + city + '</div><div class="hud-city-sub">' + country + ' • ' + serverName + '</div></div>' +
+            '</div>' +
+            '<div class="hud-time">' +
+                '<div class="hud-time-main">' + (currentTime.split(',')[1] ? currentTime.split(',')[1].trim() : '--:--') + '</div>' +
+                '<div class="hud-time-sub">' + (currentTime.split(',')[0] ? currentTime.split(',')[0].trim() : '') + '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="hud-hero">' +
+            '<div class="hud-temp-ring">' +
+                '<svg width="100" height="100" viewBox="0 0 100 100">' +
+                    '<circle class="ring-bg" cx="50" cy="50" r="46"/>' +
+                    '<circle class="ring-fill" cx="50" cy="50" r="46" stroke-dasharray="' + circumference + '" stroke-dashoffset="' + offset + '"/>' +
+                '</svg>' +
+                '<div class="hud-temp-value">' + Math.round(temp) + '<span class="hud-temp-unit">°C</span></div>' +
+            '</div>' +
+            '<div class="hud-weather-icon-main">' + weatherIcon + '</div>' +
+        '</div>' +
+        '<div class="hud-condition-text">' + weatherLabel + '</div>' +
+        '<div class="hud-aqi-section">' +
+            '<div class="hud-aqi-header">' +
+                '<span class="hud-aqi-label">Air Quality</span>' +
+                '<span class="hud-aqi-status ' + aqiInfo.class + '">' + aqiInfo.label + ' • ' + aqiValue + '</span>' +
+            '</div>' +
+            '<div class="hud-aqi-track"><div class="hud-aqi-fill" style="width: ' + Math.min(aqiValue / 3, 100) + '%;"></div></div>' +
+        '</div>' +
+        '<div class="hud-metrics">' + metricsHTML + '</div>' +
+        '<div class="hud-expanded" id="' + cardId + '-expanded">' +
+            '<div class="hud-data-grid">' + expandedHTML + '</div>' +
+        '</div>' +
+        '<button class="hud-expand-btn" onclick="toggleExpanded(\\'' + cardId + '\\')">' +
+            '<span id="' + cardId + '-btn-text">▼ Show All Data</span>' +
+        '</button>' +
+        '<div class="hud-footer">' +
+            '<div class="hud-source"><span class="hud-source-dot"></span><span>' + serverName + '</span></div>' +
+            '<span>' + (data.latitude ? data.latitude.toFixed(4) : '--') + ', ' + (data.longitude ? data.longitude.toFixed(4) : '--') + '</span>' +
+        '</div>' +
+    '</div>';
 }
 
-function extractCityFromText(text) {
-    const ignore = new Set([
-        "weather", "today", "tell", "me", "what", "is",
-        "the", "in", "show", "give", "details", "and",
-        "compare", "vs", "versus", "between", "aqi", "air",
-        "quality", "time", "coordinate", "holiday", "about"
-    ]);
-
-    const words = text.match(/[A-Za-z]+/g) || [];
-    const cities = words.filter(w => {
-        const lower = w.toLowerCase();
-        return !ignore.has(lower) && w.length > 2;
-    });
-
-    return cities.length > 0 ? cities[0] : "";
+function toggleExpanded(cardId) {
+    const expanded = document.getElementById(cardId + '-expanded');
+    const btnText = document.getElementById(cardId + '-btn-text');
+    const isOpen = expanded.classList.contains('open');
+    if (isOpen) {
+        expanded.classList.remove('open');
+        btnText.textContent = '▼ Show All Data';
+    } else {
+        expanded.classList.add('open');
+        btnText.textContent = '▲ Hide Details';
+    }
 }
 
-document.getElementById("msg").addEventListener("keydown", function(e) {
-    if (e.key === "Enter") {
+function renderCompareStrip(results) {
+    const cards = results.filter(function(r) { return !r.error && r; }).map(function(d) {
+        const temp = d.weather && d.weather.temperature !== undefined ? d.weather.temperature : 0;
+        const aqi = d.aqi && d.aqi.us_aqi ? d.aqi.us_aqi : (d.aqi && d.aqi.pm2_5 ? d.aqi.pm2_5 : 0);
+        const aqiInfo = getAQIStatus(aqi);
+        return '<div class="compare-mini" onclick="expandCompare(\\'' + (d.city || 'Unknown') + '\\')">' +
+            '<div class="compare-mini-city"><span>' + getFlag(d.country) + '</span>' + (d.city || 'Unknown') + '</div>' +
+            '<div class="compare-mini-temp">' + Math.round(temp) + '°</div>' +
+            '<div class="compare-mini-aqi">' +
+                '<div class="compare-mini-bar"><div class="compare-mini-fill" style="width: ' + Math.min(aqi / 3, 100) + '%;background:' + aqiInfo.color + ';"></div></div>' +
+                '<span class="compare-mini-value" style="color:' + aqiInfo.color + ';">' + aqi + '</span>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+    return '<div class="compare-strip">' + cards + '</div>';
+}
+
+function getFlag(country) {
+    const flags = {
+        'Japan': '🇯🇵', 'United States': '🇺🇸', 'India': '🇮🇳', 'United Kingdom': '🇬🇧',
+        'Germany': '🇩🇪', 'France': '🇫🇷', 'Brazil': '🇧🇷', 'Australia': '🇦🇺',
+        'China': '🇨🇳', 'Russia': '🇷🇺', 'Canada': '🇨🇦', 'Italy': '🇮🇹'
+    };
+    return flags[country] || '🌍';
+}
+
+function expandCompare(city) {
+    showToast('Click on ' + city + ' to see full details', '📊');
+}
+
+// ==============================
+// INIT
+// ==============================
+window.onload = function() {
+    applySettings();
+    initWelcome();
+};
+
+document.getElementById('msg').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
         e.preventDefault();
         send();
     }
