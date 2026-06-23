@@ -344,6 +344,13 @@ body {
     border-bottom-left-radius: 4px;
 }
 
+/* Desktop: wider bot messages for cards */
+@media (min-width: 521px) {
+    .msg.bot {
+        max-width: 95%;
+    }
+}
+
 .msg-time {
     font-size: 10px;
     opacity: 0.5;
@@ -591,6 +598,13 @@ body {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.1) inset;
     animation: hudEntry 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     font-family: 'Inter', sans-serif;
+}
+
+/* Desktop: allow cards to fill grid cell */
+@media (min-width: 521px) {
+    .hud-card {
+        max-width: none;
+    }
 }
 
 @keyframes hudEntry {
@@ -1560,6 +1574,53 @@ body {
     text-align: right;
 }
 
+/* ==============================
+   RESPONSIVE COMPARE GRID
+   ============================== */
+
+.compare-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Desktop: side by side */
+@media (min-width: 900px) {
+    .compare-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Large desktop: 3 columns if needed */
+@media (min-width: 1400px) {
+    .compare-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.compare-grid-item {
+    min-width: 0; /* prevent overflow */
+}
+
+.compare-grid-item .hud-card {
+    max-width: none;
+    width: 100%;
+}
+
+/* Center compare strip on desktop */
+@media (min-width: 521px) {
+    .compare-strip {
+        justify-content: center;
+        padding: 12px 0;
+    }
+    
+    .compare-mini {
+        min-width: 160px;
+        padding: 20px;
+    }
+}
+
 
 </style>
 <base target="_blank">
@@ -2493,14 +2554,39 @@ async function send() {
                 addMsg(data.llm_text, "bot");
             }
         } else if (data.type === "compare") {
-            // Multi-city → Show compare strip + full HUD cards below
+            // Multi-city → Show compare strip + full HUD cards in responsive grid
             const compareHTML = renderCompareStrip(data.response);
             addMsg('<div style="margin-top:8px;">' + compareHTML + '</div>', "bot", true);
-            // Also render full HUD cards for each city
+            
+            // Show LLM comparison text if available
+            if (data.llm_text) {
+                addMsg(data.llm_text, "bot");
+            }
+            
+            // Render HUD cards in a responsive grid container
+            const gridId = 'compare-grid-' + Date.now();
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'compare-grid';
+            gridContainer.id = gridId;
+            
             for (const cityData of data.response) {
                 const hudHTML = renderHUDCard(cityData, "Weather MCP");
-                addMsg(hudHTML, "bot", true);
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = 'compare-grid-item';
+                cardWrapper.innerHTML = hudHTML;
+                gridContainer.appendChild(cardWrapper);
             }
+            
+            const chat = document.getElementById('chat');
+            const gridMsg = document.createElement('div');
+            gridMsg.className = 'msg bot';
+            gridMsg.style.padding = '8px';
+            gridMsg.style.maxWidth = '95%';
+            gridMsg.style.background = 'transparent';
+            gridMsg.style.border = 'none';
+            gridMsg.appendChild(gridContainer);
+            chat.appendChild(gridMsg);
+            chat.scrollTop = chat.scrollHeight;
         } else if (data.type === "text") {
             // General LLM response (no city needed)
             addMsg(data.response, "bot");
