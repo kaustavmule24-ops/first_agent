@@ -1611,14 +1611,25 @@ body {
             </div>
             <div class="settings-section">
                 <div class="settings-section-title">🔗 MCP Servers</div>
-                <div class="mcp-server-list" id="mcpServerList">
-                    <div class="mcp-server-item">
-                        <div class="mcp-server-name">
-                            <span class="mcp-server-status" id="serverStatus1"></span>
-                            Weather MCP
-                        </div>
-                        <span style="font-size:11px;color:var(--text-secondary)">Default</span>
+                <div class="server-list" id="serverList">
+                    <!-- Servers render here dynamically -->
+                </div>
+                
+                <div class="add-server-section">
+                    <h3>➕ Add New Server</h3>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="newServerName" placeholder="e.g. My Weather MCP">
                     </div>
+                    <div class="form-group">
+                        <label>URL</label>
+                        <input type="text" id="newServerUrl" placeholder="https://your-mcp.onrender.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Description (optional)</label>
+                        <input type="text" id="newServerDesc" placeholder="Custom weather data source">
+                    </div>
+                    <button class="add-btn" onclick="addServer()">Add Server</button>
                 </div>
             </div>
             <div class="settings-section">
