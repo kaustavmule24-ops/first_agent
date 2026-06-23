@@ -1,6 +1,7 @@
 import os
 import asyncio
 import json
+import aiohttp
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +25,33 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ==============================
+# SELF-PING TO PREVENT SLEEP
+# ==============================
+async def self_ping():
+    """Ping own health endpoint every 10 minutes to prevent Render free tier sleep."""
+    await asyncio.sleep(30)  # wait for server startup
+    while True:
+        try:
+            async with aiohttp.ClientSession() as session:
+                port = os.environ.get("PORT", "8000")
+                async with session.get(f"http://localhost:{port}/health") as resp:
+                    if resp.status == 200:
+                        print("Self-ping: OK")
+                    else:
+                        print(f"Self-ping: Status {resp.status}")
+        except Exception as e:
+            print(f"Self-ping failed: {e}")
+        await asyncio.sleep(600)  # 10 minutes
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Start background tasks on server startup."""
+    asyncio.create_task(self_ping())
+
 
 @app.get("/")
 def home():
