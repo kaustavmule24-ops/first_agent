@@ -8,12 +8,12 @@ from groq import Groq
 # 🎨 COLORS
 # ==============================
 class Color:
-    CYAN = "[96m"
-    GREEN = "[92m"
-    YELLOW = "[93m"
-    RED = "[91m"
-    BOLD = "[1m"
-    END = "[0m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BOLD = "\033[1m"
+    END = "\033[0m"
 
 
 # ==============================
@@ -185,8 +185,8 @@ def generate_general_response(user_query):
 # 🚀 CLI
 # ==============================
 def start_cli():
-    print(f"{Color.GREEN}{Color.BOLD}🚀 MCP + Groq Agent Ready{Color.END}
-")
+    print(f"{Color.GREEN}{Color.BOLD}🚀 MCP + Groq Agent Ready{Color.END}")
+    print()
     while True:
         user_input = input(f"{Color.CYAN}{Color.BOLD}You:{Color.END} ")
         if user_input.lower() == "exit":
@@ -195,10 +195,10 @@ def start_cli():
         cities = extract_cities(user_input)
         if not cities:
             response = generate_general_response(user_input)
-            print(f"
-{Color.GREEN}🤖 AI:{Color.END}
-{response}
-")
+            print()
+            print(f"{Color.GREEN}🤖 AI:{Color.END}")
+            print(response)
+            print()
             continue
         if len(cities) > 1:
             print(f"{Color.YELLOW}🔍 Multi-city mode{Color.END}")
@@ -210,10 +210,10 @@ def start_cli():
             if not results:
                 print("❌ No valid data")
                 continue
-            print(f"
-{Color.GREEN}🤖 AI:{Color.END}
-Multi-city results received.
-")
+            print()
+            print(f"{Color.GREEN}🤖 AI:{Color.END}")
+            print("Multi-city results received.")
+            print()
         else:
             city = cities[0]
             tool = choose_tool(user_input)
@@ -223,10 +223,10 @@ Multi-city results received.
                 continue
             cleaned = clean_data(result["data"])
             insights = generate_city_insights(user_input, cleaned)
-            print(f"
-{Color.GREEN}🤖 AI:{Color.END}
-{insights}
-")
+            print()
+            print(f"{Color.GREEN}🤖 AI:{Color.END}")
+            print(insights)
+            print()
 
 if __name__ == "__main__":
     start_cli()
