@@ -126,7 +126,7 @@ def detect_mcp_format(url, timeout=10):
 
     # Strategy 3: REST API probe
     try:
-        base_url = url.replace('/tool', '').replace('/mcp', '')
+        base_url = url.replace('/tool', '').replace('/mcp', '').rstrip('/')
         res = requests.get(base_url, timeout=timeout)
         if res.status_code in [200, 401, 403]:
             content_type = res.headers.get('Content-Type', '')
@@ -145,6 +145,14 @@ def detect_mcp_format(url, timeout=10):
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
+        # Also detect REST API by URL patterns (e.g., api.mapbox.com, api.openweathermap.org)
+        if any(domain in base_url for domain in ['api.', 'rest.', 'data.', 'maps.']):
+            detected_format = MCPFormat.REST_API
+            logs.append(f"✅ Detected: REST API format (URL pattern match: {base_url})")
+            print(f"{Color.GREEN}✅ Detected: REST API format (URL pattern){Color.END}")
+            FORMAT_CACHE[url] = detected_format
+            TOOLS_CACHE[url] = available_tools
+            return detected_format, available_tools, logs
 
     except Exception as e:
         logs.append(f"⚠️ REST API probe failed: {str(e)}")
@@ -238,14 +246,15 @@ def call_mcp_rest_api(url, tool, city, server_config, timeout=15):
     config = server_config or {}
 
     try:
-        endpoint = config.get('endpoint_template', '/tool')
+        endpoint = config.get('endpoint_template', '/')
         endpoint = endpoint.replace('{city}', city)
         endpoint = endpoint.replace('{tool}', tool)
 
-        full_url = url.replace('/tool', '').rstrip('/')
+        # Build base URL: strip /tool if present, then append endpoint
+        base_url = url.replace('/tool', '').rstrip('/')
         if not endpoint.startswith('/'):
             endpoint = '/' + endpoint
-        full_url = full_url + endpoint
+        full_url = base_url + endpoint
 
         logs.append(f"🌐 REST API call: {config.get('method', 'GET')} {full_url}")
         print(f"{Color.CYAN}🌐 REST API: {full_url}{Color.END}")
@@ -263,6 +272,7 @@ def call_mcp_rest_api(url, tool, city, server_config, timeout=15):
         params = {}
         if auth_type == 'query_param' and auth_key and auth_value:
             params[auth_key] = auth_value
+            logs.append(f"🔑 Auth: query param {auth_key}=***")
 
         extra_params = config.get('params', {})
         if isinstance(extra_params, dict):
@@ -286,6 +296,7 @@ def call_mcp_rest_api(url, tool, city, server_config, timeout=15):
             return {"error": f"HTTP {res.status_code}: {res.text[:200]}", "logs": logs}
 
         raw_data = res.json()
+        logs.append(f"📥 Raw response keys: {list(raw_data.keys())[:10]}")
 
         mapping = config.get('response_mapping', {})
         if mapping:
@@ -307,9 +318,15 @@ def call_mcp_rest_api(url, tool, city, server_config, timeout=15):
             logs.append("✅ REST API response mapped successfully")
             return {"data": normalized, "logs": logs, "format": MCPFormat.REST_API}
         else:
-            normalized = parse_mcp_response(raw_data, MCPFormat.REST_API)
-            logs.append("✅ REST API response normalized")
-            return {"data": normalized, "logs": logs, "format": MCPFormat.REST_API}
+            # Auto-detect common REST API response patterns
+            normalized = auto_normalize_rest_response(raw_data)
+            if normalized:
+                logs.append("✅ REST API response auto-normalized")
+                return {"data": normalized, "logs": logs, "format": MCPFormat.REST_API}
+            else:
+                normalized = parse_mcp_response(raw_data, MCPFormat.REST_API)
+                logs.append("✅ REST API response normalized (fallback)")
+                return {"data": normalized, "logs": logs, "format": MCPFormat.REST_API}
 
     except Exception as e:
         logs.append(f"❌ REST API failed: {str(e)}")
@@ -376,11 +393,93 @@ def parse_mcp_response(data, mcp_format):
             normalized[key] = value
 
     if not normalized.get("city"):
-        normalized["_needs_mapping"] = True
-        normalized["_raw_keys"] = list(data.keys())
+        # Try to extract city from common REST API patterns
+        if "query" in data and isinstance(data["query"], list):
+            normalized["city"] = data["query"][0] if data["query"] else None
+        elif "place_name" in data:
+            normalized["city"] = data["place_name"]
+        elif "text" in data:
+            normalized["city"] = data["text"]
+
+        # If still no city, store minimal info but DON'T pollute with _raw_keys
+        if not normalized.get("city"):
+            normalized["city"] = "Unknown"
+            normalized["_raw_preview"] = str(list(data.keys())[:5])
 
     return normalized
 
+
+
+def auto_normalize_rest_response(raw_data):
+    """
+    Auto-detect and normalize common REST API response patterns.
+    Returns normalized dict or None if pattern not recognized.
+    """
+    if not isinstance(raw_data, dict):
+        return None
+
+    normalized = {}
+
+    # Pattern 1: Mapbox Geocoding API
+    if "type" in raw_data and raw_data.get("type") == "FeatureCollection":
+        features = raw_data.get("features", [])
+        if features and len(features) > 0:
+            feature = features[0]
+            place_name = feature.get("place_name", "")
+            # Extract city from place_name (usually first part)
+            city_name = place_name.split(",")[0].strip() if "," in place_name else place_name
+
+            normalized["city"] = city_name
+            normalized["country"] = "Unknown"  # Could extract from context
+
+            center = feature.get("center", [])
+            if len(center) >= 2:
+                normalized["longitude"] = center[0]
+                normalized["latitude"] = center[1]
+
+            normalized["current_time"] = ""
+            normalized["weather"] = {"temperature": 0, "weathercode": 0, "is_day": 1}
+            normalized["aqi"] = {"us_aqi": 0}
+
+            return normalized
+
+    # Pattern 2: OpenWeatherMap / standard weather APIs
+    if "coord" in raw_data or "main" in raw_data:
+        normalized["city"] = raw_data.get("name", "Unknown")
+        normalized["country"] = raw_data.get("sys", {}).get("country", "Unknown")
+        normalized["latitude"] = raw_data.get("coord", {}).get("lat")
+        normalized["longitude"] = raw_data.get("coord", {}).get("lon")
+
+        main = raw_data.get("main", {})
+        weather_list = raw_data.get("weather", [])
+        weather_code = weather_list[0].get("id", 0) if weather_list else 0
+
+        normalized["weather"] = {
+            "temperature": main.get("temp"),
+            "windspeed": raw_data.get("wind", {}).get("speed"),
+            "winddirection": raw_data.get("wind", {}).get("deg"),
+            "weathercode": weather_code,
+            "is_day": 1,
+            "humidity": main.get("humidity"),
+            "pressure": main.get("pressure")
+        }
+        normalized["aqi"] = {"us_aqi": 0}
+        normalized["current_time"] = ""
+
+        return normalized
+
+    # Pattern 3: Generic geo data with lat/lon
+    if any(k in raw_data for k in ["lat", "latitude", "lon", "longitude"]):
+        normalized["city"] = raw_data.get("name") or raw_data.get("city") or "Unknown"
+        normalized["country"] = raw_data.get("country") or "Unknown"
+        normalized["latitude"] = raw_data.get("lat") or raw_data.get("latitude")
+        normalized["longitude"] = raw_data.get("lon") or raw_data.get("longitude") or raw_data.get("lng")
+        normalized["current_time"] = ""
+        normalized["weather"] = {"temperature": 0, "weathercode": 0, "is_day": 1}
+        normalized["aqi"] = {"us_aqi": 0}
+        return normalized
+
+    return None
 
 # ==============================
 # 🔗 MULTI-MCP MERGE LOGIC
@@ -560,6 +659,9 @@ def call_mcp(tool, city, custom_url=None, server_config=None):
     logs.extend(detect_logs)
 
     if mcp_format == MCPFormat.REST_API:
+        logs.append(f"🌐 REST API mode: tool={tool}, city={city}")
+        logs.append(f"📋 Config: {json.dumps(server_config, indent=2) if server_config else 'None'}")
+        logs.append(f"🔗 URL: {url}")
         return call_mcp_rest_api(url, tool, city, server_config, timeout=15)
 
     payload = build_mcp_payload(tool, city, mcp_format, available_tools, server_config)

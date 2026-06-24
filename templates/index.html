@@ -2199,7 +2199,7 @@ function renderHUDCard(data, serverName) {
     const offset = circumference - (tempPercent / 100) * circumference;
     
     // Build metrics from weather data (excluding already shown fields)
-    const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source'];
+    const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys'];
     const metrics = [];
     
     for (const [key, value] of Object.entries(weather)) {
@@ -2210,7 +2210,7 @@ function renderHUDCard(data, serverName) {
     
     // Build expanded data from all other fields
     const expandedData = [];
-    const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude'];
+    const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys'];
     
     for (const [key, value] of Object.entries(data)) {
         if (expandedExclude.includes(key)) continue;

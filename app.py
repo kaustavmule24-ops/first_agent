@@ -80,6 +80,10 @@ async def chat(request: Request):
             # If server has explicit config, pass it through
             if "config" in mcp_servers[0]:
                 server_config = mcp_servers[0]["config"]
+            # Also pass the protocol type so agent knows how to handle it
+            if "protocol" in mcp_servers[0]:
+                server_config = server_config or {}
+                server_config["_protocol"] = mcp_servers[0]["protocol"]
 
         result = await asyncio.to_thread(process_query, user_input, llm_enabled, server_config)
         return result
@@ -119,7 +123,7 @@ def process_query(user_input: str, llm_enabled: bool, server_config=None):
     if len(cities) > 1:
         results = []
         for city in cities:
-            result = call_mcp("getFullInsights", city, server_config=server_config)
+            result = call_mcp("getFullInsights", city, custom_url=None, server_config=server_config)
             all_logs.extend(result.get("logs", []))
             if "error" not in result:
                 results.append(clean_data(result["data"]))
@@ -153,7 +157,7 @@ Provide a brief comparison (2-3 sentences) highlighting key differences in weath
     city = cities[0]
     tool = choose_tool(user_input)
 
-    result = call_mcp(tool, city, server_config=server_config)
+    result = call_mcp(tool, city, custom_url=None, server_config=server_config)
     all_logs.extend(result.get("logs", []))
 
     if "error" in result:
