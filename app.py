@@ -73,19 +73,10 @@ async def chat(request: Request):
                 content={"type": "error", "response": "❌ Empty message", "mcp_logs": []}
             )
 
-        # If custom MCP servers provided, use first enabled one
-        if mcp_servers and len(mcp_servers) > 0:
-            import agent
-            agent.MCP_URL = mcp_servers[0]["url"]
-            # If server has explicit config, pass it through
-            if "config" in mcp_servers[0]:
-                server_config = mcp_servers[0]["config"]
-            # Also pass the protocol type so agent knows how to handle it
-            if "protocol" in mcp_servers[0]:
-                server_config = server_config or {}
-                server_config["_protocol"] = mcp_servers[0]["protocol"]
+        # Pass all MCP servers to process_query (it will handle default vs custom)
+        # Don't override agent.MCP_URL here - let process_query handle it
 
-        result = await asyncio.to_thread(process_query, user_input, llm_enabled, server_config)
+        result = await asyncio.to_thread(process_query, user_input, llm_enabled, mcp_servers, server_config)
         return result
 
     except Exception as e:
@@ -95,9 +86,10 @@ async def chat(request: Request):
         )
 
 
-def process_query(user_input: str, llm_enabled: bool, server_config=None):
+def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, server_config=None):
     all_logs = []
     cities = extract_cities(user_input)
+    mcp_servers = mcp_servers or []
 
     # ======================
     # NO CITY FOUND
@@ -118,30 +110,60 @@ def process_query(user_input: str, llm_enabled: bool, server_config=None):
             }
 
     # ======================
-    # MULTI-CITY
+    # SPLIT: Default MCP (HUD) + Custom MCPs (LLM text)
+    # ======================
+    city = cities[0]
+    tool = choose_tool(user_input)
+
+    # 1. ALWAYS call default weather MCP for HUD
+    default_result = call_mcp(tool, city, custom_url=None, server_config=server_config)
+    all_logs.extend(default_result.get("logs", []))
+    hud_data = clean_data(default_result["data"]) if "error" not in default_result else None
+
+    # 2. Call custom MCPs (non-default servers)
+    custom_mcp_results = []
+    for server in mcp_servers:
+        if server.get("isDefault"):
+            continue  # Skip default, already called above
+        
+        result = call_mcp(
+            tool, 
+            city, 
+            custom_url=server["url"],
+            server_config=server.get("config")
+        )
+        all_logs.extend(result.get("logs", []))
+        if "error" not in result:
+            custom_mcp_results.append({
+                "server_name": server["name"],
+                "data": result["data"],
+                "format": result.get("format", "unknown")
+            })
+
+    # ======================
+    # MULTI-CITY (HUD compare)
     # ======================
     if len(cities) > 1:
         results = []
-        for city in cities:
-            result = call_mcp("getFullInsights", city, custom_url=None, server_config=server_config)
-            all_logs.extend(result.get("logs", []))
-            if "error" not in result:
-                results.append(clean_data(result["data"]))
+        for c in cities:
+            r = call_mcp("getFullInsights", c, custom_url=None, server_config=server_config)
+            all_logs.extend(r.get("logs", []))
+            if "error" not in r:
+                results.append(clean_data(r["data"]))
 
         if not results:
             return {
                 "type": "error",
-                "response": "❌ Could not fetch data for any of the requested cities. Please check the city names and try again.",
+                "response": "❌ Could not fetch data for any of the requested cities.",
                 "mcp_logs": all_logs
             }
 
-        # Generate LLM comparison summary
         llm_text = ""
         if llm_enabled:
             compare_prompt = f"""Compare these cities based on the data:
 {json.dumps(results, indent=2)}
 
-Provide a brief comparison (2-3 sentences) highlighting key differences in weather, air quality, and any interesting observations."""
+Provide a brief comparison (2-3 sentences) highlighting key differences."""
             llm_text = generate_llm_text(compare_prompt)
 
         return {
@@ -152,31 +174,45 @@ Provide a brief comparison (2-3 sentences) highlighting key differences in weath
         }
 
     # ======================
-    # SINGLE CITY
+    # SINGLE CITY: HUD + Custom MCP text
     # ======================
-    city = cities[0]
-    tool = choose_tool(user_input)
-
-    result = call_mcp(tool, city, custom_url=None, server_config=server_config)
-    all_logs.extend(result.get("logs", []))
-
-    if "error" in result:
+    if hud_data is None:
         return {
             "type": "error",
-            "response": f"❌ {result['error']}",
+            "response": f"❌ {default_result.get('error', 'Default MCP failed')}",
             "mcp_logs": all_logs
         }
 
-    cleaned = clean_data(result["data"])
+    # Build custom MCP text (LLM formatted or raw)
+    custom_text = ""
+    if custom_mcp_results:
+        if llm_enabled:
+            # Send custom MCP data to LLM for formatting
+            custom_prompt = f"""The user asked: "{user_input}"
 
-    llm_text = ""
-    if llm_enabled:
-        llm_text = generate_city_insights(user_input, cleaned)
+Weather data: {json.dumps(hud_data, indent=2)}
+
+Additional data from custom MCPs:
+{json.dumps(custom_mcp_results, indent=2)}
+
+Provide a helpful response incorporating both weather data and custom MCP insights. Be concise."""
+            custom_text = generate_llm_text(custom_prompt)
+        else:
+            # LLM disabled: show raw custom MCP data
+            raw_parts = []
+            for r in custom_mcp_results:
+                raw_parts.append(f"📡 **{r['server_name']}**:\n```json\n{json.dumps(r['data'], indent=2)}\n```")
+            custom_text = "\n\n".join(raw_parts)
+
+    # If no custom MCPs, use default LLM insights on weather only
+    elif llm_enabled:
+        custom_text = generate_city_insights(user_input, hud_data)
 
     return {
-        "type": "hud",
-        "response": cleaned,
-        "llm_text": llm_text if llm_enabled else "",
+        "type": "hud_with_custom",
+        "hud_data": hud_data,
+        "custom_text": custom_text,
+        "custom_mcp_results": custom_mcp_results,
         "mcp_logs": all_logs
     }
 

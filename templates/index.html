@@ -1626,6 +1626,7 @@ body {
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -1930,7 +1931,7 @@ async function renderServerList() {
             <div class="server-url">${server.url}</div>
             ${server.description ? `<div class="server-desc">${server.description}</div>` : ''}
             <div class="server-actions">
-                <span style="font-size:11px;color:var(--text-secondary)">${server.isDefault ? '🔒 Built-in' : 'Custom'}</span>
+                <span style="font-size:11px;color:var(--text-secondary)">${server.isDefault ? '⭐ Default (HUD)' : 'Custom'}</span>
                 ${!server.isDefault ? `<button class="delete-btn" onclick="deleteServer('${server.id}')">🗑️ Delete</button>` : ''}
             </div>
         `;
@@ -2260,7 +2261,7 @@ function renderHUDCard(data, serverName) {
     const offset = circumference - (tempPercent / 100) * circumference;
     
     // Build metrics from weather data (excluding already shown fields)
-    const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys'];
+    const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response'];
     const metrics = [];
     
     for (const [key, value] of Object.entries(weather)) {
@@ -2271,7 +2272,7 @@ function renderHUDCard(data, serverName) {
     
     // Build expanded data from all other fields
     const expandedData = [];
-    const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys'];
+    const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response'];
     
     for (const [key, value] of Object.entries(data)) {
         if (expandedExclude.includes(key)) continue;
@@ -2355,7 +2356,7 @@ function renderHUDCard(data, serverName) {
                 <span class="hud-aqi-status ${aqiInfo.class}">${aqiInfo.label} • ${aqiValue}</span>
             </div>
             <div class="hud-aqi-track">
-                <div class="hud-aqi-fill" style="width: ${Math.min(aqiValue / 3, 100)}%;"></div>
+                <div class="hud-aqi-fill" style="width: ${aqiValue > 0 ? Math.min(aqiValue / 3, 100) : 0}%;"></div>
             </div>
         </div>
         
@@ -2733,12 +2734,38 @@ async function send() {
         await new Promise(function(r) { setTimeout(r, data.mcp_logs && data.mcp_logs.length > 0 ? 500 : 0); });
 
         if (data.type === "hud") {
-            // City query → Show HUD card
+            // City query → Show HUD card (legacy fallback)
             const hudHTML = renderHUDCard(data.response, "Weather MCP");
             addMsg(hudHTML, "bot", true);
             // Show LLM insights if available
             if (data.llm_text) {
                 addMsg(data.llm_text, "bot");
+            }
+        } else if (data.type === "hud_with_custom") {
+            // NEW: Default MCP HUD + Custom MCP text
+            if (data.hud_data) {
+                const hudHTML = renderHUDCard(data.hud_data, "Weather MCP");
+                addMsg(hudHTML, "bot", true);
+            }
+            // Show custom MCP text (LLM formatted or raw JSON)
+            if (data.custom_text) {
+                addMsg(data.custom_text, "bot");
+            }
+            // Show raw custom MCP data as expandable blocks
+            if (data.custom_mcp_results && data.custom_mcp_results.length > 0) {
+                for (const custom of data.custom_mcp_results) {
+                    const rawHTML = `
+                        <div style="margin-top:8px; padding:12px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid var(--border);">
+                            <div style="font-size:11px; color:var(--primary); font-weight:600; margin-bottom:8px;">
+                                📡 ${custom.server_name} (${custom.format})
+                            </div>
+                            <pre style="font-size:11px; color:var(--text-secondary); overflow-x:auto; margin:0; max-height:200px; overflow-y:auto;">
+${JSON.stringify(custom.data, null, 2)}
+                            </pre>
+                        </div>
+                    `;
+                    addMsg(rawHTML, "bot", true);
+                }
             }
         } else if (data.type === "compare") {
             // Multi-city → Show compare strip + full HUD cards in responsive grid
