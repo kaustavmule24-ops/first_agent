@@ -1724,6 +1724,14 @@ body {
                 <div class="add-server-section">
                     <h3>➕ Add New Server</h3>
                     <div class="form-group">
+                        <label>Protocol Type</label>
+                        <select id="newServerProtocol" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;">
+                            <option value="custom">🤖 Custom MCP (POST /tool)</option>
+                            <option value="jsonrpc">📡 JSON-RPC MCP (Anthropic)</option>
+                            <option value="rest_api">🌐 REST API (Mapbox, OpenWeather, etc.)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>Name</label>
                         <input type="text" id="newServerName" placeholder="e.g. My Weather MCP">
                     </div>
@@ -1735,6 +1743,44 @@ body {
                         <label>Description (optional)</label>
                         <input type="text" id="newServerDesc" placeholder="Custom weather data source">
                     </div>
+                    
+                    <!-- REST API Config (hidden by default) -->
+                    <div id="restConfigSection" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+                        <h4 style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">🔧 REST API Configuration</h4>
+                        <div class="form-group">
+                            <label>Endpoint Template (use {city} placeholder)</label>
+                            <input type="text" id="restEndpoint" placeholder="/geocoding/v5/mapbox.places/{city}.json">
+                        </div>
+                        <div class="form-group">
+                            <label>HTTP Method</label>
+                            <select id="restMethod" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-primary);font-size:13px;">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Auth Type</label>
+                            <select id="restAuthType" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-primary);font-size:13px;">
+                                <option value="none">No Auth</option>
+                                <option value="query_param">Query Parameter (e.g. ?access_token=xxx)</option>
+                                <option value="header">Header (e.g. X-API-Key)</option>
+                                <option value="bearer">Bearer Token</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Auth Key (param name or header name)</label>
+                            <input type="text" id="restAuthKey" placeholder="access_token">
+                        </div>
+                        <div class="form-group">
+                            <label>Auth Value (token or key)</label>
+                            <input type="text" id="restAuthValue" placeholder="pk.eyJ1Ijoi...">
+                        </div>
+                        <div class="form-group">
+                            <label>Response Mapping (JSON, optional)</label>
+                            <textarea id="restMapping" rows="3" placeholder='{"city": "features.0.place_name", "latitude": "features.0.center.1"}' style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-primary);font-size:12px;font-family:'JetBrains Mono',monospace;resize:vertical;"></textarea>
+                        </div>
+                    </div>
+                    
                     <button class="add-btn" onclick="addServer()">Add Server</button>
                 </div>
             </div>
@@ -1771,7 +1817,9 @@ const DEFAULT_SERVERS = [
         url: 'https://mcp-weather-s1s0.onrender.com/tool',
         description: 'Weather, AQI, time & holiday data',
         enabled: true,
-        isDefault: true
+        isDefault: true,
+        protocol: 'custom',  // custom | jsonrpc | rest_api
+        config: {}           // REST API config (endpoint_template, auth, mapping)
     }
 ];
 
@@ -1826,11 +1874,25 @@ async function renderServerList() {
         card.className = 'server-card';
         const statusClass = server.enabled ? 'checking' : 'offline';
         
+        const protocolEmoji = {
+            'custom': '🤖',
+            'jsonrpc': '📡',
+            'rest_api': '🌐'
+        };
+        const protocolLabel = {
+            'custom': 'Custom MCP',
+            'jsonrpc': 'JSON-RPC',
+            'rest_api': 'REST API'
+        };
+        
         card.innerHTML = `
             <div class="server-card-header">
                 <div class="server-name">
                     <span class="server-status ${statusClass}" id="status-${server.id}"></span>
                     ${server.name}
+                    <span style="font-size:10px;color:var(--text-secondary);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;margin-left:6px;">
+                        ${protocolEmoji[server.protocol] || '🤖'} ${protocolLabel[server.protocol] || 'Custom'}
+                    </span>
                 </div>
                 <label class="toggle-switch">
                     <input type="checkbox" ${server.enabled ? 'checked' : ''} onchange="toggleServer('${server.id}', this.checked)">
@@ -1879,18 +1941,61 @@ function addServer() {
     const nameInput = document.getElementById('newServerName');
     const urlInput = document.getElementById('newServerUrl');
     const descInput = document.getElementById('newServerDesc');
+    const protocolInput = document.getElementById('newServerProtocol');
     
     const name = nameInput.value.trim();
     let url = urlInput.value.trim();
     const desc = descInput.value.trim();
+    const protocol = protocolInput.value;
     
     if (!name || !url) {
         showToast('Name and URL are required', '⚠️');
         return;
     }
     
-    if (!url.endsWith('/tool')) {
+    // Only auto-append /tool for custom MCP protocol
+    if (protocol === 'custom' && !url.endsWith('/tool')) {
         url = url.replace(/\/$/, '') + '/tool';
+    }
+    
+    // Build server object
+    const server = {
+        id: generateId(),
+        name,
+        url,
+        description: desc,
+        enabled: true,
+        isDefault: false,
+        protocol: protocol
+    };
+    
+    // Add REST API config if applicable
+    if (protocol === 'rest_api') {
+        const endpoint = document.getElementById('restEndpoint').value.trim();
+        const method = document.getElementById('restMethod').value;
+        const authType = document.getElementById('restAuthType').value;
+        const authKey = document.getElementById('restAuthKey').value.trim();
+        const authValue = document.getElementById('restAuthValue').value.trim();
+        const mappingStr = document.getElementById('restMapping').value.trim();
+        
+        let mapping = {};
+        if (mappingStr) {
+            try {
+                mapping = JSON.parse(mappingStr);
+            } catch (e) {
+                showToast('Invalid JSON in response mapping', '⚠️');
+                return;
+            }
+        }
+        
+        server.config = {
+            endpoint_template: endpoint || '/',
+            method: method,
+            auth_type: authType,
+            auth_key: authKey,
+            auth_value: authValue,
+            response_mapping: mapping
+        };
     }
     
     const servers = loadServers();
@@ -1899,7 +2004,7 @@ function addServer() {
         return;
     }
     
-    servers.push({ id: generateId(), name, url, description: desc, enabled: true, isDefault: false });
+    servers.push(server);
     saveServers(servers);
     
     nameInput.value = '';
@@ -2372,7 +2477,12 @@ function addMsg(text, type, isCard = false) {
     
     div.innerHTML = text + `<div class="msg-time">${time}</div>`;
     chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+    
+    // NEW: Scroll so new message top aligns with chat container top
+    setTimeout(() => {
+        div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+    
     return div;
 }
 
@@ -2391,12 +2501,16 @@ function addSuggestions(options) {
         div.appendChild(chip);
     });
     chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+    
+    // NEW: Scroll so suggestions top aligns with chat container top
+    setTimeout(() => {
+        div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
 }
 
 function showTyping() {
     document.getElementById('typing').classList.add('active');
-    document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+    // Don't auto-scroll typing indicator to bottom
 }
 
 function hideTyping() {
@@ -2463,7 +2577,7 @@ function showStatus(text, icon) {
     div.id = 'active-status';
     div.innerHTML = '<span class="status-icon">' + icon + '</span>' + text;
     chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+    // Don't auto-scroll status messages
 }
 
 function removeStatus() {
@@ -2487,7 +2601,7 @@ function showMCPLogs(logs) {
     }).join('');
     div.innerHTML = '<div class="log-title">🔧 MCP Call Log</div>' + logHTML;
     chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+    // Don't auto-scroll logs
 }
 
 function removeMCPLogs() {
@@ -2535,7 +2649,8 @@ async function send() {
             body: JSON.stringify({ 
                 message: text, 
                 llm_enabled: settings.llmEnabled,
-                mcp_servers: enabledServers  // ← send custom MCP servers
+                mcp_servers: enabledServers,  // ← send custom MCP servers
+                server_config: enabledServers.length > 0 ? (enabledServers[0].config || null) : null
             })
         });
 
@@ -2592,7 +2707,9 @@ async function send() {
             gridMsg.style.border = 'none';
             gridMsg.appendChild(gridContainer);
             chat.appendChild(gridMsg);
-            chat.scrollTop = chat.scrollHeight;
+            setTimeout(() => {
+                gridMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
         } else if (data.type === "text") {
             // General LLM response (no city needed)
             addMsg(data.response, "bot");

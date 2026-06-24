@@ -65,6 +65,7 @@ async def chat(request: Request):
         user_input = body.get("message", "").strip()
         llm_enabled = body.get("llm_enabled", True)
         mcp_servers = body.get("mcp_servers", [])  # ← custom MCP servers from frontend
+        server_config = body.get("server_config", None)  # ← REST API config
 
         if not user_input:
             return JSONResponse(
@@ -76,8 +77,11 @@ async def chat(request: Request):
         if mcp_servers and len(mcp_servers) > 0:
             import agent
             agent.MCP_URL = mcp_servers[0]["url"]
+            # If server has explicit config, pass it through
+            if "config" in mcp_servers[0]:
+                server_config = mcp_servers[0]["config"]
 
-        result = await asyncio.to_thread(process_query, user_input, llm_enabled)
+        result = await asyncio.to_thread(process_query, user_input, llm_enabled, server_config)
         return result
 
     except Exception as e:
@@ -87,7 +91,7 @@ async def chat(request: Request):
         )
 
 
-def process_query(user_input: str, llm_enabled: bool):
+def process_query(user_input: str, llm_enabled: bool, server_config=None):
     all_logs = []
     cities = extract_cities(user_input)
 
@@ -115,7 +119,7 @@ def process_query(user_input: str, llm_enabled: bool):
     if len(cities) > 1:
         results = []
         for city in cities:
-            result = call_mcp("getFullInsights", city)
+            result = call_mcp("getFullInsights", city, server_config=server_config)
             all_logs.extend(result.get("logs", []))
             if "error" not in result:
                 results.append(clean_data(result["data"]))
@@ -149,7 +153,7 @@ Provide a brief comparison (2-3 sentences) highlighting key differences in weath
     city = cities[0]
     tool = choose_tool(user_input)
 
-    result = call_mcp(tool, city)
+    result = call_mcp(tool, city, server_config=server_config)
     all_logs.extend(result.get("logs", []))
 
     if "error" in result:

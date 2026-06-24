@@ -21,7 +21,7 @@ class Color:
 # 🔗 CONFIG
 # ==============================
 DEFAULT_MCP_URL = "https://mcp-weather-s1s0.onrender.com/tool"
-MCP_URL = DEFAULT_MCP_URL  # can be overridden dynamically
+MCP_URL = DEFAULT_MCP_URL
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 
@@ -34,60 +34,52 @@ MODEL = "llama-3.1-8b-instant"
 
 
 # ==============================
-# 🔍 MCP FORMAT DETECTION SYSTEM
+# 🔍 PROTOCOL ENUMS & CACHE
 # ==============================
 
 class MCPFormat:
-    CUSTOM = "custom"           # {"tool": "...", "input": "..."}
-    JSONRPC = "jsonrpc"         # {"jsonrpc":"2.0","method":"tools/call","params":{...}}
-    OPENAI = "openai"           # {"function":"...","parameters":{...}}
-    REST = "rest"               # {"action":"...","data":"..."}
+    CUSTOM = "custom"
+    JSONRPC = "jsonrpc"
+    REST_API = "rest_api"
     UNKNOWN = "unknown"
 
-# Cache: url -> detected format
 FORMAT_CACHE = {}
-
-# Cache: url -> available tools list
 TOOLS_CACHE = {}
 
+
+# ==============================
+# 🌐 PROTOCOL DETECTION ENGINE
+# ==============================
+
 def detect_mcp_format(url, timeout=10):
-    """
-    Auto-detect the MCP protocol format used by a server.
-    Returns: (format_type, available_tools, logs)
-    """
     logs = []
-    
-    # Check cache first
+
     if url in FORMAT_CACHE:
         logs.append(f"📋 Using cached format for {url}: {FORMAT_CACHE[url]}")
         return FORMAT_CACHE[url], TOOLS_CACHE.get(url, []), logs
-    
+
     logs.append(f"🔍 Detecting MCP format for: {url}")
     print(f"{Color.YELLOW}🔍 Detecting MCP format for: {url}{Color.END}")
-    
+
     detected_format = MCPFormat.UNKNOWN
     available_tools = []
-    
-    # --- Strategy 1: Try healthCheck in CUSTOM format ---
+
+    # Strategy 1: CUSTOM format probe
     try:
         custom_payload = {"tool": "healthCheck", "input": "test"}
         res = requests.post(url, json=custom_payload, timeout=timeout)
-        
+
         if res.status_code == 200:
             data = res.json()
-            # Check if response matches our custom format
             if "status" in data and "server" in data:
                 detected_format = MCPFormat.CUSTOM
-                logs.append("✅ Detected: CUSTOM format (your protocol)")
+                logs.append("✅ Detected: CUSTOM format (GeoBot protocol)")
                 print(f"{Color.GREEN}✅ Detected: CUSTOM format{Color.END}")
-                # Try to extract tools list if available
                 if "features" in data:
                     available_tools = list(data["features"].keys())
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
-            
-            # Check if it's actually JSON-RPC response to our custom request
             if "jsonrpc" in data:
                 detected_format = MCPFormat.JSONRPC
                 logs.append("✅ Detected: JSON-RPC format (from healthCheck response)")
@@ -95,11 +87,11 @@ def detect_mcp_format(url, timeout=10):
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
-                
+
     except Exception as e:
         logs.append(f"⚠️ CUSTOM probe failed: {str(e)}")
-    
-    # --- Strategy 2: Try JSON-RPC format ---
+
+    # Strategy 2: JSON-RPC format probe
     try:
         jsonrpc_payload = {
             "jsonrpc": "2.0",
@@ -108,20 +100,18 @@ def detect_mcp_format(url, timeout=10):
             "params": {}
         }
         res = requests.post(url, json=jsonrpc_payload, timeout=timeout)
-        
+
         if res.status_code == 200:
             data = res.json()
             if "jsonrpc" in data and ("result" in data or "error" in data):
                 detected_format = MCPFormat.JSONRPC
                 logs.append("✅ Detected: JSON-RPC format (Anthropic MCP)")
                 print(f"{Color.GREEN}✅ Detected: JSON-RPC format{Color.END}")
-                # Extract tools from result
                 if "result" in data and "tools" in data["result"]:
                     available_tools = [t.get("name") for t in data["result"]["tools"] if t.get("name")]
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
-            # Some servers accept JSON-RPC but return plain JSON
             if "tools" in data:
                 detected_format = MCPFormat.JSONRPC
                 logs.append("✅ Detected: JSON-RPC format (plain tools response)")
@@ -130,78 +120,60 @@ def detect_mcp_format(url, timeout=10):
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
-                
+
     except Exception as e:
         logs.append(f"⚠️ JSON-RPC probe failed: {str(e)}")
-    
-    # --- Strategy 3: Try OpenAI-style format ---
+
+    # Strategy 3: REST API probe
     try:
-        openai_payload = {
-            "function": "list_tools",
-            "parameters": {}
-        }
-        res = requests.post(url, json=openai_payload, timeout=timeout)
-        
-        if res.status_code == 200:
-            data = res.json()
-            if "functions" in data or "tools" in data:
-                detected_format = MCPFormat.OPENAI
-                logs.append("✅ Detected: OpenAI-style format")
-                print(f"{Color.GREEN}✅ Detected: OpenAI-style format{Color.END}")
-                if "tools" in data:
-                    available_tools = [t.get("name") for t in data["tools"] if t.get("name")]
-                elif "functions" in data:
-                    available_tools = [f.get("name") for f in data["functions"] if f.get("name")]
+        base_url = url.replace('/tool', '').replace('/mcp', '')
+        res = requests.get(base_url, timeout=timeout)
+        if res.status_code in [200, 401, 403]:
+            content_type = res.headers.get('Content-Type', '')
+            if 'json' in content_type or 'application/json' in content_type:
+                detected_format = MCPFormat.REST_API
+                logs.append(f"✅ Detected: REST API format (GET returned JSON, status {res.status_code})")
+                print(f"{Color.GREEN}✅ Detected: REST API format{Color.END}")
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
-                
-    except Exception as e:
-        logs.append(f"⚠️ OpenAI probe failed: {str(e)}")
-    
-    # --- Strategy 4: Try generic REST format ---
-    try:
-        rest_payload = {
-            "action": "health",
-            "data": {}
-        }
-        res = requests.post(url, json=rest_payload, timeout=timeout)
-        
-        if res.status_code == 200:
-            data = res.json()
-            if "status" in data or "data" in data:
-                detected_format = MCPFormat.REST
-                logs.append("✅ Detected: Generic REST format")
-                print(f"{Color.GREEN}✅ Detected: Generic REST format{Color.END}")
+            text = res.text.lower()
+            if any(x in text for x in ['api', 'documentation', 'endpoints', 'swagger', 'openapi']):
+                detected_format = MCPFormat.REST_API
+                logs.append("✅ Detected: REST API format (documentation page)")
+                print(f"{Color.GREEN}✅ Detected: REST API format{Color.END}")
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
-                
+
     except Exception as e:
-        logs.append(f"⚠️ REST probe failed: {str(e)}")
-    
-    # --- Fallback: Try GET request (some MCP servers use GET for discovery) ---
+        logs.append(f"⚠️ REST API probe failed: {str(e)}")
+
+    # Strategy 4: Error response probe
     try:
-        res = requests.get(url, timeout=timeout)
-        if res.status_code == 200:
-            data = res.json()
-            if isinstance(data, dict):
-                if "jsonrpc" in data or "methods" in data:
-                    detected_format = MCPFormat.JSONRPC
-                elif "tools" in data or "functions" in data:
-                    detected_format = MCPFormat.OPENAI
-                else:
-                    detected_format = MCPFormat.REST
-                logs.append(f"✅ Detected: {detected_format.upper()} format (from GET)")
-                print(f"{Color.GREEN}✅ Detected: {detected_format.upper()} format (from GET){Color.END}")
-                FORMAT_CACHE[url] = detected_format
-                TOOLS_CACHE[url] = available_tools
-                return detected_format, available_tools, logs
-                
+        res = requests.post(url, timeout=timeout)
+        if res.status_code in [400, 401, 403, 404, 405]:
+            error_text = res.text.lower()
+            if 'jsonrpc' in error_text or 'method' in error_text:
+                detected_format = MCPFormat.JSONRPC
+                logs.append("✅ Detected: JSON-RPC format (from error response)")
+                print(f"{Color.GREEN}✅ Detected: JSON-RPC format (from error){Color.END}")
+            elif 'tool' in error_text or 'input' in error_text:
+                detected_format = MCPFormat.CUSTOM
+                logs.append("✅ Detected: CUSTOM format (from error response)")
+                print(f"{Color.GREEN}✅ Detected: CUSTOM format (from error){Color.END}")
+            else:
+                detected_format = MCPFormat.REST_API
+                logs.append("✅ Detected: REST API format (from error response)")
+                print(f"{Color.GREEN}✅ Detected: REST API format (from error){Color.END}")
+            FORMAT_CACHE[url] = detected_format
+            TOOLS_CACHE[url] = available_tools
+            return detected_format, available_tools, logs
+
     except Exception as e:
-        logs.append(f"⚠️ GET probe failed: {str(e)}")
-    
-    # --- Final Fallback ---
+        logs.append(f"⚠️ Error probe failed: {str(e)}")
+
+    # Fallback
     logs.append("⚠️ Could not auto-detect format. Defaulting to CUSTOM.")
     print(f"{Color.YELLOW}⚠️ Could not auto-detect format. Defaulting to CUSTOM.{Color.END}")
     detected_format = MCPFormat.CUSTOM
@@ -210,13 +182,7 @@ def detect_mcp_format(url, timeout=10):
     return detected_format, available_tools, logs
 
 
-def build_mcp_payload(tool, city, mcp_format, available_tools=None):
-    """
-    Build the correct request payload based on detected MCP format.
-    Also maps tool names if the server uses different naming conventions.
-    """
-    
-    # Map our tool names to server-specific names if needed
+def build_mcp_payload(tool, city, mcp_format, available_tools=None, server_config=None):
     tool_mapping = {
         "getFullInsights": "getFullInsights",
         "getWeatherOnly": "getWeatherOnly",
@@ -226,17 +192,17 @@ def build_mcp_payload(tool, city, mcp_format, available_tools=None):
         "getTodaySpecial": "getTodaySpecial",
         "healthCheck": "healthCheck"
     }
-    
-    # If we know available tools, try to find the closest match
+
     if available_tools:
         tool_lower = tool.lower()
         for server_tool in available_tools:
             if tool_lower in server_tool.lower() or server_tool.lower() in tool_lower:
                 tool_mapping[tool] = server_tool
                 break
-    
+
     actual_tool = tool_mapping.get(tool, tool)
-    
+    config = server_config or {}
+
     if mcp_format == MCPFormat.JSONRPC:
         return {
             "jsonrpc": "2.0",
@@ -251,64 +217,133 @@ def build_mcp_payload(tool, city, mcp_format, available_tools=None):
                 }
             }
         }
-    
-    elif mcp_format == MCPFormat.OPENAI:
+
+    elif mcp_format == MCPFormat.REST_API:
         return {
-            "function": actual_tool,
-            "parameters": {
-                "city": city,
-                "location": city,
-                "input": city
-            }
+            "_format": "rest_api",
+            "_tool": actual_tool,
+            "_city": city,
+            "_config": config
         }
-    
-    elif mcp_format == MCPFormat.REST:
-        return {
-            "action": actual_tool,
-            "data": {
-                "city": city,
-                "location": city,
-                "input": city
-            }
-        }
-    
-    else:  # CUSTOM (default)
+
+    else:
         return {
             "tool": actual_tool,
             "input": city
         }
 
 
+def call_mcp_rest_api(url, tool, city, server_config, timeout=15):
+    logs = []
+    config = server_config or {}
+
+    try:
+        endpoint = config.get('endpoint_template', '/tool')
+        endpoint = endpoint.replace('{city}', city)
+        endpoint = endpoint.replace('{tool}', tool)
+
+        full_url = url.replace('/tool', '').rstrip('/')
+        if not endpoint.startswith('/'):
+            endpoint = '/' + endpoint
+        full_url = full_url + endpoint
+
+        logs.append(f"🌐 REST API call: {config.get('method', 'GET')} {full_url}")
+        print(f"{Color.CYAN}🌐 REST API: {full_url}{Color.END}")
+
+        headers = {'Content-Type': 'application/json'}
+        auth_type = config.get('auth_type', 'none')
+        auth_key = config.get('auth_key', '')
+        auth_value = config.get('auth_value', '')
+
+        if auth_type == 'header' and auth_key and auth_value:
+            headers[auth_key] = auth_value
+        elif auth_type == 'bearer' and auth_value:
+            headers['Authorization'] = f'Bearer {auth_value}'
+
+        params = {}
+        if auth_type == 'query_param' and auth_key and auth_value:
+            params[auth_key] = auth_value
+
+        extra_params = config.get('params', {})
+        if isinstance(extra_params, dict):
+            params.update(extra_params)
+
+        method = config.get('method', 'GET').upper()
+
+        if method == 'POST':
+            body = config.get('body_template', {})
+            if isinstance(body, dict):
+                body_str = json.dumps(body)
+                body_str = body_str.replace('{city}', city).replace('{tool}', tool)
+                body = json.loads(body_str)
+            res = requests.post(full_url, headers=headers, params=params, json=body, timeout=timeout)
+        else:
+            res = requests.get(full_url, headers=headers, params=params, timeout=timeout)
+
+        logs.append(f"⬅️ Status: {res.status_code}")
+
+        if res.status_code != 200:
+            return {"error": f"HTTP {res.status_code}: {res.text[:200]}", "logs": logs}
+
+        raw_data = res.json()
+
+        mapping = config.get('response_mapping', {})
+        if mapping:
+            normalized = {}
+            for our_field, their_path in mapping.items():
+                value = raw_data
+                for key in their_path.split('.'):
+                    if isinstance(value, dict):
+                        value = value.get(key)
+                    elif isinstance(value, list) and key.isdigit():
+                        value = value[int(key)] if int(key) < len(value) else None
+                    else:
+                        value = None
+                    if value is None:
+                        break
+                normalized[our_field] = value
+
+            normalized['_raw'] = raw_data
+            logs.append("✅ REST API response mapped successfully")
+            return {"data": normalized, "logs": logs, "format": MCPFormat.REST_API}
+        else:
+            normalized = parse_mcp_response(raw_data, MCPFormat.REST_API)
+            logs.append("✅ REST API response normalized")
+            return {"data": normalized, "logs": logs, "format": MCPFormat.REST_API}
+
+    except Exception as e:
+        logs.append(f"❌ REST API failed: {str(e)}")
+        return {"error": str(e), "logs": logs}
+
+
 def parse_mcp_response(data, mcp_format):
-    """
-    Parse and normalize MCP response regardless of format.
-    Returns standardized dict with city, weather, aqi, etc.
-    """
     if not isinstance(data, dict):
         return {"error": "Invalid response format"}
-    
-    # JSON-RPC wrapper unwrap
+
     if mcp_format == MCPFormat.JSONRPC and "result" in data:
         data = data["result"]
-    
-    # OpenAI wrapper unwrap
-    if mcp_format == MCPFormat.OPENAI and "output" in data:
-        data = data["output"]
-    
-    # REST wrapper unwrap
-    if mcp_format == MCPFormat.REST and "data" in data:
-        data = data["data"]
-    
-    # Normalize common field names
+
+    if mcp_format == MCPFormat.REST_API and "data" in data and isinstance(data["data"], dict):
+        inner = data["data"]
+        if any(k in inner for k in ["city", "weather", "aqi", "features", "place_name"]):
+            data = inner
+
     normalized = {}
-    
-    # City / Location
-    normalized["city"] = data.get("city") or data.get("location") or data.get("name") or "Unknown"
+
+    normalized["city"] = data.get("city") or data.get("location") or data.get("name")
+    if not normalized["city"]:
+        features = data.get("features")
+        if features and isinstance(features, list) and len(features) > 0:
+            place = features[0]
+            normalized["city"] = place.get("place_name") or place.get("text")
+            if "center" in place:
+                normalized["longitude"] = place["center"][0]
+                normalized["latitude"] = place["center"][1]
+
     normalized["country"] = data.get("country") or data.get("country_code") or "Unknown"
     normalized["latitude"] = data.get("latitude") or data.get("lat")
     normalized["longitude"] = data.get("longitude") or data.get("lon") or data.get("lng")
-    
-    # Weather (handle nested or flat structures)
+
     weather = data.get("weather") or data.get("current_weather") or data.get("current")
     if weather and isinstance(weather, dict):
         normalized["weather"] = {
@@ -319,9 +354,8 @@ def parse_mcp_response(data, mcp_format):
             "is_day": weather.get("is_day", 1),
             "time": weather.get("time") or data.get("current_time")
         }
-    
-    # AQI
-    aqi = data.get("aqi") or data.get("air_quality") or data.get("current", {}).get("us_aqi")
+
+    aqi = data.get("aqi") or data.get("air_quality")
     if aqi and isinstance(aqi, dict):
         normalized["aqi"] = {
             "us_aqi": aqi.get("us_aqi") or aqi.get("aqi") or aqi.get("pm25") or aqi.get("pm2_5"),
@@ -330,21 +364,137 @@ def parse_mcp_response(data, mcp_format):
         }
     elif isinstance(aqi, (int, float)):
         normalized["aqi"] = {"us_aqi": aqi}
-    
-    # Time
+
     normalized["current_time"] = data.get("current_time") or data.get("time") or data.get("local_time")
-    
-    # Special (holidays, facts)
+
     special = data.get("today_special") or data.get("special") or {}
     if special and isinstance(special, dict):
         normalized["today_special"] = special
-    
-    # Copy any other fields not yet mapped
+
     for key, value in data.items():
-        if key not in normalized and key not in ["weather", "aqi", "today_special", "current"]:
+        if key not in normalized and key not in ["weather", "aqi", "today_special", "current", "features"]:
             normalized[key] = value
-    
+
+    if not normalized.get("city"):
+        normalized["_needs_mapping"] = True
+        normalized["_raw_keys"] = list(data.keys())
+
     return normalized
+
+
+# ==============================
+# 🔗 MULTI-MCP MERGE LOGIC
+# ==============================
+
+def merge_mcp_data(primary_data, secondary_data):
+    """
+    Merge two MCP responses. Primary takes precedence.
+    Secondary fills only missing/null fields.
+    Preserves all source names across chained merges.
+    """
+    if not primary_data and not secondary_data:
+        return None
+    if not primary_data:
+        return secondary_data
+    if not secondary_data:
+        return primary_data
+
+    merged = dict(primary_data)
+
+    # Collect existing sources from primary
+    existing_sources = merged.get("_sources", [])
+    if not existing_sources and (merged.get("source") or merged.get("_source")):
+        existing_sources = [merged.get("source") or merged.get("_source")]
+
+    # Collect new source from secondary
+    new_source = secondary_data.get("source") or secondary_data.get("_source")
+
+    # Top-level fields: fill if missing or "Unknown"
+    fill_fields = ["country", "latitude", "longitude", "current_time"]
+    for field in fill_fields:
+        if field not in merged or merged[field] is None or merged[field] == "Unknown":
+            if field in secondary_data and secondary_data[field] is not None:
+                merged[field] = secondary_data[field]
+
+    # Weather: merge individual sub-fields
+    if "weather" in secondary_data and isinstance(secondary_data["weather"], dict):
+        if "weather" not in merged or not isinstance(merged.get("weather"), dict):
+            merged["weather"] = secondary_data["weather"]
+        else:
+            for wkey in ["temperature", "windspeed", "winddirection", "weathercode", "is_day", "time"]:
+                if wkey not in merged["weather"] or merged["weather"][wkey] is None:
+                    if wkey in secondary_data["weather"]:
+                        merged["weather"][wkey] = secondary_data["weather"][wkey]
+
+    # AQI: merge individual sub-fields
+    if "aqi" in secondary_data and isinstance(secondary_data["aqi"], dict):
+        if "aqi" not in merged or not isinstance(merged.get("aqi"), dict):
+            merged["aqi"] = secondary_data["aqi"]
+        else:
+            for akey in ["us_aqi", "pm10", "pm2_5"]:
+                if akey not in merged["aqi"] or merged["aqi"][akey] is None:
+                    if akey in secondary_data["aqi"]:
+                        merged["aqi"][akey] = secondary_data["aqi"][akey]
+
+    # Today Special: merge holiday/fact
+    if "today_special" in secondary_data and isinstance(secondary_data["today_special"], dict):
+        if "today_special" not in merged or not isinstance(merged.get("today_special"), dict):
+            merged["today_special"] = secondary_data["today_special"]
+        else:
+            for skey in ["holiday", "fact"]:
+                if skey not in merged["today_special"] or not merged["today_special"][skey]:
+                    if skey in secondary_data["today_special"] and secondary_data["today_special"][skey]:
+                        merged["today_special"][skey] = secondary_data["today_special"][skey]
+
+    # Merge and deduplicate sources
+    all_sources = list(existing_sources)
+    if new_source and new_source not in all_sources:
+        all_sources.append(new_source)
+
+    if all_sources:
+        merged["_sources"] = all_sources
+
+    return merged
+
+
+def call_mcp_multi(tool, city, servers):
+    """
+    Call multiple MCP servers with fallback/merge.
+    servers: list of dicts with 'url', 'config', 'name'
+    Returns: {"data": merged, "logs": [...], "sources": [...]}
+    """
+    all_logs = []
+    results = []
+
+    for i, server in enumerate(servers):
+        url = server.get("url")
+        config = server.get("config")
+        name = server.get("name", f"Server-{i+1}")
+
+        all_logs.append(f"🔄 [{i+1}/{len(servers)}] Trying {name} @ {url}")
+        result = call_mcp(tool, city, custom_url=url, server_config=config)
+        all_logs.extend(result.get("logs", []))
+
+        if "error" not in result and result.get("data"):
+            results.append(result["data"])
+            all_logs.append(f"✅ {name} returned data")
+        else:
+            err = result.get("error", "No data")
+            all_logs.append(f"⚠️ {name} failed: {err}")
+
+    if not results:
+        return {"error": "All MCP servers failed", "logs": all_logs}
+
+    # Chain merge all results
+    merged = results[0]
+    for i in range(1, len(results)):
+        merged = merge_mcp_data(merged, results[i])
+
+    return {
+        "data": merged,
+        "logs": all_logs,
+        "sources": merged.get("_sources", [])
+    }
 
 
 # ==============================
@@ -400,20 +550,21 @@ def extract_cities(user_input):
 
 
 # ==============================
-# 🔧 MCP CALL WITH FORMAT DETECTION
+# 🔧 SINGLE MCP CALL (backward compat)
 # ==============================
-def call_mcp(tool, city, custom_url=None):
+def call_mcp(tool, city, custom_url=None, server_config=None):
     logs = []
     url = custom_url or MCP_URL
-    
-    # Step 1: Detect format (cached after first call)
+
     mcp_format, available_tools, detect_logs = detect_mcp_format(url)
     logs.extend(detect_logs)
-    
-    # Step 2: Build correct payload
-    payload = build_mcp_payload(tool, city, mcp_format, available_tools)
+
+    if mcp_format == MCPFormat.REST_API:
+        return call_mcp_rest_api(url, tool, city, server_config, timeout=15)
+
+    payload = build_mcp_payload(tool, city, mcp_format, available_tools, server_config)
     logs.append(f"📤 Payload ({mcp_format}): {json.dumps(payload, indent=2)}")
-    
+
     try:
         log_msg = f"🔄 Calling MCP [{mcp_format}]: {tool} → {city} @ {url}"
         logs.append(log_msg)
@@ -430,19 +581,16 @@ def call_mcp(tool, city, custom_url=None):
         if not raw_data:
             logs.append("❌ MCP failed: Empty response")
             return {"error": "Empty MCP response", "logs": logs}
-        
-        # Handle JSON-RPC errors
+
         if mcp_format == MCPFormat.JSONRPC and "error" in raw_data:
             err = raw_data["error"]
             logs.append(f"❌ MCP JSON-RPC error: {err}")
             return {"error": str(err), "logs": logs}
-        
-        # Handle generic error field
+
         if "error" in raw_data and mcp_format != MCPFormat.JSONRPC:
             logs.append(f"❌ MCP failed: {raw_data['error']}")
             return {"error": raw_data["error"], "logs": logs}
 
-        # Step 3: Parse and normalize response
         parsed_data = parse_mcp_response(raw_data, mcp_format)
         logs.append(f"✅ MCP success for {city} (format: {mcp_format})")
         return {"data": parsed_data, "logs": logs, "format": mcp_format}
@@ -470,13 +618,23 @@ def clean_data(data):
 # 🧠 PROMPT BUILDERS
 # ==============================
 def build_city_prompt(user_query, mcp_data):
-    return f"""You are GeoBot, a location intelligence assistant. 
+    return f"""You are GeoBot, a location intelligence assistant.
 The user asked: "{user_query}"
 
 Here is the real-time data for {mcp_data.get('city', 'the city')}:
 {json.dumps(mcp_data, indent=2)}
 
 Provide a friendly, informative response about this city. Include interesting facts, travel tips, or cultural insights. Keep it concise but engaging (3-5 sentences)."""
+
+def build_city_prompt_multi(user_query, mcp_data, sources):
+    sources_text = ", ".join(sources) if sources else "available sources"
+    return f"""You are GeoBot, a location intelligence assistant.
+The user asked: "{user_query}"
+
+Here is the combined real-time data for {mcp_data.get('city', 'the city')} (merged from {sources_text}):
+{json.dumps(mcp_data, indent=2)}
+
+Provide a friendly, informative response. Mention that data was combined from multiple sources if relevant. Include interesting facts, travel tips, or cultural insights. Keep it concise but engaging (3-5 sentences)."""
 
 def build_general_prompt(user_query):
     return f"""You are GeoBot, a helpful location intelligence assistant.
@@ -485,6 +643,14 @@ Answer the user's question clearly and concisely.
 USER: {user_query}
 
 Answer:"""
+
+def build_compare_prompt_multi(results, sources_list):
+    return f"""Compare these cities based on the combined data from multiple sources:
+{json.dumps(results, indent=2)}
+
+Sources used: {json.dumps(sources_list)}
+
+Provide a brief comparison (2-3 sentences) highlighting key differences in weather, air quality, and any interesting observations."""
 
 
 # ==============================
@@ -509,6 +675,11 @@ def generate_llm_text(prompt):
 
 def generate_city_insights(user_query, mcp_data):
     prompt = build_city_prompt(user_query, mcp_data)
+    return generate_llm_text(prompt)
+
+
+def generate_city_insights_multi(user_query, mcp_data, sources):
+    prompt = build_city_prompt_multi(user_query, mcp_data, sources)
     return generate_llm_text(prompt)
 
 
@@ -540,10 +711,10 @@ def start_cli():
         if len(cities) > 1:
             print(f"{Color.YELLOW}🔍 Multi-city mode{Color.END}")
             results = []
-        for city in cities:
-            result = call_mcp("getFullInsights", city)
-            if "error" not in result:
-                results.append(clean_data(result["data"]))
+            for city in cities:
+                result = call_mcp("getFullInsights", city)
+                if "error" not in result:
+                    results.append(clean_data(result["data"]))
             if not results:
                 print("❌ No valid data")
                 continue
