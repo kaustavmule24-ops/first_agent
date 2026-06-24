@@ -41,6 +41,8 @@ class MCPFormat:
     CUSTOM = "custom"
     JSONRPC = "jsonrpc"
     REST_API = "rest_api"
+    STDIO = "stdio"
+    STREAMABLE_HTTP = "streamable_http"
     UNKNOWN = "unknown"
 
 FORMAT_CACHE = {}
@@ -181,6 +183,25 @@ def detect_mcp_format(url, timeout=10):
     except Exception as e:
         logs.append(f"⚠️ Error probe failed: {str(e)}")
 
+    # Strategy 5: Stdio pseudo-URL
+    if url.startswith("stdio://"):
+        detected_format = MCPFormat.STDIO
+        logs.append("✅ Detected: STDIO format (local subprocess)")
+        print(f"{Color.GREEN}✅ Detected: STDIO format{Color.END}")
+        FORMAT_CACHE[url] = detected_format
+        TOOLS_CACHE[url] = available_tools
+        return detected_format, available_tools, logs
+
+    # Strategy 6: Streamable HTTP (MCP 2025-03-26 spec)
+    # Apify, Cloudflare, and modern MCP servers use this
+    if any(domain in url for domain in ['mcp.apify.com', 'mcp.cloudflare.com']):
+        detected_format = MCPFormat.STREAMABLE_HTTP
+        logs.append(f"✅ Detected: Streamable HTTP format ({url})")
+        print(f"{Color.GREEN}✅ Detected: Streamable HTTP format{Color.END}")
+        FORMAT_CACHE[url] = detected_format
+        TOOLS_CACHE[url] = available_tools
+        return detected_format, available_tools, logs
+
     # Fallback
     logs.append("⚠️ Could not auto-detect format. Defaulting to CUSTOM.")
     print(f"{Color.YELLOW}⚠️ Could not auto-detect format. Defaulting to CUSTOM.{Color.END}")
@@ -240,6 +261,344 @@ def build_mcp_payload(tool, city, mcp_format, available_tools=None, server_confi
             "input": city
         }
 
+
+
+
+def call_mcp_stdio(tool, city, server_config, timeout=15):
+    """
+    Call an MCP server via stdio (subprocess).
+    Uses JSON-RPC 2.0 over stdin/stdout.
+    """
+    import subprocess
+    import select
+    import time
+
+    logs = []
+    config = server_config or {}
+    cmd = config.get("command", "tsx")
+    args = config.get("args", [])
+    cwd = config.get("cwd") or None
+
+    full_cmd = [cmd] + args
+    logs.append(f"💻 Spawning stdio MCP: {' '.join(full_cmd)}")
+    print(f"{Color.CYAN}💻 Stdio MCP: {' '.join(full_cmd)}{Color.END}")
+
+    try:
+        proc = subprocess.Popen(
+            full_cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=cwd,
+            bufsize=1
+        )
+
+        # --- Initialize ---
+        init_req = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "geobot", "version": "1.0"}
+            }
+        }
+        proc.stdin.write(json.dumps(init_req) + "\n")
+        proc.stdin.flush()
+
+        ready, _, _ = select.select([proc.stdout], [], [], timeout)
+        if not ready:
+            proc.terminate()
+            logs.append("❌ Stdio init timeout")
+            return {"error": "Stdio initialization timeout", "logs": logs}
+
+        init_resp = json.loads(proc.stdout.readline())
+        server_name = init_resp.get("result", {}).get("serverInfo", {}).get("name", "unknown")
+        logs.append(f"✅ Stdio MCP initialized: {server_name}")
+
+        # --- Send initialized notification ---
+        proc.stdin.write(json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}) + "\n")
+        proc.stdin.flush()
+
+        # --- Get tools list (optional but good for mapping) ---
+        tools_req = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+        proc.stdin.write(json.dumps(tools_req) + "\n")
+        proc.stdin.flush()
+
+        ready, _, _ = select.select([proc.stdout], [], [], 3)
+        if ready:
+            tools_resp = json.loads(proc.stdout.readline())
+            available_tools = [t.get("name") for t in tools_resp.get("result", {}).get("tools", []) if t.get("name")]
+            if available_tools:
+                logs.append(f"📋 Tools: {', '.join(available_tools)}")
+
+        # --- Call tool ---
+        actual_tool = tool
+        if available_tools:
+            tool_lower = tool.lower()
+            for t in available_tools:
+                if tool_lower in t.lower() or t.lower() in tool_lower:
+                    actual_tool = t
+                    break
+
+        call_req = {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+                "name": actual_tool,
+                "arguments": {"city": city, "location": city, "input": city}
+            }
+        }
+        proc.stdin.write(json.dumps(call_req) + "\n")
+        proc.stdin.flush()
+
+        ready, _, _ = select.select([proc.stdout], [], [], timeout)
+        if not ready:
+            proc.terminate()
+            logs.append("❌ Stdio tool call timeout")
+            return {"error": "Stdio tool call timeout", "logs": logs}
+
+        resp_line = proc.stdout.readline()
+        resp = json.loads(resp_line)
+        proc.terminate()
+
+        if "error" in resp:
+            logs.append(f"❌ Stdio error: {resp['error']}")
+            return {"error": resp["error"], "logs": logs}
+
+        # Parse result
+        result = resp.get("result", {})
+        content = result.get("content", [])
+        if content and len(content) > 0:
+            text_content = content[0].get("text", "{}")
+            try:
+                data = json.loads(text_content)
+                parsed = parse_mcp_response(data, MCPFormat.JSONRPC)
+                logs.append("✅ Stdio response parsed successfully")
+                return {"data": parsed, "logs": logs, "format": MCPFormat.STDIO}
+            except json.JSONDecodeError:
+                # Some stdio servers return plain text
+                parsed = {
+                    "city": city,
+                    "country": "Unknown",
+                    "current_time": "",
+                    "weather": {"temperature": 0, "weathercode": 0, "is_day": 1},
+                    "aqi": {"us_aqi": 0},
+                    "_text_response": text_content
+                }
+                logs.append("✅ Stdio response received (text format)")
+                return {"data": parsed, "logs": logs, "format": MCPFormat.STDIO}
+
+        logs.append("✅ Stdio response received")
+        return {"data": parse_mcp_response(result, MCPFormat.JSONRPC), "logs": logs, "format": MCPFormat.STDIO}
+
+    except FileNotFoundError:
+        logs.append(f"❌ Command not found: {cmd}")
+        return {"error": f"Command not found: {cmd}. Make sure it is installed.", "logs": logs}
+    except Exception as e:
+        logs.append(f"❌ Stdio failed: {str(e)}")
+        return {"error": str(e), "logs": logs}
+
+
+
+def call_mcp_streamable_http(url, tool, city, server_config, timeout=15):
+    """
+    Call an MCP server using Streamable HTTP transport (MCP spec 2025-03-26).
+    Used by Apify, Cloudflare, and other modern MCP hosts.
+    Requires Authorization header with Bearer token or OAuth.
+    """
+    logs = []
+    config = server_config or {}
+
+    logs.append(f"🌐 Streamable HTTP: {url}")
+    print(f"{Color.CYAN}🌐 Streamable HTTP MCP: {url}{Color.END}")
+
+    try:
+        # Build auth headers
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/event-stream',
+            'MCP-Protocol-Version': '2025-03-26'
+        }
+
+        auth_type = config.get('auth_type', 'none')
+        auth_value = config.get('auth_value', '')
+
+        if auth_type == 'bearer' and auth_value:
+            headers['Authorization'] = f'Bearer {auth_value}'
+            logs.append("🔑 Auth: Bearer token")
+        elif auth_type == 'header':
+            auth_key = config.get('auth_key', '')
+            if auth_key and auth_value:
+                headers[auth_key] = auth_value
+                logs.append(f"🔑 Auth: Header {auth_key}")
+
+        # --- Step 1: Initialize ---
+        init_payload = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {
+                    "tools": {},
+                    "resources": {},
+                    "prompts": {}
+                },
+                "clientInfo": {
+                    "name": "geobot",
+                    "version": "1.0.0"
+                }
+            }
+        }
+
+        logs.append("📤 Sending initialize...")
+        res = requests.post(url, headers=headers, json=init_payload, timeout=timeout)
+        logs.append(f"⬅️ Init status: {res.status_code}")
+
+        if res.status_code not in [200, 202]:
+            return {"error": f"Initialize failed: HTTP {res.status_code}", "logs": logs}
+
+        # Parse init response (could be JSON or SSE)
+        init_data = None
+        content_type = res.headers.get('Content-Type', '')
+        if 'text/event-stream' in content_type:
+            # Parse SSE
+            for line in res.text.split('\n'):
+                if line.startswith('data: '):
+                    init_data = json.loads(line[6:])
+                    break
+        else:
+            init_data = res.json()
+
+        if init_data and "result" in init_data:
+            server_info = init_data["result"].get("serverInfo", {})
+            logs.append(f"✅ Initialized: {server_info.get('name', 'unknown')} v{server_info.get('version', '?')}")
+
+        # --- Step 2: Send initialized notification ---
+        notify_payload = {
+            "jsonrpc": "2.0",
+            "method": "notifications/initialized"
+        }
+        requests.post(url, headers=headers, json=notify_payload, timeout=5)
+
+        # --- Step 3: List tools ---
+        tools_payload = {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/list",
+            "params": {}
+        }
+
+        res = requests.post(url, headers=headers, json=tools_payload, timeout=timeout)
+        available_tools = []
+        if res.status_code == 200:
+            tools_data = res.json()
+            if "result" in tools_data and "tools" in tools_data["result"]:
+                available_tools = [t.get("name") for t in tools_data["result"]["tools"] if t.get("name")]
+                logs.append(f"📋 Tools: {', '.join(available_tools[:10])}")
+
+        # --- Step 4: Call tool ---
+        # Map our tool names to Apify tool names
+        actual_tool = tool
+        tool_lower = tool.lower()
+        for t in available_tools:
+            if tool_lower in t.lower() or t.lower() in tool_lower:
+                actual_tool = t
+                break
+
+        # For Apify, tools are Actors. Common ones:
+        if not available_tools and "apify" in url:
+            # Default Apify tools if discovery fails
+            available_tools = [
+                "apify/rag-web-browser",
+                "actors",
+                "docs"
+            ]
+
+        call_payload = {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+                "name": actual_tool,
+                "arguments": {
+                    "city": city,
+                    "location": city,
+                    "input": city,
+                    "query": f"weather in {city}"
+                }
+            }
+        }
+
+        logs.append(f"📤 Calling tool: {actual_tool}")
+        res = requests.post(url, headers=headers, json=call_payload, timeout=timeout)
+        logs.append(f"⬅️ Tool call status: {res.status_code}")
+
+        if res.status_code != 200:
+            return {"error": f"Tool call failed: HTTP {res.status_code}", "logs": logs}
+
+        # Parse response
+        response_data = None
+        content_type = res.headers.get('Content-Type', '')
+        if 'text/event-stream' in content_type:
+            # Parse SSE stream
+            for line in res.text.split('\n'):
+                if line.startswith('data: '):
+                    try:
+                        response_data = json.loads(line[6:])
+                        if "result" in response_data or "error" in response_data:
+                            break
+                    except:
+                        continue
+        else:
+            response_data = res.json()
+
+        if not response_data:
+            return {"error": "Empty response from Streamable HTTP", "logs": logs}
+
+        if "error" in response_data:
+            logs.append(f"❌ Tool error: {response_data['error']}")
+            return {"error": response_data["error"], "logs": logs}
+
+        # Extract result content
+        result = response_data.get("result", {})
+        content = result.get("content", [])
+
+        if content and len(content) > 0:
+            text_content = content[0].get("text", "{}")
+            try:
+                data = json.loads(text_content)
+                parsed = parse_mcp_response(data, MCPFormat.JSONRPC)
+                logs.append("✅ Streamable HTTP response parsed")
+                return {"data": parsed, "logs": logs, "format": MCPFormat.STREAMABLE_HTTP}
+            except json.JSONDecodeError:
+                # Return as text insight
+                parsed = {
+                    "city": city,
+                    "country": "Unknown",
+                    "current_time": "",
+                    "weather": {"temperature": 0, "weathercode": 0, "is_day": 1},
+                    "aqi": {"us_aqi": 0},
+                    "_text_response": text_content
+                }
+                logs.append("✅ Streamable HTTP response received (text)")
+                return {"data": parsed, "logs": logs, "format": MCPFormat.STREAMABLE_HTTP}
+
+        # Try to parse result directly
+        parsed = parse_mcp_response(result, MCPFormat.JSONRPC)
+        logs.append("✅ Streamable HTTP response parsed (direct)")
+        return {"data": parsed, "logs": logs, "format": MCPFormat.STREAMABLE_HTTP}
+
+    except requests.exceptions.Timeout:
+        logs.append("❌ Streamable HTTP timeout")
+        return {"error": "Streamable HTTP timeout", "logs": logs}
+    except Exception as e:
+        logs.append(f"❌ Streamable HTTP error: {str(e)}")
+        return {"error": str(e), "logs": logs}
 
 def call_mcp_rest_api(url, tool, city, server_config, timeout=15):
     logs = []
@@ -663,6 +1022,12 @@ def call_mcp(tool, city, custom_url=None, server_config=None):
         logs.append(f"📋 Config: {json.dumps(server_config, indent=2) if server_config else 'None'}")
         logs.append(f"🔗 URL: {url}")
         return call_mcp_rest_api(url, tool, city, server_config, timeout=15)
+
+    if mcp_format == MCPFormat.STDIO:
+        return call_mcp_stdio(tool, city, server_config, timeout=15)
+
+    if mcp_format == MCPFormat.STREAMABLE_HTTP:
+        return call_mcp_streamable_http(url, tool, city, server_config, timeout=15)
 
     payload = build_mcp_payload(tool, city, mcp_format, available_tools, server_config)
     logs.append(f"📤 Payload ({mcp_format}): {json.dumps(payload, indent=2)}")
