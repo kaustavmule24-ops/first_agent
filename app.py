@@ -65,7 +65,6 @@ async def chat(request: Request):
         user_input = body.get("message", "").strip()
         llm_enabled = body.get("llm_enabled", True)
         mcp_servers = body.get("mcp_servers", [])  # ← custom MCP servers from frontend
-        server_config = body.get("server_config", None)  # ← REST API config
 
         if not user_input:
             return JSONResponse(
@@ -74,9 +73,7 @@ async def chat(request: Request):
             )
 
         # Pass all MCP servers to process_query (it will handle default vs custom)
-        # Don't override agent.MCP_URL here - let process_query handle it
-
-        result = await asyncio.to_thread(process_query, user_input, llm_enabled, mcp_servers, server_config)
+        result = await asyncio.to_thread(process_query, user_input, llm_enabled, mcp_servers)
         return result
 
     except Exception as e:
@@ -86,7 +83,7 @@ async def chat(request: Request):
         )
 
 
-def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, server_config=None):
+def process_query(user_input: str, llm_enabled: bool, mcp_servers=None):
     all_logs = []
     cities = extract_cities(user_input)
     mcp_servers = mcp_servers or []
@@ -110,43 +107,12 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, server_c
             }
 
     # ======================
-    # SPLIT: Default MCP (HUD) + Custom MCPs (LLM text)
-    # ======================
-    city = cities[0]
-    tool = choose_tool(user_input)
-
-    # 1. ALWAYS call default weather MCP for HUD
-    default_result = call_mcp(tool, city, custom_url=None, server_config=server_config)
-    all_logs.extend(default_result.get("logs", []))
-    hud_data = clean_data(default_result["data"]) if "error" not in default_result else None
-
-    # 2. Call custom MCPs (non-default servers)
-    custom_mcp_results = []
-    for server in mcp_servers:
-        if server.get("isDefault"):
-            continue  # Skip default, already called above
-        
-        result = call_mcp(
-            tool, 
-            city, 
-            custom_url=server["url"],
-            server_config=server.get("config")
-        )
-        all_logs.extend(result.get("logs", []))
-        if "error" not in result:
-            custom_mcp_results.append({
-                "server_name": server["name"],
-                "data": result["data"],
-                "format": result.get("format", "unknown")
-            })
-
-    # ======================
-    # MULTI-CITY (HUD compare)
+    # MULTI-CITY: Compare mode
     # ======================
     if len(cities) > 1:
         results = []
         for c in cities:
-            r = call_mcp("getFullInsights", c, custom_url=None, server_config=server_config)
+            r = call_mcp("getFullInsights", c, custom_url=None, server_config=None)
             all_logs.extend(r.get("logs", []))
             if "error" not in r:
                 results.append(clean_data(r["data"]))
@@ -174,8 +140,37 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
         }
 
     # ======================
-    # SINGLE CITY: HUD + Custom MCP text
+    # SINGLE CITY: Default MCP (HUD) + Custom MCPs (text)
     # ======================
+    city = cities[0]
+    tool = choose_tool(user_input)
+
+    # 1. ALWAYS call default weather MCP for HUD
+    default_result = call_mcp(tool, city, custom_url=None, server_config=None)
+    all_logs.extend(default_result.get("logs", []))
+    hud_data = clean_data(default_result["data"]) if "error" not in default_result else None
+
+    # 2. Call custom MCPs (non-default servers)
+    custom_mcp_results = []
+    for server in mcp_servers:
+        if server.get("isDefault"):
+            continue  # Skip default, already called above
+        
+        result = call_mcp(
+            tool, 
+            city, 
+            custom_url=server["url"],
+            server_config=server.get("config")
+        )
+        all_logs.extend(result.get("logs", []))
+        if "error" not in result:
+            custom_mcp_results.append({
+                "server_name": server["name"],
+                "data": result["data"],
+                "format": result.get("format", "unknown")
+            })
+
+    # If default failed, return error
     if hud_data is None:
         return {
             "type": "error",
@@ -215,7 +210,6 @@ Provide a helpful response incorporating both weather data and custom MCP insigh
         "custom_mcp_results": custom_mcp_results,
         "mcp_logs": all_logs
     }
-
 
 @app.get("/health")
 def health():

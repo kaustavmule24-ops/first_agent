@@ -2710,14 +2710,13 @@ async function send() {
     try {
         const enabledServers = getEnabledServers();
         
-        const res = await fetch("/chat", {
+                const res = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
                 message: text, 
                 llm_enabled: settings.llmEnabled,
-                mcp_servers: enabledServers,  // ← send custom MCP servers
-                server_config: enabledServers.length > 0 ? (enabledServers[0].config || null) : null
+                mcp_servers: enabledServers  // Backend will filter isDefault itself
             })
         });
 
@@ -2751,8 +2750,8 @@ async function send() {
             if (data.custom_text) {
                 addMsg(data.custom_text, "bot");
             }
-            // Show raw custom MCP data as expandable blocks
-            if (data.custom_mcp_results && data.custom_mcp_results.length > 0) {
+            // Show raw custom MCP data as expandable blocks (only when LLM is off)
+if (!settings.llmEnabled && data.custom_mcp_results && data.custom_mcp_results.length > 0) {
                 for (const custom of data.custom_mcp_results) {
                     const rawHTML = `
                         <div style="margin-top:8px; padding:12px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid var(--border);">
