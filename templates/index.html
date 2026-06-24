@@ -2205,6 +2205,21 @@ function formatValue(key, value, parentKey = '') {
     if (key === 'cloudcover' || key === 'cloud_cover') return `${value}%`;
     if (key === 'is_day') return value ? '☀️ Day' : '🌙 Night';
     if (key === 'elevation') return `${value} m`;
+
+        // Custom MCP V2 fields
+    if (key === 'humidity_percent') return `${value}%`;
+    if (key === 'uv_index') return `${value}`;
+    if (key === 'uv_risk') return `${value}`;
+    if (key === 'phase_name') return `${value}`;
+    if (key === 'illumination_percent') return `${value}%`;
+    if (key === 'age_days') return `${value} days`;
+    if (key === 'solar_radiation_w_m2') return `${value} W/m²`;
+    if (key === 'pressure_hpa') return `${value} hPa`;
+    if (key === 'visibility_km') return `${value} km`;
+    if (key === 'visibility_meters') return `${(value/1000).toFixed(1)} km`;
+    if (key === 'dew_point_celsius') return `${value}°C`;
+    if (key === 'cloud_cover_percent') return `${value}%`;
+    if (key === 'is_waxing') return value ? '🌙 Waxing' : '🌙 Waning';
     
     // Time formatting
     if (key.includes('time') && typeof value === 'string' && value.includes('T')) {
@@ -2220,18 +2235,28 @@ function getFieldIcon(key) {
         temperature: '🌡️', temp: '🌡️', temp2m: '🌡️',
         windspeed: '💨', wind_speed: '💨',
         winddirection: '↗️', wind_direction: '↗️',
-        humidity: '💧', relative_humidity: '💧',
-        pressure: '📊', surface_pressure: '📊',
-        visibility: '👁️',
-        uv_index: '☀️', uvi: '☀️',
+        humidity: '💧', relative_humidity: '💧', humidity_percent: '💧',
+        pressure: '📊', surface_pressure: '📊', pressure_hpa: '📊',
+        visibility: '👁️', visibility_km: '👁️', visibility_meters: '👁️',
+        uv_index: '☀️', uvi: '☀️', uv_risk: '⚠️',
         precipitation: '🌧️', rain: '🌧️',
-        cloudcover: '☁️', cloud_cover: '☁️',
+        cloudcover: '☁️', cloud_cover: '☁️', cloud_cover_percent: '☁️',
         is_day: '🌅',
         elevation: '⛰️',
         pm10: '🌫️', pm2_5: '🌫️',
         us_aqi: '😷',
         sunrise: '🌅', sunset: '🌇',
-        latitude: '📍', longitude: '📍'
+        latitude: '📍', longitude: '📍',
+        // Custom MCP V2 fields
+        phase_name: '🌙',
+        illumination_percent: '💡',
+        age_days: '📅',
+        is_waxing: '🌙',
+        solar_radiation_w_m2: '☀️',
+        dew_point_celsius: '💨',
+        next_full_moon: '🌕',
+        next_new_moon: '🌑',
+        days_since_new: '📅'
     };
     return icons[key] || '📊';
 }
@@ -2261,7 +2286,7 @@ function renderHUDCard(data, serverName) {
     const offset = circumference - (tempPercent / 100) * circumference;
     
     // Build metrics from weather data (excluding already shown fields)
-    const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response'];
+    const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response', 'city', 'country', 'latitude', 'longitude', 'current_time'];
     const metrics = [];
     
     for (const [key, value] of Object.entries(weather)) {
@@ -2740,31 +2765,16 @@ async function send() {
             if (data.llm_text) {
                 addMsg(data.llm_text, "bot");
             }
-        } else if (data.type === "hud_with_custom") {
-            // NEW: Default MCP HUD + Custom MCP text
+                } else if (data.type === "hud_with_custom") {
+            // 1. Show unified HUD card (default + custom MCP data merged)
             if (data.hud_data) {
-                const hudHTML = renderHUDCard(data.hud_data, "Weather MCP");
+                const hudHTML = renderHUDCard(data.hud_data, "Weather MCP + Custom");
                 addMsg(hudHTML, "bot", true);
             }
-            // Show custom MCP text (LLM formatted or raw JSON)
+            
+            // 2. Show LLM-formatted text only (no raw JSON blocks)
             if (data.custom_text) {
                 addMsg(data.custom_text, "bot");
-            }
-            // Show raw custom MCP data as expandable blocks (only when LLM is off)
-if (!settings.llmEnabled && data.custom_mcp_results && data.custom_mcp_results.length > 0) {
-                for (const custom of data.custom_mcp_results) {
-                    const rawHTML = `
-                        <div style="margin-top:8px; padding:12px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid var(--border);">
-                            <div style="font-size:11px; color:var(--primary); font-weight:600; margin-bottom:8px;">
-                                📡 ${custom.server_name} (${custom.format})
-                            </div>
-                            <pre style="font-size:11px; color:var(--text-secondary); overflow-x:auto; margin:0; max-height:200px; overflow-y:auto;">
-${JSON.stringify(custom.data, null, 2)}
-                            </pre>
-                        </div>
-                    `;
-                    addMsg(rawHTML, "bot", true);
-                }
             }
         } else if (data.type === "compare") {
             // Multi-city → Show compare strip + full HUD cards in responsive grid

@@ -164,9 +164,20 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
         )
         all_logs.extend(result.get("logs", []))
         if "error" not in result:
+            raw_data = result["data"]
+            # Flatten nested objects for metrics grid rendering
+            flattened = {}
+            for key, value in raw_data.items():
+                if isinstance(value, dict):
+                    for sub_key, sub_value in value.items():
+                        if not sub_key.startswith('_') and sub_key != 'source':
+                            flattened[sub_key] = sub_value
+                elif not key.startswith('_') and key not in ['source', 'city', 'country', 'latitude', 'longitude']:
+                    flattened[key] = value
+            
             custom_mcp_results.append({
                 "server_name": server["name"],
-                "data": result["data"],
+                "data": flattened,
                 "format": result.get("format", "unknown")
             })
 
@@ -203,9 +214,16 @@ Provide a helpful response incorporating both weather data and custom MCP insigh
     elif llm_enabled:
         custom_text = generate_city_insights(user_input, hud_data)
 
+    # Merge custom MCP flat data into hud_data for unified rendering
+    merged_hud = dict(hud_data)
+    for custom in custom_mcp_results:
+        for key, value in custom.get("data", {}).items():
+            if key not in merged_hud and value is not None:
+                merged_hud[key] = value
+
     return {
         "type": "hud_with_custom",
-        "hud_data": hud_data,
+        "hud_data": merged_hud,
         "custom_text": custom_text,
         "custom_mcp_results": custom_mcp_results,
         "mcp_logs": all_logs

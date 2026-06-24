@@ -1141,28 +1141,8 @@ def call_mcp(tool, city, custom_url=None, server_config=None):
                 logs.append("📢 Test server returned JSON-RPC result - treating as echo/mock")
 
         if is_echo:
-            logs.append("📢 Echo server detected - returning mock data")
-            mock_data = {
-                "city": city,
-                "country": "Test Country",
-                "latitude": 35.6762,
-                "longitude": 139.6503,
-                "current_time": "Monday, 24 June 2026, 07:00 PM",
-                "weather": {
-                    "temperature": 23,
-                    "windspeed": 4.5,
-                    "winddirection": 166,
-                    "weathercode": 3,
-                    "is_day": 1
-                },
-                "aqi": {
-                    "us_aqi": 42,
-                    "pm10": 15,
-                    "pm2_5": 8
-                },
-                "source": "Echo Server (Mock)"
-            }
-            return {"data": mock_data, "logs": logs, "format": mcp_format}
+            logs.append("⚠️ Echo server detected - no real data available")
+            return {"error": "No data found", "logs": logs}
 
         parsed_data = parse_mcp_response(raw_data, mcp_format)
         logs.append(f"✅ MCP success for {city} (format: {mcp_format})")
