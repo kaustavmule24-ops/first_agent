@@ -204,11 +204,8 @@ Additional data from custom MCPs:
 Provide a helpful response incorporating both weather data and custom MCP insights. Be concise."""
             custom_text = generate_llm_text(custom_prompt)
         else:
-            # LLM disabled: show raw custom MCP data
-            raw_parts = []
-            for r in custom_mcp_results:
-                raw_parts.append(f"📡 **{r['server_name']}**:\n```json\n{json.dumps(r['data'], indent=2)}\n```")
-            custom_text = "\n\n".join(raw_parts)
+            # LLM disabled: NO ugly markdown text — frontend will render dropdown from custom_mcp_results
+            custom_text = ""
 
     # If no custom MCPs, use default LLM insights on weather only
     elif llm_enabled:

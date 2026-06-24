@@ -1621,6 +1621,171 @@ body {
     }
 }
 
+/* ==============================
+   FUTURISTIC MCP DROPDOWN
+   ============================== */
+
+.mcp-dropdown {
+    width: 100%;
+    max-width: 380px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.1) inset;
+    animation: hudEntry 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mcp-dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    background: rgba(99, 102, 241, 0.05);
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.mcp-dropdown-header:hover {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.mcp-dropdown-header.active {
+    border-bottom-color: var(--border);
+}
+
+.mcp-dropdown-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.mcp-dropdown-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.mcp-dropdown-arrow {
+    font-size: 12px;
+    color: var(--primary);
+    transition: transform 0.3s ease;
+}
+
+.mcp-dropdown-header.active .mcp-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.mcp-dropdown-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    opacity: 0;
+}
+
+.mcp-dropdown-body.open {
+    max-height: 600px;
+    opacity: 1;
+}
+
+.mcp-dropdown-content {
+    padding: 12px 16px 16px;
+}
+
+/* Server section inside dropdown */
+.mcp-server-section {
+    margin-bottom: 12px;
+}
+
+.mcp-server-section:last-child {
+    margin-bottom: 0;
+}
+
+.mcp-server-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.mcp-server-header::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--success);
+}
+
+/* Data grid inside dropdown */
+.mcp-data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+.mcp-data-cell {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 10px;
+    transition: all 0.2s;
+}
+
+.mcp-data-cell:hover {
+    background: rgba(99, 102, 241, 0.04);
+    border-color: rgba(99, 102, 241, 0.15);
+}
+
+.mcp-data-label {
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mcp-data-value {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+}
+
+.mcp-data-value.null {
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+/* Desktop: wider dropdown */
+@media (min-width: 521px) {
+    .mcp-dropdown {
+        max-width: none;
+    }
+}
+
 
 </style>
 <base target="_blank">
@@ -2424,6 +2589,78 @@ function toggleExpanded(cardId) {
     }
 }
 
+function renderMcpDropdown(customMcpResults) {
+    if (!customMcpResults || customMcpResults.length === 0) return '';
+    
+    const dropdownId = 'mcp-drop-' + Date.now();
+    
+    // Build server sections
+    const sectionsHTML = customMcpResults.map(custom => {
+        const data = custom.data || {};
+        const serverName = custom.server_name || 'Custom MCP';
+        
+        // Build data cells
+        const cells = [];
+        for (const [key, value] of Object.entries(data)) {
+            if (value === null || value === undefined) continue;
+            if (typeof value === 'object') continue;
+            if (key.startsWith('_')) continue;
+            if (key === 'source') continue;
+            
+            cells.push(`
+                <div class="mcp-data-cell">
+                    <div class="mcp-data-label">${getFieldIcon(key)} ${key.replace(/_/g, ' ')}</div>
+                    <div class="mcp-data-value ${value === null ? 'null' : ''}">${formatValue(key, value)}</div>
+                </div>
+            `);
+        }
+        
+        return `
+            <div class="mcp-server-section">
+                <div class="mcp-server-header">
+                    <span>🔗 ${serverName}</span>
+                    <span style="margin-left:auto; font-size:10px; color:var(--text-secondary); text-transform:none; letter-spacing:0;">${custom.format || 'custom'}</span>
+                </div>
+                <div class="mcp-data-grid">
+                    ${cells.join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    return `
+    <div class="mcp-dropdown" id="${dropdownId}">
+        <div class="mcp-dropdown-header" onclick="toggleMcpDropdown('${dropdownId}')">
+            <div class="mcp-dropdown-title">
+                <div class="mcp-dropdown-icon">📡</div>
+                <span>Custom MCP Data (${customMcpResults.length} source${customMcpResults.length > 1 ? 's' : ''})</span>
+            </div>
+            <div class="mcp-dropdown-arrow">▼</div>
+        </div>
+        <div class="mcp-dropdown-body" id="${dropdownId}-body">
+            <div class="mcp-dropdown-content">
+                ${sectionsHTML}
+            </div>
+        </div>
+    </div>
+    `;
+}
+
+function toggleMcpDropdown(dropdownId) {
+    const header = document.querySelector(`#${dropdownId} .mcp-dropdown-header`);
+    const body = document.getElementById(dropdownId + '-body');
+    const isOpen = body.classList.contains('open');
+    
+    if (isOpen) {
+        body.classList.remove('open');
+        header.classList.remove('active');
+    } else {
+        body.classList.add('open');
+        header.classList.add('active');
+    }
+}
+
+
 function renderCompareStrip(results) {
     // Backend sends raw data array, not {error, data} wrappers
     const cards = results.map(d => {
@@ -2772,9 +3009,15 @@ async function send() {
                 addMsg(hudHTML, "bot", true);
             }
             
-            // 2. Show LLM-formatted text only (no raw JSON blocks)
+            // 2. Show LLM-formatted text (when LLM is ON)
             if (data.custom_text) {
                 addMsg(data.custom_text, "bot");
+            }
+            
+            // 3. Show futuristic MCP dropdown (ONLY when LLM is OFF)
+            if (!settings.llmEnabled && data.custom_mcp_results && data.custom_mcp_results.length > 0) {
+                const dropdownHTML = renderMcpDropdown(data.custom_mcp_results);
+                addMsg(dropdownHTML, "bot", true);
             }
         } else if (data.type === "compare") {
             // Multi-city → Show compare strip + full HUD cards in responsive grid
