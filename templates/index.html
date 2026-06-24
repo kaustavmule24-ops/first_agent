@@ -1625,6 +1625,7 @@ body {
 </style>
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -2480,7 +2481,9 @@ function addMsg(text, type, isCard = false) {
     
     // NEW: Scroll so new message top aligns with chat container top
     setTimeout(() => {
-        div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const chat = document.getElementById('chat');
+        const targetScroll = div.offsetTop - chat.offsetTop;
+        chat.scrollTo({ top: targetScroll, behavior: 'smooth' });
     }, 50);
     
     return div;
@@ -2504,7 +2507,9 @@ function addSuggestions(options) {
     
     // NEW: Scroll so suggestions top aligns with chat container top
     setTimeout(() => {
-        div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const chat = document.getElementById('chat');
+        const targetScroll = div.offsetTop - chat.offsetTop;
+        chat.scrollTo({ top: targetScroll, behavior: 'smooth' });
     }, 50);
 }
 
@@ -2708,7 +2713,8 @@ async function send() {
             gridMsg.appendChild(gridContainer);
             chat.appendChild(gridMsg);
             setTimeout(() => {
-                gridMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const targetScroll = gridMsg.offsetTop - chat.offsetTop;
+                chat.scrollTo({ top: targetScroll, behavior: 'smooth' });
             }, 50);
         } else if (data.type === "text") {
             // General LLM response (no city needed)
