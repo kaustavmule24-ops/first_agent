@@ -207,7 +207,8 @@ Provide a compact, space-efficient response. Rules:
 - Each bullet must be ONE line: "- Label: Value"
 - NO extra blank lines between sections
 - NO closing message like "Stay comfortable"
-- Max 8-10 bullet points total
+- Max 6-8 bullet points total
+- Each bullet MAX 40 characters
 - Keep it under 150 words
 
 Example format:
