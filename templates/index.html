@@ -358,6 +358,21 @@ body {
     text-align: right;
 }
 
+.msg.bot ul {
+    margin: 8px 0;
+    padding-left: 16px;
+}
+
+.msg.bot li {
+    margin: 4px 0;
+    color: var(--text-secondary);
+}
+
+.msg.bot strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
 /* Typing indicator */
 .typing-container {
     display: none;
@@ -2783,6 +2798,17 @@ function initWelcome() {
     ]);
 }
 
+function mdToHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/^- (.*?)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*?<\/li>\n?)+/gs, '<ul>$&</ul>')
+        .replace(/\n/g, '<br>')
+        .replace(/<\/ul><br>/g, '</ul>');
+}
+
 function addMsg(text, type, isCard = false) {
     let chat = document.getElementById("chat");
     let div = document.createElement("div");
@@ -2800,10 +2826,10 @@ function addMsg(text, type, isCard = false) {
         hour12: true 
     });
     
-    div.innerHTML = text + `<div class="msg-time">${time}</div>`;
+    const htmlContent = (type === 'bot' && !isCard) ? mdToHtml(text) : text;
+    div.innerHTML = htmlContent + `<div class="msg-time">${time}</div>`;
     chat.appendChild(div);
     
-    // NEW: Scroll so new message top aligns with chat container top
     setTimeout(() => {
         const chat = document.getElementById('chat');
         const targetScroll = div.offsetTop - chat.offsetTop;

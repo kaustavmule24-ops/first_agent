@@ -201,7 +201,33 @@ Weather data: {json.dumps(hud_data, indent=2)}
 Additional data from custom MCPs:
 {json.dumps(custom_mcp_results, indent=2)}
 
-Provide a helpful response incorporating both weather data and custom MCP insights. Be concise."""
+Provide a helpful, well-structured response. Use clear sections with headers.
+Format each section like this example:
+
+Delhi Weather Update (25 June 2026, 03:03 PM)
+
+Weather Conditions:
+- Temperature: 39.5°C
+- Windspeed: 3.1 m/s
+- Wind Direction: 324° (North-West)
+- Partly cloudy sky with 23% cloud cover
+
+Air Quality:
+- US AQI: 194 (Unhealthy)
+- PM 2.5: 85.4 μg/m³ (Moderate)
+
+Additional Insights:
+- Humidity: 30%
+- UV Index: 5.85 (Moderate risk)
+- Solar Radiation: 674 W/m²
+- Atmospheric Pressure: 974.7 hPa
+- Visibility: 13.9 km
+- Dew Point: 18.5°C
+
+Stay comfortable and aware of your surroundings.
+
+Use markdown **bold** for section headers. Use bullet lists (-) for data points.
+Keep it concise and readable."""
             custom_text = generate_llm_text(custom_prompt)
         else:
             # LLM disabled: NO ugly markdown text — frontend will render dropdown from custom_mcp_results
