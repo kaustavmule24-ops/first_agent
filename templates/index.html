@@ -382,6 +382,46 @@ body {
     display: none;
 }
 
+/* 3-column section grid for LLM responses */
+.msg.bot .section-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.msg.bot .section-col {
+    min-width: 0;
+}
+
+.msg.bot .section-header {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.msg.bot .section-col ul {
+    margin: 0;
+    padding-left: 14px;
+}
+
+.msg.bot .section-col li {
+    margin: 2px 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Mobile: stack to 1 column */
+@media (max-width: 700px) {
+    .msg.bot .section-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Typing indicator */
 .typing-container {
     display: none;
@@ -2810,13 +2850,31 @@ function initWelcome() {
 
 function mdToHtml(text) {
     if (!text) return '';
-    return text
+    
+    // Step 1: Convert markdown basics
+    let html = text
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/^- (.*?)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*?<\/li>(\n?))+/gs, '<ul>$&</ul>')
-        .replace(/<\/ul>\n?<br>/g, '</ul>')
+        .replace(/^- (.*?)$/gm, '<li>$1</li>');
+    
+    // Step 2: Split into sections by bold headers, wrap each in a column div
+    // Pattern: bold text followed by bullet list until next bold or end
+    html = html.replace(
+        /(<strong>.*?<\/strong>)\s*(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs,
+        '<div class="section-col"><div class="section-header">$1</div><ul>$2</ul></div>'
+    );
+    
+    // Step 3: Wrap all section-col divs in a grid
+    if (html.includes('class="section-col"')) {
+        html = '<div class="section-grid">' + html + '</div>';
+    }
+    
+    // Step 4: Clean up remaining line breaks
+    html = html
+        .replace(/\n\n+/g, '\n')
         .replace(/\n/g, '<br>');
+    
+    return html;
 }
 
 function addMsg(text, type, isCard = false) {
