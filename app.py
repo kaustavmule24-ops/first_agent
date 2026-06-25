@@ -257,29 +257,37 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
                     deduped.append(r)
             relevant_mcp_results = deduped
 
-            # --- STEP 2: Send only relevant data to LLM ---
-            if relevant_mcp_results:
-                custom_prompt = f"""You are GeoBot, a location intelligence assistant.
+            # --- STEP 2: Build LLM prompt ---
+            # Always include relevant MCP data (if any) in the prompt context
+            mcp_context = json.dumps(relevant_mcp_results, indent=2) if relevant_mcp_results else "No relevant external MCP data available."
+
+            custom_prompt = f"""You are GeoBot, a location intelligence assistant.
 
 The user asked: "{user_input}"
 
 Relevant external MCP data:
-{json.dumps(relevant_mcp_results, indent=2)}
+{mcp_context}
 
-Task: Answer the user's question using ONLY the Relevant external MCP data above.
-- Write a brief, natural answer in plain flowing text citing specific details from the data.
-- Do NOT mention weather, temperature, or general city info unless the user explicitly asked for it.
+Task: Answer the user's question directly in plain flowing text.
+- If the Relevant external MCP data above is useful and matches the user's question, use it as the primary source and cite specific details.
+- If the Relevant external MCP data is NOT useful or does not match the user's question, answer from your own general knowledge about the topic. Do NOT repeat the default weather data — it is already displayed in the HUD card.
+- In ALL cases, end your response with this exact note on a new line: (Note: No relevant data returned from connected MCP.)
 - Do NOT use bullet points, headers, or numbered lists. Max 100 words. No emojis unless the user used them."""
-                custom_text = generate_llm_text(custom_prompt)
-            else:
-                custom_text = "(Note: No relevant data returned from connected MCP.)"
+            custom_text = generate_llm_text(custom_prompt)
         else:
             # LLM disabled: frontend will render dropdown from custom_mcp_results
             custom_text = ""
 
-    # If no custom MCPs configured, do NOT generate default LLM insights — HUD already shows weather data
+    # If no custom MCPs configured, still use LLM for general knowledge + note
     elif llm_enabled:
-        custom_text = "(Note: No relevant data returned from connected MCP.)"
+        fallback_prompt = f"""You are GeoBot, a location intelligence assistant.
+
+The user asked: "{user_input}"
+
+Task: Answer the user's question directly in plain flowing text from your own general knowledge. Do NOT repeat the default weather data — it is already displayed in the HUD card.
+End your response with this exact note on a new line: (Note: No relevant data returned from connected MCP.)
+Do NOT use bullet points, headers, or numbered lists. Max 100 words. No emojis unless the user used them."""
+        custom_text = generate_llm_text(fallback_prompt)
 
     # Merge custom MCP flat data into hud_data for unified rendering
     merged_hud = dict(hud_data)
