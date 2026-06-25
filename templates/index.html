@@ -359,18 +359,27 @@ body {
 }
 
 .msg.bot ul {
-    margin: 8px 0;
+    margin: 4px 0;
     padding-left: 16px;
 }
 
 .msg.bot li {
-    margin: 4px 0;
+    margin: 2px 0;
     color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.msg.bot li + li {
+    margin-top: 2px;
 }
 
 .msg.bot strong {
     color: var(--text-primary);
     font-weight: 600;
+}
+
+.msg.bot br + br {
+    display: none;
 }
 
 /* Typing indicator */
@@ -2809,6 +2818,17 @@ function mdToHtml(text) {
         .replace(/<\/ul><br>/g, '</ul>');
 }
 
+function mdToHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/^- (.*?)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*?<\/li>(\n?))+/gs, '<ul>$&</ul>')
+        .replace(/<\/ul>\n?<br>/g, '</ul>')
+        .replace(/\n/g, '<br>');
+}
+
 function addMsg(text, type, isCard = false) {
     let chat = document.getElementById("chat");
     let div = document.createElement("div");
@@ -2838,7 +2858,6 @@ function addMsg(text, type, isCard = false) {
     
     return div;
 }
-
 function addSuggestions(options) {
     let chat = document.getElementById("chat");
     let div = document.createElement("div");
