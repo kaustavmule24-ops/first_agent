@@ -193,19 +193,24 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
     custom_text = ""
     if custom_mcp_results:
         if llm_enabled:
-            # Send custom MCP data to LLM for formatting
-            custom_prompt = f"""The user asked: "{user_input}"
+            # Send custom MCP data to LLM for formatting with relevance check
+            custom_prompt = f"""You are GeoBot, a location intelligence assistant.
 
-Here is the real-time data for {hud_data.get('city', 'this city')}:
+The user asked: "{user_input}"
+
+Default weather/location data for {hud_data.get('city', 'this city')}:
 {json.dumps(hud_data, indent=2)}
 
-Additional data from custom sources:
+External MCP data:
 {json.dumps(custom_mcp_results, indent=2)}
 
-Write a brief, natural-sounding weather insight (2-3 sentences) that directly answers the user's question. Mention the temperature, conditions, and one interesting observation. Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text like a friendly assistant. Keep it under 80 words. No emojis unless the user used them."""
+Task: Answer the user's question directly.
+- If the External MCP data above is relevant to "{user_input}", use it as the primary source for your answer and cite specific details.
+- If the External MCP data is NOT relevant (e.g., user asked for hospitals but MCP returned weather or nothing useful), answer based on the default weather data (if relevant to the question) or your own general knowledge. End your response with this exact note: (Note: No relevant data returned from connected MCP.)
+- Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text like a friendly assistant. Max 100 words. No emojis unless the user used them."""
             custom_text = generate_llm_text(custom_prompt)
         else:
-            # LLM disabled: NO ugly markdown text — frontend will render dropdown from custom_mcp_results
+            # LLM disabled: frontend will render dropdown from custom_mcp_results
             custom_text = ""
 
     # If no custom MCPs, use default LLM insights on weather only
