@@ -233,6 +233,7 @@ Task: Answer the user's question directly.
     }
 
 @app.get("/health")
+@app.head("/health")
 def health():
     return {"status": "ok"}
 
