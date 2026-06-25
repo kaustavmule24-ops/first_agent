@@ -2807,16 +2807,6 @@ function initWelcome() {
     ]);
 }
 
-function mdToHtml(text) {
-    if (!text) return '';
-    return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/^- (.*?)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*?<\/li>\n?)+/gs, '<ul>$&</ul>')
-        .replace(/\n/g, '<br>')
-        .replace(/<\/ul><br>/g, '</ul>');
-}
 
 function mdToHtml(text) {
     if (!text) return '';

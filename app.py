@@ -227,6 +227,7 @@ Additional Insights:
 Stay comfortable and aware of your surroundings.
 
 Use markdown **bold** for section headers. Use bullet lists (-) for data points.
+Do NOT add blank lines between bullet points. Keep them compact.
 Keep it concise and readable."""
             custom_text = generate_llm_text(custom_prompt)
         else:
