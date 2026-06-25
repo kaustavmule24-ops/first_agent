@@ -196,35 +196,13 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
             # Send custom MCP data to LLM for formatting
             custom_prompt = f"""The user asked: "{user_input}"
 
-Data: {json.dumps(hud_data, indent=2)}
+Here is the real-time data for {hud_data.get('city', 'this city')}:
+{json.dumps(hud_data, indent=2)}
 
-Custom MCPs: {json.dumps(custom_mcp_results, indent=2)}
+Additional data from custom sources:
+{json.dumps(custom_mcp_results, indent=2)}
 
-Respond in 3 compact sections: **Weather**, **Air Quality**, **Extra**.
-Rules:
-- Use **bold** for headers only
-- Use bullet lists (-) with NO blank lines between items
-- Each bullet ONE line: "- Label: Value"
-- NO blank lines between sections
-- NO intro or closing sentences
-- Max 8 bullets total
-- Each bullet under 35 chars
-- Under 120 words total
-
-Example:
-**Weather**
-- Temp: 28.8°C
-- Wind: 20.5 m/s (96°)
-- Time: 10:45
-
-**Air Quality**
-- AQI: 59 (Moderate)
-- PM2.5: 11.7 μg/m³
-
-**Extra**
-- Humidity: 54%
-- UV: 5.65 (Moderate)
-- Pressure: 1015.3 hPa"""
+Write a brief, natural-sounding weather insight (2-3 sentences) that directly answers the user's question. Mention the temperature, conditions, and one interesting observation. Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text like a friendly assistant. Keep it under 80 words. No emojis unless the user used them."""
             custom_text = generate_llm_text(custom_prompt)
         else:
             # LLM disabled: NO ugly markdown text — frontend will render dropdown from custom_mcp_results
