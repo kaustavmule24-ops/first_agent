@@ -342,6 +342,8 @@ body {
     color: var(--text-primary);
     margin-right: auto;
     border-bottom-left-radius: 4px;
+    padding: 10px 14px;
+    line-height: 1.45;
 }
 
 /* Desktop: wider bot messages for cards */
@@ -386,33 +388,36 @@ body {
 .msg.bot .section-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-top: 8px;
+    gap: 8px 12px;
+    margin-top: 4px;
     width: 100%;
 }
 
 .msg.bot .section-col {
     min-width: 0;
+    padding: 4px 0;
 }
 
 .msg.bot .section-header {
     font-weight: 600;
     color: var(--text-primary);
-    font-size: 13px;
-    margin-bottom: 6px;
+    font-size: 12px;
+    margin-bottom: 2px;
     display: block;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px;
 }
 
 .msg.bot .section-col ul {
     margin: 0;
-    padding-left: 14px;
+    padding-left: 12px;
 }
 
 .msg.bot .section-col li {
-    margin: 2px 0;
+    margin: 0;
     color: var(--text-secondary);
-    font-size: 12px;
-    line-height: 1.4;
+    font-size: 11px;
+    line-height: 1.35;
 }
 
 /* Mobile: stack to 1 column */
@@ -741,8 +746,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px 16px;
-    gap: 16px;
+    padding: 12px 16px;
+    gap: 12px;
     position: relative;
 }
 
@@ -816,8 +821,8 @@ body {
 
 /* AQI Bar */
 .hud-aqi-section {
-    margin: 0 14px 12px;
-    padding: 10px 12px;
+    margin: 0 14px 8px;
+    padding: 8px 10px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.04);
@@ -2858,7 +2863,6 @@ function mdToHtml(text) {
         .replace(/^- (.*?)$/gm, '<li>$1</li>');
     
     // Step 2: Split into sections by bold headers, wrap each in a column div
-    // Pattern: bold text followed by bullet list until next bold or end
     html = html.replace(
         /(<strong>.*?<\/strong>)\s*(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs,
         '<div class="section-col"><div class="section-header">$1</div><ul>$2</ul></div>'
@@ -2869,9 +2873,9 @@ function mdToHtml(text) {
         html = '<div class="section-grid">' + html + '</div>';
     }
     
-    // Step 4: Clean up remaining line breaks
+    // Step 4: Clean up - single breaks only, no double spacing
     html = html
-        .replace(/\n\n+/g, '\n')
+        .replace(/\n{3,}/g, '\n')
         .replace(/\n/g, '<br>');
     
     return html;
