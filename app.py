@@ -217,32 +217,30 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
                     "weather", "aqi", "air", "quality", "time", "coordinate", "temperature",
                     "city", "location", "data", "info", "information"
                 }
-                import re
                 query_words = set(w.lower() for w in re.findall(r"[a-zA-Z]+", query_lower) if len(w) > 2 and w.lower() not in stop_words)
                 if not query_words:
                     return True  # If no meaningful keywords, keep all
 
                 # Check against all keys and string values in the MCP data
                 all_text = " ".join(str(k) + " " + str(v) for k, v in data.items() if not k.startswith("_")).lower()
-                # Also check server name
+                # Also check server name and URL for hints
                 all_text += " " + mcp_result.get("server_name", "").lower()
+                all_text += " " + mcp_result.get("server_url", "").lower()
 
                 # A result is relevant if at least one query word appears in the data text
                 matches = sum(1 for w in query_words if w in all_text)
-                # Require at least 1 match, or if query has only 1 word, require exact match
                 return matches >= 1
 
             # Filter to only relevant MCP results
             relevant_mcp_results = [r for r in custom_mcp_results if is_relevant_to_query(r, user_input)]
 
-            # Also keep results that have non-empty, non-weather data (heuristic: if keys are very different from weather)
+            # Also keep results that have non-empty, non-weather data (heuristic)
             weather_keys = {"temperature", "weathercode", "is_day", "windspeed", "winddirection", "humidity", "pressure", "cloudcover", "precipitation", "visibility", "uv_index", "dew_point", "feels_like", "temp_min", "temp_max"}
             for r in custom_mcp_results:
                 if r in relevant_mcp_results:
                     continue
                 data = r.get("data", {})
                 data_keys = set(k.lower() for k in data.keys() if not k.startswith("_"))
-                # If data has keys that are NOT weather-related, it might be relevant
                 non_weather_keys = data_keys - weather_keys
                 if non_weather_keys and len(non_weather_keys) >= len(data_keys) * 0.3:
                     relevant_mcp_results.append(r)
@@ -257,37 +255,49 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
                     deduped.append(r)
             relevant_mcp_results = deduped
 
-            # --- STEP 2: Build LLM prompt ---
-            # Always include relevant MCP data (if any) in the prompt context
-            mcp_context = json.dumps(relevant_mcp_results, indent=2) if relevant_mcp_results else "No relevant external MCP data available."
-
-            custom_prompt = f"""You are GeoBot, a location intelligence assistant.
+            # --- STEP 2: Conditionally build LLM prompt ---
+            if relevant_mcp_results:
+                # RELEVANT data found → use ONLY external MCP data, NO note
+                custom_prompt = f"""You are GeoBot, a location intelligence assistant.
 
 The user asked: "{user_input}"
 
-Relevant external MCP data:
-{mcp_context}
+External MCP data:
+{json.dumps(relevant_mcp_results, indent=2)}
 
-Task: Answer the user's question directly in plain flowing text.
-- If the Relevant external MCP data above is useful and matches the user's question, use it as the primary source and cite specific details.
-- If the Relevant external MCP data is NOT useful or does not match the user's question, answer from your own general knowledge about the topic. Do NOT repeat the default weather data — it is already displayed in the HUD card.
-- In ALL cases, end your response with this exact note on a new line: (Note: No relevant data returned from connected MCP.)
-- Do NOT use bullet points, headers, or numbered lists. Max 100 words. No emojis unless the user used them."""
-            custom_text = generate_llm_text(custom_prompt)
+Task: Answer the user's question using ONLY the External MCP data above.
+Write a brief, natural answer in plain flowing text citing specific details from the data.
+Do NOT mention weather, temperature, or general city info unless the user explicitly asked for it.
+Do NOT use bullet points, headers, or numbered lists. Max 100 words. No emojis unless the user used them."""
+                custom_text = generate_llm_text(custom_prompt)
+            else:
+                # NO relevant data → general knowledge + programmatically appended note
+                fallback_prompt = f"""You are GeoBot, a location intelligence assistant.
+
+The user asked: "{user_input}"
+
+Task: Answer the user's question directly in plain flowing text from your own general knowledge. Do NOT repeat the default weather data — it is already displayed in the HUD card.
+Do NOT use bullet points, headers, or numbered lists. Max 100 words. No emojis unless the user used them."""
+                custom_text = generate_llm_text(fallback_prompt)
+                custom_text = custom_text.strip() + "
+
+(Note: No relevant data returned from connected MCP.)"
         else:
             # LLM disabled: frontend will render dropdown from custom_mcp_results
             custom_text = ""
 
-    # If no custom MCPs configured, still use LLM for general knowledge + note
+    # If no custom MCPs configured → general knowledge + programmatically appended note
     elif llm_enabled:
         fallback_prompt = f"""You are GeoBot, a location intelligence assistant.
 
 The user asked: "{user_input}"
 
 Task: Answer the user's question directly in plain flowing text from your own general knowledge. Do NOT repeat the default weather data — it is already displayed in the HUD card.
-End your response with this exact note on a new line: (Note: No relevant data returned from connected MCP.)
 Do NOT use bullet points, headers, or numbered lists. Max 100 words. No emojis unless the user used them."""
         custom_text = generate_llm_text(fallback_prompt)
+        custom_text = custom_text.strip() + "
+
+(Note: No relevant data returned from connected MCP.)"
 
     # Merge custom MCP flat data into hud_data for unified rendering
     merged_hud = dict(hud_data)
