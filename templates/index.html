@@ -349,13 +349,14 @@ body {
 /* === DYNAMIC PAIR LAYOUT: HUD + Text side by side === */
 .msg-pair {
     display: grid;
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: minmax(300px, 380px) 1fr;
     gap: 16px;
     align-items: start;
     padding: 8px !important;
     background: transparent !important;
     border: none !important;
     max-width: 100% !important;
+    width: 100%;
 }
 
 .msg-pair-card {
@@ -377,12 +378,13 @@ body {
     line-height: 1.4;
     container-type: inline-size;
     container-name: pairtext;
+    overflow: hidden; /* prevent text spill */
 }
 
 /* Dynamic columns inside the text panel */
 .msg-pair-text .section-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 6px 10px;
     margin-top: 4px;
     width: 100%;
@@ -401,24 +403,47 @@ body {
     display: block;
     border-bottom: 1px solid var(--border);
     padding-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .msg-pair-text .section-col ul {
     margin: 0;
-    padding-left: 10px;
+    padding-left: 12px;
 }
 
 .msg-pair-text .section-col li {
     margin: 0;
     color: var(--text-secondary);
     font-size: 11px;
-    line-height: 1.3;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.35;
+}
+
+/* Wider text panel → more columns, bigger text */
+@container pairtext (min-width: 400px) {
+    .msg-pair-text .section-grid {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 8px 14px;
+    }
+    .msg-pair-text .section-header { font-size: 12px; }
+    .msg-pair-text .section-col li { font-size: 12px; }
+}
+
+/* Narrow text panel → fewer columns */
+@container pairtext (max-width: 260px) {
+    .msg-pair-text .section-grid {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+}
+
+/* Mobile: stack vertically */
+@media (max-width: 768px) {
+    .msg-pair {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+    .msg-pair-card .hud-card {
+        max-width: 100%;
+    }
 }
 
 /* Wider text panel → more columns, bigger text */
@@ -462,6 +487,9 @@ body {
     opacity: 0.5;
     margin-top: 6px;
     text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .msg.bot ul {
@@ -2983,10 +3011,11 @@ function mdToHtml(text) {
         html = '<div class="section-grid">' + html + '</div>';
     }
     
-    // Clean breaks: collapse 2+ newlines to 1, then convert
+    // Clean breaks: collapse 3+ newlines to 2, 2 newlines to <br>, single to space
     html = html
-        .replace(/\n{2,}/g, '\n')
-        .replace(/\n/g, '<br>');
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, ' ');
     
     return html;
 }
@@ -3230,7 +3259,8 @@ async function send() {
                 textWrap.className = 'msg-pair-text';
 
                 if (hasText) {
-                    textWrap.innerHTML = mdToHtml(data.custom_text) + `<div class="msg-time">${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}</div>`;
+                    const timeStr = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+                    textWrap.innerHTML = mdToHtml(data.custom_text) + `<div class="msg-time">${timeStr}</div>`;
                 }
                 if (hasDropdown) {
                     textWrap.innerHTML += renderMcpDropdown(data.custom_mcp_results);

@@ -196,35 +196,35 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
             # Send custom MCP data to LLM for formatting
             custom_prompt = f"""The user asked: "{user_input}"
 
-Weather data: {json.dumps(hud_data, indent=2)}
+Data: {json.dumps(hud_data, indent=2)}
 
-Additional data from custom MCPs:
-{json.dumps(custom_mcp_results, indent=2)}
+Custom MCPs: {json.dumps(custom_mcp_results, indent=2)}
 
-Provide a compact, space-efficient response. Rules:
-- Use **bold** for section headers ONLY (3 sections max: Weather, Air Quality, Extra)
+Respond in 3 compact sections: **Weather**, **Air Quality**, **Extra**.
+Rules:
+- Use **bold** for headers only
 - Use bullet lists (-) with NO blank lines between items
-- Each bullet must be ONE line: "- Label: Value"
-- NO extra blank lines between sections
-- NO closing message like "Stay comfortable"
-- Max 6-8 bullet points total
-- Each bullet MAX 40 characters
-- Keep it under 150 words
+- Each bullet ONE line: "- Label: Value"
+- NO blank lines between sections
+- NO intro or closing sentences
+- Max 8 bullets total
+- Each bullet under 35 chars
+- Under 120 words total
 
-Example format:
+Example:
 **Weather**
-- Temperature: 39.5°C
-- Wind: 3.1 m/s NW
-- Clouds: 23%
+- Temp: 28.8°C
+- Wind: 20.5 m/s (96°)
+- Time: 10:45
 
 **Air Quality**
-- AQI: 194 (Unhealthy)
-- PM2.5: 85.4 μg/m³
+- AQI: 59 (Moderate)
+- PM2.5: 11.7 μg/m³
 
 **Extra**
-- Humidity: 30%
-- UV: 5.85 (Moderate)
-- Pressure: 974.7 hPa"""
+- Humidity: 54%
+- UV: 5.65 (Moderate)
+- Pressure: 1015.3 hPa"""
             custom_text = generate_llm_text(custom_prompt)
         else:
             # LLM disabled: NO ugly markdown text — frontend will render dropdown from custom_mcp_results
