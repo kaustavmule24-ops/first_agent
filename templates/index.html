@@ -45,15 +45,17 @@ body {
     padding: 0;
 }
 
-/* Animated background mesh */
+/* Weather-themed animated background */
 .bg-mesh {
     position: fixed;
     inset: 0;
     z-index: 0;
     background: 
-        radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+        radial-gradient(ellipse at 10% 20%, rgba(59, 130, 246, 0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 80%, rgba(16, 185, 129, 0.15) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 50%, rgba(245, 158, 11, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 10%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+        linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0f172a 100%);
     animation: meshMove 20s ease-in-out infinite;
 }
 
@@ -92,29 +94,30 @@ body {
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 100%;          /* full width on desktop */
-    height: 100vh;            /* full height on desktop */
-    max-height: none;
+    max-width: 480px;         /* chat box width on desktop */
+    height: 85vh;             /* chat box height on desktop */
+    max-height: 800px;
     background: var(--bg-glass);
     backdrop-filter: blur(20px);
     border: 1px solid var(--border);
-    border-radius: 0;         /* no radius on desktop */
+    border-radius: 28px;      /* rounded on desktop */
     display: flex;
     flex-direction: column;
     overflow: hidden;
     box-shadow: 
         0 25px 50px -12px rgba(0, 0, 0, 0.5),
         0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    margin: auto;
 }
 
-/* Mobile: card style */
+/* Mobile: full screen */
 @media (max-width: 520px) {
     .app {
-        max-width: 480px;     /* card width on mobile */
-        height: 95vh;
-        max-height: 900px;
-        border-radius: 28px;  /* rounded corners on mobile */
-        margin: auto;
+        max-width: 100%;      /* full width on mobile */
+        height: 100vh;        /* full height on mobile */
+        max-height: none;
+        border-radius: 0;     /* no radius on mobile */
+        margin: 0;
     }
     
     body {
@@ -1581,44 +1584,7 @@ body {
 .msg.log .log-entry.warning { color: var(--warning); }
 .msg.log .log-entry.info { color: var(--info); }
 
-/* Responsive */
-@media (max-width: 520px) {
-    .app {
-        height: 100vh;
-        max-height: none;
-        border-radius: 0;
-        border: none;
-    }
-    
-    body {
-        padding: 0;
-    }
-    
-    .bg-mesh, .particles {
-        display: none;
-    }
-    
-    .clear-btn, .settings-btn {
-        top: 12px;
-    }
-    
-    .settings-btn {
-        left: 12px;
-    }
-    
-    .clear-btn {
-        right: 12px;
-    }
-    
-    .hud-card {
-        max-width: 100%;
-    }
-    
-    .compare-mini {
-        min-width: 120px;
-        padding: 12px;
-    }
-}
+
 
 
 /* Compare strip enhancements */
@@ -3236,14 +3202,12 @@ async function send() {
                 });
             }, 100);
         }
-        else if (data.type === "hud") {
-            // City query → Show HUD card (legacy fallback)
-            const hudHTML = renderHUDCard(data.response, "Weather MCP");
+                else if (data.type === "hud") {
+            // City query → Show HUD card with LLM text inside
+            const hudHTML = renderHUDCard(data.response, "Weather MCP", data.llm_text || '');
             addMsg(hudHTML, "bot", true);
-            // Show LLM insights if available
-            if (data.llm_text) {
-                addMsg(data.llm_text, "bot");
-            }
+        }
+
                 } else if (data.type === "hud_with_custom") {
             const hasHud = data.hud_data;
             const hasText = data.custom_text;
@@ -3279,7 +3243,7 @@ async function send() {
             gridContainer.id = gridId;
             
             for (const cityData of data.response) {
-                const hudHTML = renderHUDCard(cityData, "Weather MCP");
+                const hudHTML = renderHUDCard(cityData, "Weather MCP", data.llm_text || '');
                 const cardWrapper = document.createElement('div');
                 cardWrapper.className = 'compare-grid-item';
                 cardWrapper.innerHTML = hudHTML;
