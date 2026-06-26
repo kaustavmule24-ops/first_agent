@@ -3152,7 +3152,8 @@ async function send() {
             body: JSON.stringify({ 
                 message: text, 
                 llm_enabled: settings.llmEnabled,
-                mcp_servers: enabledServers  // Backend will filter isDefault itself
+                mcp_enabled: settings.mcpEnabled,
+                mcp_servers: enabledServers
             })
         });
 

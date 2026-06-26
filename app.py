@@ -63,6 +63,7 @@ async def chat(request: Request):
         body = await request.json()
         user_input = body.get("message", "").strip()
         llm_enabled = body.get("llm_enabled", True)
+        mcp_enabled = body.get("mcp_enabled", False)
         mcp_servers = body.get("mcp_servers", [])  # ← custom MCP servers from frontend
 
         if not user_input:
@@ -72,7 +73,7 @@ async def chat(request: Request):
             )
 
         # Pass all MCP servers to process_query (it will handle default vs custom)
-        result = await asyncio.to_thread(process_query, user_input, llm_enabled, mcp_servers)
+        result = await asyncio.to_thread(process_query, user_input, llm_enabled, mcp_servers, mcp_enabled)
         return result
 
     except Exception as e:
@@ -82,7 +83,7 @@ async def chat(request: Request):
         )
 
 
-def process_query(user_input: str, llm_enabled: bool, mcp_servers=None):
+def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_master_enabled=False):
     all_logs = []
     cities = extract_cities(user_input)
     mcp_servers = mcp_servers or []
@@ -106,16 +107,14 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None):
             }
 
     # ======================
-    # CHECK IF ANY MCP IS ENABLED
+    # CHECK IF MASTER MCP IS ENABLED
     # ======================
-    enabled_servers = [s for s in mcp_servers if s.get("enabled", False)]
-    
-    if not enabled_servers:
-        # No MCP connected — tell user to connect one
+    if not mcp_master_enabled:
+        # Master MCP toggle is OFF — tell user to enable it
         return {
             "type": "need_mcp",
-            "response": "🔌 No MCP server connected.<br><br>To get weather, AQI, and location data, please connect an MCP server first:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Go to '🔗 MCP Servers'<br>3. Click '➕ Add New Server' and enter your MCP URL<br>4. Enable the server using the toggle<br><br>You can use any MCP server that supports weather/location data.",
-            "mcp_logs": ["⚠️ No MCP servers enabled — user needs to connect one"]
+            "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br><br>The default weather MCP will connect automatically.",
+            "mcp_logs": ["⚠️ Master MCP toggle is OFF"]
         }
 
     # ======================
@@ -124,9 +123,8 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None):
     if len(cities) > 1:
         results = []
         for c in cities:
-            # Use the first enabled server for now (or could parallel call all)
-            server = enabled_servers[0]
-            r = call_mcp("getFullInsights", c, custom_url=server["url"], server_config=server.get("config"))
+            # Use default MCP (from agent.py)
+            r = call_mcp("getFullInsights", c)
             all_logs.extend(r.get("logs", []))
             if "error" not in r:
                 results.append(clean_data(r["data"]))
@@ -159,9 +157,20 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
     city = cities[0]
     tool = choose_tool(user_input)
 
-    # Call ALL enabled MCP servers
+    # 1. Call DEFAULT MCP (from agent.py) — this is the master/primary MCP
+    result = call_mcp(tool, city)  # No custom_url = uses DEFAULT_MCP_URL from agent.py
+    all_logs.extend(result.get("logs", []))
     all_mcp_results = []
-    for server in enabled_servers:
+    if "error" not in result:
+        all_mcp_results.append({
+            "server_name": "Weather MCP",
+            "data": result["data"],
+            "format": result.get("format", "custom")
+        })
+
+    # 2. Call any enabled CUSTOM MCP servers (extras beyond default)
+    enabled_custom_servers = [s for s in mcp_servers if s.get("enabled") == True and not s.get("isDefault")]
+    for server in enabled_custom_servers:
         result = call_mcp(
             tool,
             city,
