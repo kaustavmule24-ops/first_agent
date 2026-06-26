@@ -158,17 +158,15 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
     tool = choose_tool(user_input)
 
     # 1. Call DEFAULT MCP (from agent.py) — this is the master/primary MCP
-    result = call_mcp(tool, city)  # No custom_url = uses DEFAULT_MCP_URL from agent.py
-    all_logs.extend(result.get("logs", []))
-    all_mcp_results = []
-    if "error" not in result:
-        all_mcp_results.append({
-            "server_name": "Weather MCP",
-            "data": result["data"],
-            "format": result.get("format", "custom")
-        })
+    default_result = call_mcp(tool, city)  # No custom_url = uses DEFAULT_MCP_URL
+    all_logs.extend(default_result.get("logs", []))
+    
+    default_data = None
+    if "error" not in default_result:
+        default_data = clean_data(default_result["data"])
 
     # 2. Call any enabled CUSTOM MCP servers (extras beyond default)
+    custom_mcp_results = []
     enabled_custom_servers = [s for s in mcp_servers if s.get("enabled") == True and not s.get("isDefault")]
     for server in enabled_custom_servers:
         result = call_mcp(
@@ -179,41 +177,32 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
         )
         all_logs.extend(result.get("logs", []))
         if "error" not in result:
-            all_mcp_results.append({
+            raw_data = result["data"]
+            # Flatten nested objects for metrics grid rendering
+            flattened = {}
+            for key, value in raw_data.items():
+                if isinstance(value, dict):
+                    for sub_key, sub_value in value.items():
+                        if not sub_key.startswith('_') and sub_key != 'source':
+                            flattened[sub_key] = sub_value
+                elif not key.startswith('_') and key not in ['source', 'city', 'country', 'latitude', 'longitude']:
+                    flattened[key] = value
+            
+            custom_mcp_results.append({
                 "server_name": server["name"],
-                "data": result["data"],
+                "data": flattened,
                 "format": result.get("format", "unknown")
             })
 
-    if not all_mcp_results:
+    if default_data is None:
         return {
             "type": "error",
-            "response": f"❌ All connected MCP servers failed to return data for {city}.",
+            "response": f"❌ Default MCP failed to return data for {city}.",
             "mcp_logs": all_logs
         }
 
-    # Use first result as primary HUD data
-    primary_data = clean_data(all_mcp_results[0]["data"])
-
-    # Build custom MCP results (all servers beyond the first)
-    custom_mcp_results = []
-    for i, custom in enumerate(all_mcp_results):
-        raw_data = custom["data"]
-        # Flatten nested objects for metrics grid rendering
-        flattened = {}
-        for key, value in raw_data.items():
-            if isinstance(value, dict):
-                for sub_key, sub_value in value.items():
-                    if not sub_key.startswith('_') and sub_key != 'source':
-                        flattened[sub_key] = sub_value
-            elif not key.startswith('_') and key not in ['source', 'city', 'country', 'latitude', 'longitude']:
-                flattened[key] = value
-
-        custom_mcp_results.append({
-            "server_name": custom["server_name"],
-            "data": flattened,
-            "format": custom.get("format", "unknown")
-        })
+    # Use default result as primary HUD data
+    primary_data = default_data
 
     # Build custom text via LLM
     custom_text = ""
