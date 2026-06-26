@@ -204,10 +204,12 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
     # Use default result as primary HUD data
     primary_data = default_data
 
-    # Build custom text via LLM
+    # Build LLM text — ALWAYS generate when LLM is enabled, regardless of custom MCPs
     custom_text = ""
-    if llm_enabled and custom_mcp_results:
-        custom_prompt = f"""You are GeoBot, a location intelligence assistant.
+    if llm_enabled:
+        if custom_mcp_results:
+            # With custom MCP data
+            custom_prompt = f"""You are GeoBot, a location intelligence assistant.
 
 The user asked: "{user_input}"
 
@@ -221,6 +223,20 @@ Task: Answer the user's question directly.
 - If the External MCP data is relevant to "{user_input}", use it as the primary source.
 - If not relevant, answer based on the available data or your own general knowledge.
 - Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text. Max 100 words. No emojis unless the user used them."""
+        else:
+            # Only default MCP data — still generate LLM text!
+            custom_prompt = f"""You are GeoBot, a location intelligence assistant.
+
+The user asked: "{user_input}"
+
+Data for {primary_data.get('city', 'this city')}:
+{json.dumps(primary_data, indent=2)}
+
+Task: Answer the user's question directly based on the weather and location data above.
+- Describe the current conditions in plain, natural language.
+- Mention temperature, weather condition, and any notable metrics (AQI, humidity, wind, etc.).
+- Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text. Max 100 words. No emojis unless the user used them."""
+        
         custom_text = generate_llm_text(custom_prompt)
 
     # Merge all custom MCP flat data into primary_data for unified HUD rendering
