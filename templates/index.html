@@ -3021,11 +3021,7 @@ const SETTINGS_KEY = 'geobot_settings';
 function loadSettings() {
     const stored = localStorage.getItem(SETTINGS_KEY);
     if (stored) {
-        const parsed = JSON.parse(stored);
-        // Force reset defaults on version change
-        parsed.llmEnabled = true;
-        parsed.mcpEnabled = false;
-        return parsed;
+        return JSON.parse(stored);
     }
     return { llmEnabled: true, mcpEnabled: false };
 }
@@ -3037,7 +3033,7 @@ function saveSettings(s) {
 let settings = loadSettings();
 
 function applySettings() {
-    document.getElementById('llmToggle').checked = true; // Always on
+    document.getElementById('llmToggle').checked = settings.llmEnabled;
     document.getElementById('mcpToggle').checked = settings.mcpEnabled;
     updateModeBadge();
 }
@@ -3046,7 +3042,7 @@ function toggleLLM(checkbox) {
     settings.llmEnabled = checkbox.checked;
     saveSettings(settings);
     updateModeBadge();
-    showToast(settings.llmEnabled ? 'AI Mode enabled' : 'MCP Mode enabled', settings.llmEnabled ? '🤖' : '🌐');
+    showToast(settings.llmEnabled ? 'LLM enabled' : 'LLM disabled', settings.llmEnabled ? '🤖' : '⏸️');
 }
 function toggleMCP(checkbox) {
     settings.mcpEnabled = checkbox.checked;
@@ -3057,15 +3053,25 @@ function toggleMCP(checkbox) {
 function updateModeBadge() {
     const badge = document.getElementById('statusBadge');
     const hint = document.getElementById('inputHint');
-    const hasMcp = getEnabledServers().length > 0;
+    const hasMcp = settings.mcpEnabled;
+    const hasLlm = settings.llmEnabled;
     
-    badge.textContent = hasMcp ? 'AI + MCP' : 'AI Only';
-    badge.classList.toggle('offline', !hasMcp);
-    
-    if (hasMcp) {
-        hint.textContent = 'AI + MCP Mode: LLM + connected MCP servers active';
+    if (hasLlm && hasMcp) {
+        badge.textContent = 'AI + MCP';
+        badge.classList.remove('offline');
+        hint.textContent = 'AI + MCP Mode: LLM + default MCP active';
+    } else if (hasLlm && !hasMcp) {
+        badge.textContent = 'AI Only';
+        badge.classList.remove('offline');
+        hint.textContent = 'AI Only Mode: LLM active, enable MCP for location data';
+    } else if (!hasLlm && hasMcp) {
+        badge.textContent = 'MCP Only';
+        badge.classList.add('offline');
+        hint.textContent = 'MCP Only Mode: Direct MCP data, LLM disabled';
     } else {
-        hint.textContent = 'AI Only Mode: Connect an MCP server in Settings for location data';
+        badge.textContent = 'Offline';
+        badge.classList.add('offline');
+        hint.textContent = 'All features disabled. Enable LLM or MCP in Settings.';
     }
 }
 
