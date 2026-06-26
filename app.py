@@ -20,7 +20,7 @@ app = FastAPI(title="MCP AI Agent 🌍")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -54,7 +54,7 @@ async def startup_event():
 
 @app.get("/")
 def home():
-    return FileResponse("index.html")
+    return FileResponse("templates/index.html")
 
 
 @app.post("/chat")
