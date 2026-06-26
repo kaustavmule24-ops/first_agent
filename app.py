@@ -20,7 +20,7 @@ app = FastAPI(title="MCP AI Agent 🌍")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -54,7 +54,7 @@ async def startup_event():
 
 @app.get("/")
 def home():
-    return FileResponse("templates/index.html")
+    return FileResponse("index.html")
 
 
 @app.post("/chat")
@@ -204,24 +204,51 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
     # Use default result as primary HUD data
     primary_data = default_data
 
-    # Build custom text via LLM
-    custom_text = ""
-    if llm_enabled and custom_mcp_results:
-        custom_prompt = f"""You are GeoBot, a location intelligence assistant.
+    # Build LLM insight text (ALWAYS when LLM is enabled, not just with custom MCPs)
+    llm_text = ""
+    if llm_enabled:
+        # Build prompt with all available data
+        prompt_data = {
+            "city": primary_data.get("city", city),
+            "weather": primary_data.get("weather", {}),
+            "aqi": primary_data.get("aqi", {}),
+            "current_time": primary_data.get("current_time", ""),
+            "custom_sources": []
+        }
+        for custom in custom_mcp_results:
+            prompt_data["custom_sources"].append({
+                "server": custom["server_name"],
+                "data": custom.get("data", {})
+            })
 
+        llm_prompt = f"""You are GeoBot, a friendly location intelligence assistant.
 The user asked: "{user_input}"
 
-Data for {primary_data.get('city', 'this city')}:
-{json.dumps(primary_data, indent=2)}
+Here is the real-time data for {primary_data.get('city', city)}:
+{json.dumps(primary_data, indent=2)}"""
 
-External MCP data:
-{json.dumps(custom_mcp_results, indent=2)}
+        if custom_mcp_results:
+            llm_prompt += f"""
 
-Task: Answer the user's question directly.
-- If the External MCP data is relevant to "{user_input}", use it as the primary source.
-- If not relevant, answer based on the available data or your own general knowledge.
-- Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text. Max 100 words. No emojis unless the user used them."""
-        custom_text = generate_llm_text(custom_prompt)
+Additional data from custom MCP servers:
+{json.dumps(custom_mcp_results, indent=2)}"""
+
+        llm_prompt += """
+
+Task: Provide a friendly, informative response about this location.
+- Include interesting facts, travel tips, or cultural insights if relevant
+- Reference the weather and air quality data naturally
+- Keep it concise but engaging (2-4 sentences)
+- Do NOT use bullet points, headers, or numbered lists
+- Write in plain flowing paragraph text
+- No emojis unless the user used them"""
+
+        llm_text = generate_llm_text(llm_prompt)
+
+    # Build custom_text only when there are custom MCP results (for backward compat)
+    custom_text = ""
+    if llm_enabled and custom_mcp_results:
+        custom_text = llm_text
 
     # Merge all custom MCP flat data into primary_data for unified HUD rendering
     merged_hud = dict(primary_data)
@@ -233,7 +260,8 @@ Task: Answer the user's question directly.
     return {
         "type": "hud_with_custom",
         "hud_data": merged_hud,
-        "custom_text": custom_text,
+        "llm_text": llm_text,           # NEW: always include LLM text when enabled
+        "custom_text": custom_text,    # Backward compat
         "custom_mcp_results": custom_mcp_results,
         "mcp_logs": all_logs
     }
