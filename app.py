@@ -10,6 +10,7 @@ from agent import (
     extract_cities,
     choose_tool,
     call_mcp,
+    call_mcp_multi,
     clean_data,
     generate_general_response,
     generate_llm_text
@@ -123,7 +124,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
     if not enabled_servers:
         return {
             "type": "need_mcp",
-            "response": "🔌 No MCP servers are enabled.<br><br>To get weather, AQI, and location data, please enable at least one MCP server:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Find your MCP server in the list<br>3. Toggle it ON<br><br>You can also add a custom MCP server if you don't want to use the default.",
+            "response": "🔌 No MCP servers are enabled.<br><br>To get weather, AQI, and location data, please enable at least one MCP server:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Find your MCP server in the list<br>3. Toggle it ON",
             "mcp_logs": ["⚠️ No MCP servers enabled"]
         }
 
@@ -133,7 +134,6 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
     if len(cities) > 1:
         results = []
         for c in cities:
-            # Call ALL enabled MCP servers (no hardcoded default)
             merged_result = call_mcp_multi("getFullInsights", c, enabled_servers)
             all_logs.extend(merged_result.get("logs", []))
             if "error" not in merged_result:
@@ -162,12 +162,11 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
         }
 
     # ======================
-    # SINGLE CITY: Call enabled MCPs only
+    # SINGLE CITY: Call ONLY enabled MCPs from frontend
     # ======================
     city = cities[0]
     tool = choose_tool(user_input)
 
-    # Call ALL enabled MCP servers (no hardcoded default)
     merged_result = call_mcp_multi(tool, city, enabled_servers)
     all_logs.extend(merged_result.get("logs", []))
 
@@ -201,10 +200,9 @@ Task: Answer the user's question directly based on the weather and location data
         "type": "hud_with_custom",
         "hud_data": primary_data,
         "custom_text": custom_text,
-        "custom_mcp_results": [],  # merged already, no separate custom results needed
+        "custom_mcp_results": [],
         "mcp_logs": all_logs
     }
-
 
 @app.get("/health")
 @app.head("/health")
