@@ -2143,7 +2143,18 @@ body {
 
 const MCP_STORAGE_KEY = 'geobot_mcp_servers';
 
-const DEFAULT_SERVERS = [];
+const DEFAULT_SERVERS = [
+    {
+        id: 'default-weather',
+        name: 'Weather MCP',
+        url: 'https://mcp-weather-s1s0.onrender.com/tool',
+        description: 'Weather, AQI, time & holiday data',
+        enabled: false,
+        isDefault: true,
+        protocol: 'custom',
+        config: {}
+    }
+];
 
 function loadServers() {
     const stored = localStorage.getItem(MCP_STORAGE_KEY);
@@ -3105,15 +3116,6 @@ function removeMCPLogs() {
 // INIT
 // ==============================
 window.onload = function() {
-    // Clear old default server from localStorage if present
-    const stored = localStorage.getItem(MCP_STORAGE_KEY);
-    if (stored) {
-        const servers = JSON.parse(stored);
-        const filtered = servers.filter(s => !s.isDefault);
-        if (filtered.length !== servers.length) {
-            saveServers(filtered);
-        }
-    }
     applySettings();
     addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
     addSuggestions([

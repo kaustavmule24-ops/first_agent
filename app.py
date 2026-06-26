@@ -114,7 +114,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None):
         # No MCP connected — tell user to connect one
         return {
             "type": "need_mcp",
-            "response": "🔌 No MCP server connected.\n\nTo get weather, AQI, and location data, please connect an MCP server first:\n\n1. Click ⚙️ Settings (top-left)\n2. Go to '🔗 MCP Servers'\n3. Click '➕ Add New Server' and enter your MCP URL\n4. Enable the server using the toggle\n\nYou can use any MCP server that supports weather/location data.",
+            "response": "🔌 No MCP server connected.<br><br>To get weather, AQI, and location data, please connect an MCP server first:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Go to '🔗 MCP Servers'<br>3. Click '➕ Add New Server' and enter your MCP URL<br>4. Enable the server using the toggle<br><br>You can use any MCP server that supports weather/location data.",
             "mcp_logs": ["⚠️ No MCP servers enabled — user needs to connect one"]
         }
 
