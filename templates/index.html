@@ -2021,7 +2021,7 @@ body {
                         </div>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="mcpToggle" checked disabled>
+                        <input type="checkbox" id="mcpToggle" onchange="toggleMCP(this)">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -2143,18 +2143,7 @@ body {
 
 const MCP_STORAGE_KEY = 'geobot_mcp_servers';
 
-const DEFAULT_SERVERS = [
-    {
-        id: 'default-weather',
-        name: 'Weather MCP',
-        url: 'https://mcp-weather-s1s0.onrender.com/tool',
-        description: 'Weather, AQI, time & holiday data',
-        enabled: true,
-        isDefault: true,
-        protocol: 'custom',  // custom | jsonrpc | rest_api
-        config: {}           // REST API config (endpoint_template, auth, mapping)
-    }
-];
+const DEFAULT_SERVERS = [];
 
 function loadServers() {
     const stored = localStorage.getItem(MCP_STORAGE_KEY);
@@ -3020,8 +3009,14 @@ const SETTINGS_KEY = 'geobot_settings';
 
 function loadSettings() {
     const stored = localStorage.getItem(SETTINGS_KEY);
-    if (stored) return JSON.parse(stored);
-    return { llmEnabled: true, mcpEnabled: true };
+    if (stored) {
+        const parsed = JSON.parse(stored);
+        // Force reset defaults on version change
+        parsed.llmEnabled = true;
+        parsed.mcpEnabled = false;
+        return parsed;
+    }
+    return { llmEnabled: true, mcpEnabled: false };
 }
 
 function saveSettings(s) {
@@ -3031,7 +3026,7 @@ function saveSettings(s) {
 let settings = loadSettings();
 
 function applySettings() {
-    document.getElementById('llmToggle').checked = settings.llmEnabled;
+    document.getElementById('llmToggle').checked = true; // Always on
     document.getElementById('mcpToggle').checked = settings.mcpEnabled;
     updateModeBadge();
 }
@@ -3042,16 +3037,24 @@ function toggleLLM(checkbox) {
     updateModeBadge();
     showToast(settings.llmEnabled ? 'AI Mode enabled' : 'MCP Mode enabled', settings.llmEnabled ? '🤖' : '🌐');
 }
-
+function toggleMCP(checkbox) {
+    settings.mcpEnabled = checkbox.checked;
+    saveSettings(settings);
+    updateModeBadge();
+    showToast(settings.mcpEnabled ? 'MCP enabled' : 'MCP disabled', settings.mcpEnabled ? '🌐' : '⏸️');
+}
 function updateModeBadge() {
     const badge = document.getElementById('statusBadge');
     const hint = document.getElementById('inputHint');
-    if (settings.llmEnabled) {
-        badge.textContent = 'AI Mode'; badge.classList.remove('offline');
-        hint.textContent = 'AI Mode: LLM will analyze your query first';
+    const hasMcp = getEnabledServers().length > 0;
+    
+    badge.textContent = hasMcp ? 'AI + MCP' : 'AI Only';
+    badge.classList.toggle('offline', !hasMcp);
+    
+    if (hasMcp) {
+        hint.textContent = 'AI + MCP Mode: LLM + connected MCP servers active';
     } else {
-        badge.textContent = 'MCP Mode'; badge.classList.add('offline');
-        hint.textContent = 'MCP Mode: Direct weather & location data';
+        hint.textContent = 'AI Only Mode: Connect an MCP server in Settings for location data';
     }
 }
 
@@ -3102,6 +3105,15 @@ function removeMCPLogs() {
 // INIT
 // ==============================
 window.onload = function() {
+    // Clear old default server from localStorage if present
+    const stored = localStorage.getItem(MCP_STORAGE_KEY);
+    if (stored) {
+        const servers = JSON.parse(stored);
+        const filtered = servers.filter(s => !s.isDefault);
+        if (filtered.length !== servers.length) {
+            saveServers(filtered);
+        }
+    }
     applySettings();
     addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
     addSuggestions([
@@ -3154,7 +3166,22 @@ async function send() {
 
         await new Promise(function(r) { setTimeout(r, data.mcp_logs && data.mcp_logs.length > 0 ? 500 : 0); });
 
-        if (data.type === "hud") {
+        if (data.type === "need_mcp") {
+            addMsg(data.response, "bot");
+            addSuggestions([
+                { text: "Open Settings", icon: "⚙️" }
+            ]);
+            // Make the "Open Settings" chip actually open the modal
+            setTimeout(function() {
+                const chips = document.querySelectorAll('.chip');
+                chips.forEach(function(chip) {
+                    if (chip.textContent.includes('Open Settings')) {
+                        chip.onclick = function() { openModal(); };
+                    }
+                });
+            }, 100);
+        }
+        else if (data.type === "hud") {
             // City query → Show HUD card (legacy fallback)
             const hudHTML = renderHUDCard(data.response, "Weather MCP");
             addMsg(hudHTML, "bot", true);
@@ -3260,7 +3287,7 @@ async function send() {
         }
 
         // Show suggestions after successful response (except need_llm which has its own)
-        if (data.type !== "error" && data.type !== "need_llm") {
+        if (data.type !== "error" && data.type !== "need_llm" && data.type !== "need_mcp") {
             addMsg("🌍 Explore another location or ask me anything!", "bot");
             addSuggestions([
                 { text: "What is AQI?", icon: "❓" },

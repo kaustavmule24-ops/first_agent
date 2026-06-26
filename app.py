@@ -11,7 +11,6 @@ from agent import (
     choose_tool,
     call_mcp,
     clean_data,
-    generate_city_insights,
     generate_general_response,
     generate_llm_text
 )
@@ -107,12 +106,27 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None):
             }
 
     # ======================
+    # CHECK IF ANY MCP IS ENABLED
+    # ======================
+    enabled_servers = [s for s in mcp_servers if s.get("enabled", False)]
+    
+    if not enabled_servers:
+        # No MCP connected — tell user to connect one
+        return {
+            "type": "need_mcp",
+            "response": "🔌 No MCP server connected.\n\nTo get weather, AQI, and location data, please connect an MCP server first:\n\n1. Click ⚙️ Settings (top-left)\n2. Go to '🔗 MCP Servers'\n3. Click '➕ Add New Server' and enter your MCP URL\n4. Enable the server using the toggle\n\nYou can use any MCP server that supports weather/location data.",
+            "mcp_logs": ["⚠️ No MCP servers enabled — user needs to connect one"]
+        }
+
+    # ======================
     # MULTI-CITY: Compare mode
     # ======================
     if len(cities) > 1:
         results = []
         for c in cities:
-            r = call_mcp("getFullInsights", c, custom_url=None, server_config=None)
+            # Use the first enabled server for now (or could parallel call all)
+            server = enabled_servers[0]
+            r = call_mcp("getFullInsights", c, custom_url=server["url"], server_config=server.get("config"))
             all_logs.extend(r.get("logs", []))
             if "error" not in r:
                 results.append(clean_data(r["data"]))
@@ -140,85 +154,79 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
         }
 
     # ======================
-    # SINGLE CITY: Default MCP (HUD) + Custom MCPs (text)
+    # SINGLE CITY: Call enabled MCPs
     # ======================
     city = cities[0]
     tool = choose_tool(user_input)
 
-    # 1. ALWAYS call default weather MCP for HUD
-    default_result = call_mcp(tool, city, custom_url=None, server_config=None)
-    all_logs.extend(default_result.get("logs", []))
-    hud_data = clean_data(default_result["data"]) if "error" not in default_result else None
-
-    # 2. Call custom MCPs (non-default servers)
-    custom_mcp_results = []
-    for server in mcp_servers:
-        if server.get("isDefault"):
-            continue  # Skip default, already called above
-        
+    # Call ALL enabled MCP servers
+    all_mcp_results = []
+    for server in enabled_servers:
         result = call_mcp(
-            tool, 
-            city, 
+            tool,
+            city,
             custom_url=server["url"],
             server_config=server.get("config")
         )
         all_logs.extend(result.get("logs", []))
         if "error" not in result:
-            raw_data = result["data"]
-            # Flatten nested objects for metrics grid rendering
-            flattened = {}
-            for key, value in raw_data.items():
-                if isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        if not sub_key.startswith('_') and sub_key != 'source':
-                            flattened[sub_key] = sub_value
-                elif not key.startswith('_') and key not in ['source', 'city', 'country', 'latitude', 'longitude']:
-                    flattened[key] = value
-            
-            custom_mcp_results.append({
+            all_mcp_results.append({
                 "server_name": server["name"],
-                "data": flattened,
+                "data": result["data"],
                 "format": result.get("format", "unknown")
             })
 
-    # If default failed, return error
-    if hud_data is None:
+    if not all_mcp_results:
         return {
             "type": "error",
-            "response": f"❌ {default_result.get('error', 'Default MCP failed')}",
+            "response": f"❌ All connected MCP servers failed to return data for {city}.",
             "mcp_logs": all_logs
         }
 
-    # Build custom MCP text (LLM formatted or raw)
+    # Use first result as primary HUD data
+    primary_data = clean_data(all_mcp_results[0]["data"])
+
+    # Build custom MCP results (all servers beyond the first)
+    custom_mcp_results = []
+    for i, custom in enumerate(all_mcp_results):
+        raw_data = custom["data"]
+        # Flatten nested objects for metrics grid rendering
+        flattened = {}
+        for key, value in raw_data.items():
+            if isinstance(value, dict):
+                for sub_key, sub_value in value.items():
+                    if not sub_key.startswith('_') and sub_key != 'source':
+                        flattened[sub_key] = sub_value
+            elif not key.startswith('_') and key not in ['source', 'city', 'country', 'latitude', 'longitude']:
+                flattened[key] = value
+
+        custom_mcp_results.append({
+            "server_name": custom["server_name"],
+            "data": flattened,
+            "format": custom.get("format", "unknown")
+        })
+
+    # Build custom text via LLM
     custom_text = ""
-    if custom_mcp_results:
-        if llm_enabled:
-            # Send custom MCP data to LLM for formatting with relevance check
-            custom_prompt = f"""You are GeoBot, a location intelligence assistant.
+    if llm_enabled and custom_mcp_results:
+        custom_prompt = f"""You are GeoBot, a location intelligence assistant.
 
 The user asked: "{user_input}"
 
-Default weather/location data for {hud_data.get('city', 'this city')}:
-{json.dumps(hud_data, indent=2)}
+Data for {primary_data.get('city', 'this city')}:
+{json.dumps(primary_data, indent=2)}
 
 External MCP data:
 {json.dumps(custom_mcp_results, indent=2)}
 
 Task: Answer the user's question directly.
-- If the External MCP data above is relevant to "{user_input}", use it as the primary source for your answer and cite specific details.
-- If the External MCP data is NOT relevant (e.g., user asked for hospitals but MCP returned weather or nothing useful), answer based on the default weather data (if relevant to the question) or your own general knowledge. End your response with this exact note: (Note: No relevant data returned from connected MCP.)
-- Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text like a friendly assistant. Max 100 words. No emojis unless the user used them."""
-            custom_text = generate_llm_text(custom_prompt)
-        else:
-            # LLM disabled: frontend will render dropdown from custom_mcp_results
-            custom_text = ""
+- If the External MCP data is relevant to "{user_input}", use it as the primary source.
+- If not relevant, answer based on the available data or your own general knowledge.
+- Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text. Max 100 words. No emojis unless the user used them."""
+        custom_text = generate_llm_text(custom_prompt)
 
-    # If no custom MCPs, use default LLM insights on weather only
-    elif llm_enabled:
-        custom_text = generate_city_insights(user_input, hud_data)
-
-    # Merge custom MCP flat data into hud_data for unified rendering
-    merged_hud = dict(hud_data)
+    # Merge all custom MCP flat data into primary_data for unified HUD rendering
+    merged_hud = dict(primary_data)
     for custom in custom_mcp_results:
         for key, value in custom.get("data", {}).items():
             if key not in merged_hud and value is not None:
