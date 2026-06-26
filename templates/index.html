@@ -1584,7 +1584,44 @@ body {
 .msg.log .log-entry.warning { color: var(--warning); }
 .msg.log .log-entry.info { color: var(--info); }
 
-
+/* Responsive */
+@media (max-width: 520px) {
+    .app {
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
+        border: none;
+    }
+    
+    body {
+        padding: 0;
+    }
+    
+    .bg-mesh, .particles {
+        display: none;
+    }
+    
+    .clear-btn, .settings-btn {
+        top: 12px;
+    }
+    
+    .settings-btn {
+        left: 12px;
+    }
+    
+    .clear-btn {
+        right: 12px;
+    }
+    
+    .hud-card {
+        max-width: 100%;
+    }
+    
+    .compare-mini {
+        min-width: 120px;
+        padding: 12px;
+    }
+}
 
 
 /* Compare strip enhancements */
