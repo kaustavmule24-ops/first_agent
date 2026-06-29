@@ -3557,22 +3557,14 @@ async function send() {
     try {
         const enabledServers = getEnabledServers();
         
-                // Get Clerk token (required for chat)
+                // Get Clerk token if user is logged in
         const token = await getClerkToken();
-        if (!token) {
-            hideTyping();
-            setInputEnabled(true);
-            addMsg("⚠️ Session expired. Please sign in again.", "bot");
-            setTimeout(() => window.Clerk.openSignIn(), 1500);
-            return;
-        }
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
 
         const res = await fetch("/chat", {
             method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
+            headers: headers,
             body: JSON.stringify({ 
                 message: text, 
                 llm_enabled: settings.llmEnabled,
@@ -3589,18 +3581,7 @@ async function send() {
             return;
         }
 
-        if (res.status === 403) {
-            hideTyping();
-            setInputEnabled(true);
-            addMsg("📧 Email verification required.<br><br>Please check your inbox for a verification code from Clerk and enter it to complete your login.<br><br>Didn't receive it? Check your spam folder or click 'Sign In' again to resend.", "bot");
-            // Open sign-in again so user can complete verification
-            setTimeout(() => {
-                if (window.Clerk) window.Clerk.openSignIn();
-            }, 2000);
-            return;
-        }
-
-        if (!res.ok) throw new Error('Server error');
+if (!res.ok) throw new Error('Server error');
 
         const data = await res.json();
         removeStatus();
