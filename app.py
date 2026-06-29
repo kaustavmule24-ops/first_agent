@@ -54,15 +54,33 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             options={"verify_aud": False, "verify_exp": True}
         )
 
-        # Check if email is verified
+        # Check if email is verified (Clerk stores this in different claim locations)
         email_verified = payload.get("email_verified", False)
+
+        # Also check in public_metadata or other locations Clerk might use
         if not email_verified:
-            return {"_unverified": True, "email": payload.get("email")}
+            # Try alternative claim names
+            email_verified = payload.get("emailVerified", False)
+
+        # If still not found, check if user has email in token (Clerk verified users have email)
+        user_email = payload.get("email", "")
+
+        # For waitlist + sign-in verification flow:
+        # If user has a valid session token, they passed Clerk's auth (including any verification)
+        # The email_verified flag might not be in JWT if Clerk handles it at their end
+        # So we check if the token is valid AND user has email
+        if not user_email:
+            return None  # No email = not a valid user session
+
+        # If email_verified is explicitly false, mark as unverified
+        # If it's missing (None), assume verified (Clerk already validated the session)
+        if email_verified is False:
+            return {"_unverified": True, "email": user_email}
 
         return {
             "user_id": payload.get("sub"),
-            "email": payload.get("email"),
-            "name": payload.get("name") or payload.get("email"),
+            "email": user_email,
+            "name": payload.get("name") or user_email,
             "email_verified": True
         }
     except Exception:
