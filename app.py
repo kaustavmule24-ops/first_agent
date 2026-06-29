@@ -40,7 +40,8 @@ jwks_client = PyJWKClient(CLERK_JWKS_URL)
 security = HTTPBearer(auto_error=False)
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify Clerk JWT and return user info. Returns None if no token or invalid."""
+    """Verify Clerk JWT and return user info. Returns None if no token or invalid.
+    Also checks if email is verified — rejects unverified users."""
     if not credentials:
         return None
     try:
@@ -52,10 +53,17 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             issuer=CLERK_ISSUER,
             options={"verify_aud": False, "verify_exp": True}
         )
+
+        # Check if email is verified
+        email_verified = payload.get("email_verified", False)
+        if not email_verified:
+            return {"_unverified": True, "email": payload.get("email")}
+
         return {
             "user_id": payload.get("sub"),
             "email": payload.get("email"),
-            "name": payload.get("name") or payload.get("email")
+            "name": payload.get("name") or payload.get("email"),
+            "email_verified": True
         }
     except Exception:
         return None
@@ -113,6 +121,16 @@ async def chat(request: Request, user: Optional[dict] = Depends(get_current_user
         return JSONResponse(
             status_code=401,
             content={"type": "error", "response": "🔐 Authentication required. Please sign in to use GeoBot."}
+        )
+
+    # Reject unverified email users
+    if user.get("_unverified"):
+        return JSONResponse(
+            status_code=403,
+            content={
+                "type": "error", 
+                "response": "📧 Email verification required.<br><br>Please check your inbox and verify your email address before using GeoBot.<br><br>Didn't receive it? Check your spam folder or try signing in again."
+            }
         )
 
     try:

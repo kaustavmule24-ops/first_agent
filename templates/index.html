@@ -3552,6 +3552,21 @@ async function send() {
             })
         });
 
+        if (res.status === 401) {
+            hideTyping();
+            setInputEnabled(true);
+            addMsg("🔐 Session expired. Please sign in again.", "bot");
+            setTimeout(() => window.Clerk.openSignIn(), 1500);
+            return;
+        }
+
+        if (res.status === 403) {
+            hideTyping();
+            setInputEnabled(true);
+            addMsg("📧 Email verification required.<br><br>Please check your inbox and verify your email address before using GeoBot.<br><br>Didn't receive it? Check your spam folder or try signing in again.", "bot");
+            return;
+        }
+
         if (!res.ok) throw new Error('Server error');
 
         const data = await res.json();
