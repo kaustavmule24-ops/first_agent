@@ -2,9 +2,13 @@ import os
 import asyncio
 import json
 import aiohttp
-from fastapi import FastAPI, Request
+from typing import Optional
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import jwt
+from jwt import PyJWKClient
 
 from agent import (
     extract_cities,
@@ -26,13 +30,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ==============================
+# CLERK AUTH CONFIG
+# ==============================
+CLERK_JWKS_URL = "https://excited-ibex-65.clerk.accounts.dev/.well-known/jwks.json"
+CLERK_ISSUER = "https://excited-ibex-65.clerk.accounts.dev"
+
+jwks_client = PyJWKClient(CLERK_JWKS_URL)
+security = HTTPBearer(auto_error=False)
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Verify Clerk JWT and return user info. Returns None if no token or invalid."""
+    if not credentials:
+        return None
+    try:
+        signing_key = jwks_client.get_signing_key_from_jwt(credentials.credentials)
+        payload = jwt.decode(
+            credentials.credentials,
+            signing_key.key,
+            algorithms=["RS256"],
+            issuer=CLERK_ISSUER,
+            options={"verify_aud": False, "verify_exp": True}
+        )
+        return {
+            "user_id": payload.get("sub"),
+            "email": payload.get("email"),
+            "name": payload.get("name") or payload.get("email")
+        }
+    except Exception:
+        return None
+
 
 # ==============================
 # SELF-PING TO PREVENT SLEEP
 # ==============================
 async def self_ping():
     """Ping own health endpoint every 10 minutes to prevent Render free tier sleep."""
-    await asyncio.sleep(30)  # wait for server startup
+    await asyncio.sleep(30)
     while True:
         try:
             async with aiohttp.ClientSession() as session:
@@ -44,7 +78,7 @@ async def self_ping():
                         print(f"Self-ping: Status {resp.status}")
         except Exception as e:
             print(f"Self-ping failed: {e}")
-        await asyncio.sleep(600)  # 10 minutes
+        await asyncio.sleep(600)
 
 
 @app.on_event("startup")
@@ -58,14 +92,28 @@ def home():
     return FileResponse("templates/index.html")
 
 
+# ==============================
+# AUTH ENDPOINTS
+# ==============================
+@app.get("/api/user")
+async def api_user(user: Optional[dict] = Depends(get_current_user)):
+    """Return current authenticated user info."""
+    if not user:
+        return {"authenticated": False}
+    return {"authenticated": True, "user": user}
+
+
+# ==============================
+# CHAT ENDPOINT
+# ==============================
 @app.post("/chat")
-async def chat(request: Request):
+async def chat(request: Request, user: Optional[dict] = Depends(get_current_user)):
     try:
         body = await request.json()
         user_input = body.get("message", "").strip()
         llm_enabled = body.get("llm_enabled", True)
         mcp_enabled = body.get("mcp_enabled", False)
-        mcp_servers = body.get("mcp_servers", [])  # ← custom MCP servers from frontend
+        mcp_servers = body.get("mcp_servers", [])
 
         if not user_input:
             return JSONResponse(
@@ -73,8 +121,9 @@ async def chat(request: Request):
                 content={"type": "error", "response": "❌ Empty message", "mcp_logs": []}
             )
 
-        # Pass all MCP servers to process_query (it will handle default vs custom)
-        result = await asyncio.to_thread(process_query, user_input, llm_enabled, mcp_servers, mcp_enabled)
+        result = await asyncio.to_thread(
+            process_query, user_input, llm_enabled, mcp_servers, mcp_enabled, user
+        )
         return result
 
     except Exception as e:
@@ -84,10 +133,14 @@ async def chat(request: Request):
         )
 
 
-def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_master_enabled=False):
+def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_master_enabled=False, user=None):
     all_logs = []
     cities = extract_cities(user_input)
     mcp_servers = mcp_servers or []
+
+    # Log user if authenticated (no DB, just for server logs)
+    if user:
+        all_logs.append(f"👤 Authenticated user: {user.get('email', 'unknown')}")
 
     # ======================
     # NO CITY FOUND
@@ -134,18 +187,16 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
     if len(cities) > 1:
         results = []
         for c in cities:
-            # Call default MCP for each city (primary data)
             default_servers = [s for s in enabled_servers if s.get("isDefault") == True]
             custom_servers = [s for s in enabled_servers if s.get("isDefault") != True]
-            
+
             city_data = None
             if default_servers:
                 r = call_mcp("getFullInsights", c, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"))
                 all_logs.extend(r.get("logs", []))
                 if "error" not in r:
                     city_data = clean_data(r["data"])
-            
-            # If no default but custom exists, try custom
+
             if city_data is None and custom_servers:
                 for server in custom_servers:
                     r = call_mcp("getFullInsights", c, custom_url=server["url"], server_config=server.get("config"))
@@ -153,7 +204,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
                     if "error" not in r:
                         city_data = clean_data(r["data"])
                         break
-            
+
             if city_data:
                 results.append(city_data)
 
@@ -179,17 +230,15 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
             "mcp_logs": all_logs
         }
 
-      # ======================
+    # ======================
     # SINGLE CITY: Call default + custom MCPs separately
     # ======================
     city = cities[0]
     tool = choose_tool(user_input)
 
-    # Separate default from custom servers
     default_servers = [s for s in enabled_servers if s.get("isDefault") == True]
     custom_servers = [s for s in enabled_servers if s.get("isDefault") != True]
 
-    # 1. Call DEFAULT MCP (if enabled) — this provides the primary HUD data
     default_data = None
     if default_servers:
         default_result = call_mcp(tool, city, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"))
@@ -197,7 +246,6 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
         if "error" not in default_result:
             default_data = clean_data(default_result["data"])
 
-    # 2. Call CUSTOM MCP servers (extras beyond default)
     custom_mcp_results = []
     for server in custom_servers:
         result = call_mcp(
@@ -209,7 +257,6 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
         all_logs.extend(result.get("logs", []))
         if "error" not in result:
             raw_data = result["data"]
-            # Flatten nested objects for metrics grid rendering
             flattened = {}
             for key, value in raw_data.items():
                 if isinstance(value, dict):
@@ -218,19 +265,16 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
                             flattened[sub_key] = sub_value
                 elif not key.startswith('_') and key not in ['source', 'city', 'country', 'latitude', 'longitude']:
                     flattened[key] = value
-            
+
             custom_mcp_results.append({
                 "server_name": server["name"],
                 "data": flattened,
                 "format": result.get("format", "unknown")
             })
 
-    # If no default data but we have custom data, use first custom as primary
     if default_data is None:
         if custom_mcp_results:
-            # Use first custom result as primary HUD data
             first_custom = custom_mcp_results[0]["data"]
-            # Reconstruct a proper HUD structure from flat data
             default_data = {
                 "city": city,
                 "country": first_custom.get("country", "Unknown"),
@@ -244,7 +288,6 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
                     "us_aqi": first_custom.get("us_aqi", 0) or first_custom.get("aqi", 0)
                 }
             }
-            # Merge remaining custom data into default_data
             for custom in custom_mcp_results:
                 for key, value in custom["data"].items():
                     if key not in default_data and value is not None:
@@ -256,18 +299,15 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
                 "mcp_logs": all_logs
             }
 
-    # Merge all custom MCP flat data into primary_data for unified HUD rendering
     primary_data = dict(default_data)
     for custom in custom_mcp_results:
         for key, value in custom.get("data", {}).items():
             if key not in primary_data and value is not None:
                 primary_data[key] = value
 
-    # Build LLM text
     custom_text = ""
     if llm_enabled:
         if custom_mcp_results:
-            # With custom MCP data
             custom_prompt = f"""You are GeoBot, a location intelligence assistant.
 
 The user asked: "{user_input}"
@@ -283,7 +323,6 @@ Task: Answer the user's question directly.
 - If not relevant, answer based on the available data or your own general knowledge.
 - Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text. Max 100 words. No emojis unless the user used them."""
         else:
-            # Only default MCP data
             custom_prompt = f"""You are GeoBot, a location intelligence assistant.
 
 The user asked: "{user_input}"
@@ -295,7 +334,7 @@ Task: Answer the user's question directly based on the weather and location data
 - Describe the current conditions in plain, natural language.
 - Mention temperature, weather condition, and any notable metrics (AQI, humidity, wind, etc.).
 - Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text. Max 100 words. No emojis unless the user used them."""
-        
+
         custom_text = generate_llm_text(custom_prompt)
 
     return {
@@ -305,6 +344,7 @@ Task: Answer the user's question directly based on the weather and location data
         "custom_mcp_results": custom_mcp_results,
         "mcp_logs": all_logs
     }
+
 
 @app.get("/health")
 @app.head("/health")

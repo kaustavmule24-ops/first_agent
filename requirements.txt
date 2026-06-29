@@ -5,3 +5,5 @@ jinja2
 python-multipart
 requests
 aiohttp
+pyjwt
+cryptography
