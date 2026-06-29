@@ -108,6 +108,13 @@ async def api_user(user: Optional[dict] = Depends(get_current_user)):
 # ==============================
 @app.post("/chat")
 async def chat(request: Request, user: Optional[dict] = Depends(get_current_user)):
+    # Mandatory authentication — reject if not logged in
+    if not user:
+        return JSONResponse(
+            status_code=401,
+            content={"type": "error", "response": "🔐 Authentication required. Please sign in to use GeoBot."}
+        )
+
     try:
         body = await request.json()
         user_input = body.get("message", "").strip()
