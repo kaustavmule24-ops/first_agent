@@ -10,6 +10,14 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from jwt import PyJWKClient
 
+def _mask_token(token: str) -> str:
+    """Mask a JWT/token for safe logging — show first 8 chars only."""
+    if not token:
+        return "[none]"
+    if len(token) <= 12:
+        return "***"
+    return token[:8] + "..."
+
 from agent import (
     extract_cities,
     choose_tool,
@@ -56,13 +64,16 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             options={"verify_aud": False, "verify_exp": True}
         )
 
-        return {
+        user_info = {
             "user_id": payload.get("sub"),
             "email": payload.get("email"),
             "name": payload.get("name") or payload.get("email"),
             "token": credentials.credentials
         }
-    except Exception:
+        print(f"🔐 [AUTH] User verified: {user_info['email']} | token={_mask_token(credentials.credentials)}")
+        return user_info
+    except Exception as e:
+        print(f"🔐 [AUTH] Verification failed: {e}")
         return None
 
 
@@ -141,6 +152,7 @@ async def chat(request: Request, user: Optional[dict] = Depends(get_current_user
             )
 
         clerk_token = user.get("token") if user else None
+        print(f"🔐 [AUTH] Extracted clerk_token for forwarding: {_mask_token(clerk_token)}")
         result = await asyncio.to_thread(
             process_query, user_input, llm_enabled, mcp_servers, mcp_enabled, user, clerk_token
         )
@@ -177,6 +189,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
     
     all_logs = []
     mcp_servers = mcp_servers or []
+    all_logs.append(f"🔐 [AUTH] Forwarding token to MCP: {_mask_token(clerk_token)}")
 
     # Log user if authenticated
     if user:
@@ -216,29 +229,33 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
             "mcp_logs": all_logs
         }
 
-    # Check Weather MCP connection state from frontend payload
+    # Check if ANY MCP server is connected/enabled (default OR custom)
     weather_mcp_connected = False
     weather_server = None
+    custom_mcp_connected = False
+    
     for s in mcp_servers:
         if s.get("isDefault") == True:
             weather_server = s
-            # Frontend sends connected state via the server's enabled flag
-            # OR we check if it's in the enabled list
             weather_mcp_connected = s.get("enabled") == True and s.get("connected") != False
-            break
+        elif s.get("enabled") == True:
+            custom_mcp_connected = True
+    
+    # ANY MCP available = default connected OR custom enabled
+    any_mcp_available = weather_mcp_connected or custom_mcp_connected
 
-    # If Weather MCP is not connected but we need city data
-    if not weather_mcp_connected and not mcp_master_enabled:
+    # If NO MCP is available at all but we need city data
+    if not any_mcp_available and not mcp_master_enabled:
         return {
             "type": "need_mcp",
-            "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br>3. Click 🔗 Connect on the Weather MCP card",
+            "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br>3. Enable at least one MCP server",
             "mcp_logs": all_logs
         }
 
-    if not weather_mcp_connected:
-        # Weather MCP disconnected but needed — return LLM-only + connect prompt
+    if not any_mcp_available:
+        # No MCP connected but needed — return LLM-only + connect prompt
         llm_response = llm_generate_general(user_input)
-        full_response = f"{llm_response}\n\n---\n\n💡 **Want live data?** Connect the Weather MCP in Settings for real-time weather, AQI, and time data."
+        full_response = f"{llm_response}\n\n---\n\n💡 **Want live data?** Enable an MCP server in Settings for real-time weather, AQI, and time data."
         return {
             "type": "need_connect_weather",
             "response": full_response,

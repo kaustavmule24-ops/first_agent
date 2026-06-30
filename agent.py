@@ -466,6 +466,8 @@ def call_mcp_streamable_http(url, tool, city, server_config, timeout=15, auth_to
             'MCP-Protocol-Version': '2025-03-26'
         }
         if auth_token:
+            masked = auth_token[:8] + "..." if len(auth_token) > 12 else "***"
+            logs.append(f"🔐 [AUTH] Streamable HTTP Bearer: {masked}")
             headers['Authorization'] = f'Bearer {auth_token}'
 
         auth_type = config.get('auth_type', 'none')
@@ -664,6 +666,8 @@ def call_mcp_rest_api(url, tool, city, server_config, timeout=15, auth_token=Non
 
         headers = {'Content-Type': 'application/json'}
         if auth_token:
+            masked = auth_token[:8] + "..." if len(auth_token) > 12 else "***"
+            logs.append(f"🔐 [AUTH] REST API Bearer: {masked}")
             headers['Authorization'] = f'Bearer {auth_token}'
         auth_type = config.get('auth_type', 'none')
         auth_key = config.get('auth_key', '')
@@ -1106,6 +1110,8 @@ def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None):
 
         headers = {"Content-Type": "application/json"}
         if auth_token:
+            masked = auth_token[:8] + "..." if len(auth_token) > 12 else "***"
+            logs.append(f"🔐 [AUTH] Attaching Bearer token: {masked}")
             headers["Authorization"] = f"Bearer {auth_token}"
         res = requests.post(url, json=payload, headers=headers, timeout=15)
 

@@ -2139,12 +2139,23 @@ body {
     }
   }
 
+  function _maskToken(token) {
+    if (!token) return "[none]";
+    if (token.length <= 12) return "***";
+    return token.substring(0, 8) + "...";
+  }
+
   async function getClerkToken() {
-    if (!window.Clerk || !window.Clerk.session) return null;
+    if (!window.Clerk || !window.Clerk.session) {
+      console.log("🔐 [AUTH] No Clerk session available");
+      return null;
+    }
     try {
       clerkToken = await window.Clerk.session.getToken();
+      console.log("🔐 [AUTH] Got Clerk token: " + _maskToken(clerkToken));
       return clerkToken;
     } catch (e) {
+      console.log("🔐 [AUTH] Failed to get Clerk token: " + e.message);
       return null;
     }
   }
@@ -3774,7 +3785,12 @@ async function send() {
                 // Get Clerk token if user is logged in
         const token = await getClerkToken();
         const headers = { "Content-Type": "application/json" };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
+        if (token) {
+          console.log("🔐 [AUTH] Attaching to /chat request: Bearer " + _maskToken(token));
+          headers["Authorization"] = `Bearer ${token}`;
+        } else {
+          console.log("🔐 [AUTH] No token — /chat will be unauthenticated");
+        }
 
         console.log("Sending to /chat:", {
             message: text,
