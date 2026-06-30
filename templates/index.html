@@ -1525,6 +1525,77 @@ body {
     font-size: 11px;
     color: var(--text-secondary);
 }
+
+/* ==============================
+   CONNECT BUTTON STYLES
+   ============================== */
+
+.connect-btn {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+}
+
+.connect-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.5);
+}
+
+.connect-btn:active {
+    transform: scale(0.96);
+}
+
+.connect-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.connect-btn.connected {
+    background: linear-gradient(135deg, var(--success), #059669);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.connect-btn.connected:hover {
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+}
+
+.connect-btn.connecting {
+    background: linear-gradient(135deg, var(--warning), #d97706);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    cursor: wait;
+}
+
+/* Spinner animation */
+.connect-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Live pulse for connected status dot */
+.server-status.online.pulse {
+    animation: livePulse 2s infinite;
+}
 /* ==============================
    SETTINGS MODAL NEW STYLES
    ============================== */
@@ -2537,6 +2608,8 @@ body {
 
 const MCP_STORAGE_KEY = 'geobot_mcp_servers';
 
+const WEATHER_MCP_CONNECTED_KEY = 'geobot_weather_mcp_connected';
+
 const DEFAULT_SERVERS = [
     {
         id: 'default-weather',
@@ -2550,6 +2623,75 @@ const DEFAULT_SERVERS = [
     }
 ];
 
+function isWeatherMCPConnected() {
+    return localStorage.getItem(WEATHER_MCP_CONNECTED_KEY) === 'true';
+}
+
+function setWeatherMCPConnected(connected) {
+    localStorage.setItem(WEATHER_MCP_CONNECTED_KEY, connected ? 'true' : 'false');
+}
+
+async function checkWeatherMCPConnection(url) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tool: 'healthCheck' }),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return res.ok;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function connectWeatherMCP(serverId) {
+    const servers = loadServers();
+    const server = servers.find(s => s.id === serverId);
+    if (!server) return;
+
+    // Set connecting state in UI
+    const btn = document.getElementById(`connect-btn-${serverId}`);
+    if (btn) {
+        btn.className = 'connect-btn connecting';
+        btn.innerHTML = '<span class="connect-spinner"></span> Connecting...';
+        btn.disabled = true;
+    }
+
+    const isOnline = await checkWeatherMCPConnection(server.url);
+
+    if (isOnline) {
+        setWeatherMCPConnected(true);
+        server.enabled = true;
+        saveServers(servers);
+        showToast('Weather MCP connected successfully', '✅');
+    } else {
+        setWeatherMCPConnected(false);
+        server.enabled = false;
+        saveServers(servers);
+        showToast('Weather MCP connection failed. Server may be offline.', '❌');
+    }
+
+    renderServerList();
+    updateActiveCount();
+}
+
+function disconnectWeatherMCP(serverId) {
+    setWeatherMCPConnected(false);
+    const servers = loadServers();
+    const server = servers.find(s => s.id === serverId);
+    if (server) {
+        server.enabled = false;
+        saveServers(servers);
+    }
+    showToast('Weather MCP disconnected', '⏸️');
+    renderServerList();
+    updateActiveCount();
+}
+
 function loadServers() {
     const stored = localStorage.getItem(MCP_STORAGE_KEY);
     if (stored) return JSON.parse(stored);
@@ -2562,7 +2704,15 @@ function saveServers(servers) {
 }
 
 function getEnabledServers() {
-    return loadServers().filter(s => s.enabled);
+    const servers = loadServers();
+    return servers.filter(s => {
+        // For Weather MCP (default), check connection state
+        if (s.isDefault) {
+            return isWeatherMCPConnected();
+        }
+        // For custom servers, use toggle
+        return s.enabled;
+    });
 }
 
 function generateId() {
@@ -2600,7 +2750,6 @@ async function renderServerList() {
     for (const server of servers) {
         const card = document.createElement('div');
         card.className = 'server-card';
-        const statusClass = server.enabled ? 'checking' : 'offline';
         
         const protocolEmoji = {
             'custom': '🤖',
@@ -2617,33 +2766,74 @@ async function renderServerList() {
             'stdio': 'Local Stdio'
         };
         
-        card.innerHTML = `
-            <div class="server-card-header">
-                <div class="server-name">
-                    <span class="server-status ${statusClass}" id="status-${server.id}"></span>
-                    ${server.name}
-                    <span style="font-size:10px;color:var(--text-secondary);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;margin-left:6px;">
-                        ${protocolEmoji[server.protocol] || '🤖'} ${protocolLabel[server.protocol] || 'Custom'}
-                    </span>
+        // WEATHER MCP: Use Connect button instead of toggle
+        if (server.isDefault) {
+            const isConnected = isWeatherMCPConnected();
+            const statusClass = isConnected ? 'online' : 'offline';
+            
+            card.innerHTML = `
+                <div class="server-card-header">
+                    <div class="server-name">
+                        <span class="server-status ${statusClass}" id="status-${server.id}"></span>
+                        ${server.name}
+                        <span style="font-size:10px;color:var(--text-secondary);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;margin-left:6px;">
+                            ${protocolEmoji[server.protocol] || '🤖'} ${protocolLabel[server.protocol] || 'Custom'}
+                        </span>
+                    </div>
+                    <button id="connect-btn-${server.id}" class="connect-btn ${isConnected ? 'connected' : ''}" 
+                        onclick="${isConnected ? `disconnectWeatherMCP('${server.id}')` : `connectWeatherMCP('${server.id}')`}">
+                        ${isConnected ? '✅ Connected' : '🔗 Connect'}
+                    </button>
                 </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" ${server.enabled ? 'checked' : ''} onchange="toggleServer('${server.id}', this.checked)">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="server-url">${server.url}</div>
-            ${server.description ? `<div class="server-desc">${server.description}</div>` : ''}
-            <div class="server-actions">
-                <span style="font-size:11px;color:var(--text-secondary)">${server.isDefault ? '⭐ Default (HUD)' : 'Custom'}</span>
-                ${!server.isDefault ? `<button class="delete-btn" onclick="deleteServer('${server.id}')">🗑️ Delete</button>` : ''}
-            </div>
-        `;
-        list.appendChild(card);
-        
-        if (server.enabled) {
-            const statusDot = document.getElementById(`status-${server.id}`);
-            const isOnline = await checkServerStatus(server.url, server.protocol);
-            statusDot.className = `server-status ${isOnline ? 'online' : 'offline'}`;
+                <div class="server-url">${server.url}</div>
+                ${server.description ? `<div class="server-desc">${server.description}</div>` : ''}
+                <div class="server-actions">
+                    <span style="font-size:11px;color:var(--text-secondary)">⭐ Default (HUD)</span>
+                </div>
+            `;
+            list.appendChild(card);
+            
+            // Live status check for Weather MCP
+            if (isConnected) {
+                const statusDot = document.getElementById(`status-${server.id}`);
+                const isOnline = await checkWeatherMCPConnection(server.url);
+                if (!isOnline) {
+                    // Auto-disconnect if server is actually down
+                    disconnectWeatherMCP(server.id);
+                }
+            }
+        } else {
+            // CUSTOM MCP: Keep toggle switch
+            const statusClass = server.enabled ? 'checking' : 'offline';
+            
+            card.innerHTML = `
+                <div class="server-card-header">
+                    <div class="server-name">
+                        <span class="server-status ${statusClass}" id="status-${server.id}"></span>
+                        ${server.name}
+                        <span style="font-size:10px;color:var(--text-secondary);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;margin-left:6px;">
+                            ${protocolEmoji[server.protocol] || '🤖'} ${protocolLabel[server.protocol] || 'Custom'}
+                        </span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${server.enabled ? 'checked' : ''} onchange="toggleServer('${server.id}', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="server-url">${server.url}</div>
+                ${server.description ? `<div class="server-desc">${server.description}</div>` : ''}
+                <div class="server-actions">
+                    <span style="font-size:11px;color:var(--text-secondary)">Custom</span>
+                    <button class="delete-btn" onclick="deleteServer('${server.id}')">🗑️ Delete</button>
+                </div>
+            `;
+            list.appendChild(card);
+            
+            if (server.enabled) {
+                const statusDot = document.getElementById(`status-${server.id}`);
+                const isOnline = await checkServerStatus(server.url, server.protocol);
+                statusDot.className = `server-status ${isOnline ? 'online' : 'offline'}`;
+            }
         }
     }
 }
@@ -3527,6 +3717,21 @@ window.onload = async function() {
     if (window.Clerk) {
         try { await initClerk(); } catch(e) { console.log('Clerk init:', e); }
     }
+    
+    // Ensure Weather MCP starts disconnected by default
+    // (unless user explicitly connected before and localStorage has it)
+    // We DON'T reset here — user must click Connect each session
+    // But if localStorage has no value, default to disconnected
+    if (localStorage.getItem(WEATHER_MCP_CONNECTED_KEY) === null) {
+        setWeatherMCPConnected(false);
+        const servers = loadServers();
+        const weatherServer = servers.find(s => s.isDefault);
+        if (weatherServer) {
+            weatherServer.enabled = false;
+            saveServers(servers);
+        }
+    }
+    
     applySettings();
     addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
     addSuggestions([
@@ -3598,11 +3803,27 @@ if (!res.ok) throw new Error('Server error');
             addSuggestions([
                 { text: "Open Settings", icon: "⚙️" }
             ]);
-            // Make the "Open Settings" chip actually open the modal
             setTimeout(function() {
                 const chips = document.querySelectorAll('.chip');
                 chips.forEach(function(chip) {
                     if (chip.textContent.includes('Open Settings')) {
+                        chip.onclick = function() { openModal(); };
+                    }
+                });
+            }, 100);
+        }
+        else if (data.type === "need_connect_weather") {
+            // Weather MCP is disconnected but needed for this query
+            addMsg(data.response, "bot");
+            addSuggestions([
+                { text: "🔗 Connect Weather MCP", icon: "⚙️", action: "open_settings" },
+                { text: "Weather in Delhi", icon: "🌤️" },
+                { text: "Compare Tokyo vs London", icon: "⚖️" }
+            ]);
+            setTimeout(function() {
+                const chips = document.querySelectorAll('.chip');
+                chips.forEach(function(chip) {
+                    if (chip.textContent.includes('Connect Weather MCP')) {
                         chip.onclick = function() { openModal(); };
                     }
                 });

@@ -1294,3 +1294,136 @@ if __name__ == "__main__":
 
 def run_agent():
     start_cli()
+
+
+# ==============================
+# 🧠 LLM-FIRST ORCHESTRATION
+# ==============================
+
+def llm_decide_needs_mcp(user_query):
+    """
+    Ask LLM to analyze the user query and decide if MCP data is needed.
+    Returns: dict with keys: needs_mcp, cities, tools, reasoning, is_compare, is_general_chat
+    """
+    prompt = f"""You are GeoBot's intent analyzer. Analyze this user query and decide what the user needs.
+
+USER QUERY: "{user_query}"
+
+INSTRUCTIONS:
+1. Determine if the user is asking about weather, AQI, time, holidays, or location data for a specific city.
+2. If yes, extract the city name(s) and determine which tool(s) are needed.
+3. If the user is comparing multiple cities, set is_compare=true.
+4. If the user is asking a general question (not about any city data), set is_general_chat=true.
+5. Return your analysis in this exact format:
+
+MCP_NEEDED: true or false
+CITIES: comma-separated list of city names (or "none")
+TOOLS: comma-separated list of tools (getFullInsights, getWeatherOnly, getAQI, getTimeOnly, getCoordinatesOnly, getTodaySpecial) (or "none")
+IS_COMPARE: true or false
+IS_GENERAL_CHAT: true or false
+REASONING: brief explanation of your decision
+
+EXAMPLES:
+- "Weather in Tokyo" → MCP_NEEDED: true, CITIES: Tokyo, TOOLS: getFullInsights, IS_COMPARE: false, IS_GENERAL_CHAT: false
+- "What is AQI?" → MCP_NEEDED: false, CITIES: none, TOOLS: none, IS_COMPARE: false, IS_GENERAL_CHAT: true
+- "Compare Delhi and Mumbai" → MCP_NEEDED: true, CITIES: Delhi,Mumbai, TOOLS: getFullInsights, IS_COMPARE: true, IS_GENERAL_CHAT: false
+- "Hello" → MCP_NEEDED: false, CITIES: none, TOOLS: none, IS_COMPARE: false, IS_GENERAL_CHAT: true
+- "Time in London" → MCP_NEEDED: true, CITIES: London, TOOLS: getTimeOnly, IS_COMPARE: false, IS_GENERAL_CHAT: false
+
+Now analyze:
+"""
+
+    try:
+        response = generate_llm_text(prompt)
+        return parse_llm_decision(response, user_query)
+    except Exception as e:
+        print(f"{Color.RED}❌ LLM decision failed: {e}{Color.END}")
+        # Fallback: use old extract_cities logic
+        cities = extract_cities(user_query)
+        return {
+            "needs_mcp": len(cities) > 0,
+            "cities": cities,
+            "tools": ["getFullInsights"],
+            "reasoning": "Fallback: extracted cities using regex",
+            "is_compare": len(cities) > 1,
+            "is_general_chat": len(cities) == 0
+        }
+
+
+def parse_llm_decision(response_text, original_query):
+    """
+    Parse the LLM's decision response into a structured dict.
+    """
+    result = {
+        "needs_mcp": False,
+        "cities": [],
+        "tools": ["getFullInsights"],
+        "reasoning": "",
+        "is_compare": False,
+        "is_general_chat": False
+    }
+
+    lines = response_text.strip().split('\n')
+    for line in lines:
+        line = line.strip()
+        if line.startswith('MCP_NEEDED:'):
+            val = line.split(':', 1)[1].strip().lower()
+            result["needs_mcp"] = val in ['true', 'yes', '1']
+        elif line.startswith('CITIES:'):
+            val = line.split(':', 1)[1].strip()
+            if val.lower() not in ['none', '', 'n/a']:
+                result["cities"] = [c.strip() for c in val.split(',') if c.strip()]
+        elif line.startswith('TOOLS:'):
+            val = line.split(':', 1)[1].strip()
+            if val.lower() not in ['none', '', 'n/a']:
+                result["tools"] = [t.strip() for t in val.split(',') if t.strip()]
+        elif line.startswith('IS_COMPARE:'):
+            val = line.split(':', 1)[1].strip().lower()
+            result["is_compare"] = val in ['true', 'yes', '1']
+        elif line.startswith('IS_GENERAL_CHAT:'):
+            val = line.split(':', 1)[1].strip().lower()
+            result["is_general_chat"] = val in ['true', 'yes', '1']
+        elif line.startswith('REASONING:'):
+            result["reasoning"] = line.split(':', 1)[1].strip()
+
+    # Fallback: if LLM didn't extract cities but we can find them
+    if result["needs_mcp"] and not result["cities"]:
+        fallback_cities = extract_cities(original_query)
+        if fallback_cities:
+            result["cities"] = fallback_cities
+
+    return result
+
+
+def llm_generate_with_data(user_query, mcp_data, reasoning=""):
+    """
+    Ask LLM to generate a final response using MCP data.
+    """
+    data_json = json.dumps(mcp_data, indent=2) if isinstance(mcp_data, (list, dict)) else str(mcp_data)
+
+    prompt = f"""You are GeoBot, a friendly location intelligence assistant.
+
+The user asked: "{user_query}"
+
+Here is the real-time data:
+{data_json}
+
+Your task:
+- Answer the user's question directly using the data above.
+- Describe conditions in plain, natural language.
+- Mention temperature, weather, AQI, or any relevant metrics.
+- Do NOT use bullet points, headers, or numbered lists.
+- Write in plain flowing text. Max 100 words.
+- No emojis unless the user used them.
+- If data is limited, mention what you can and be honest about gaps.
+
+Answer:"""
+
+    return generate_llm_text(prompt)
+
+
+def llm_generate_general(user_query):
+    """
+    Ask LLM to answer a general question (no MCP data needed).
+    """
+    return generate_general_response(user_query)

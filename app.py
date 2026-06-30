@@ -124,6 +124,15 @@ async def chat(request: Request, user: Optional[dict] = Depends(get_current_user
         llm_enabled = body.get("llm_enabled", True)
         mcp_enabled = body.get("mcp_enabled", False)
         mcp_servers = body.get("mcp_servers", [])
+        
+        # Inject Weather MCP connection state from frontend into server objects
+        # Frontend sends connected state via a separate field or we check isDefault servers
+        for s in mcp_servers:
+            if s.get("isDefault") == True:
+                # The frontend's getEnabledServers() only includes Weather MCP if connected
+                # So if it's in the list, it's connected. If not, it's disconnected.
+                # We also check for explicit 'connected' field if frontend sends it
+                s["connected"] = s.get("connected", s.get("enabled", False))
 
         if not user_input:
             return JSONResponse(
@@ -144,57 +153,97 @@ async def chat(request: Request, user: Optional[dict] = Depends(get_current_user
 
 
 def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_master_enabled=False, user=None):
+    """
+    NEW ORCHESTRATOR: LLM-first decision making.
+    1. Ask LLM what the user needs
+    2. If general chat → LLM answers directly
+    3. If city data needed → Check Weather MCP connection → Call MCP → LLM synthesizes response
+    """
     all_logs = []
-    cities = extract_cities(user_input)
     mcp_servers = mcp_servers or []
 
-    # Log user if authenticated (no DB, just for server logs)
+    # Log user if authenticated
     if user:
         all_logs.append(f"👤 Authenticated user: {user.get('email', 'unknown')}")
 
     # ======================
-    # NO CITY FOUND
+    # STEP 1: LLM decides what user needs
     # ======================
-    if not cities:
-        if llm_enabled:
-            response_text = generate_general_response(user_input)
-            return {
-                "type": "text",
-                "response": response_text,
-                "mcp_logs": ["🤖 No city detected — routing to LLM for general answer"]
-            }
-        else:
-            return {
-                "type": "need_llm",
-                "response": "I need a city name to fetch weather data. Please mention a city (e.g., 'Weather in Delhi').\n\nOr enable 🤖 LLM in Settings for AI-powered answers to general questions.",
-                "mcp_logs": ["⚠️ No city found and LLM is disabled"]
-            }
+    if not llm_enabled:
+        # LLM disabled — use old fallback logic
+        return process_query_fallback(user_input, mcp_servers, mcp_master_enabled, all_logs)
+
+    decision = llm_decide_needs_mcp(user_input)
+    all_logs.append(f"🧠 LLM decision: needs_mcp={decision['needs_mcp']}, cities={decision['cities']}, reasoning={decision['reasoning']}")
 
     # ======================
-    # CHECK IF MASTER MCP IS ENABLED
+    # STEP 2: General chat (no MCP needed)
     # ======================
-    if not mcp_master_enabled:
+    if not decision["needs_mcp"] or decision["is_general_chat"]:
+        response_text = llm_generate_general(user_input)
         return {
-            "type": "need_mcp",
-            "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br><br>Then enable at least one MCP server from the list.",
-            "mcp_logs": ["⚠️ Master MCP toggle is OFF"]
+            "type": "text",
+            "response": response_text,
+            "mcp_logs": all_logs
         }
 
     # ======================
-    # CHECK IF ANY MCP SERVER IS ENABLED
+    # STEP 3: MCP needed — check if Weather MCP is connected
+    # ======================
+    cities = decision["cities"]
+    if not cities:
+        all_logs.append("⚠️ LLM said MCP needed but no cities found")
+        response_text = llm_generate_general(user_input)
+        return {
+            "type": "text",
+            "response": response_text,
+            "mcp_logs": all_logs
+        }
+
+    # Check Weather MCP connection state from frontend payload
+    weather_mcp_connected = False
+    weather_server = None
+    for s in mcp_servers:
+        if s.get("isDefault") == True:
+            weather_server = s
+            # Frontend sends connected state via the server's enabled flag
+            # OR we check if it's in the enabled list
+            weather_mcp_connected = s.get("enabled") == True and s.get("connected") != False
+            break
+
+    # If Weather MCP is not connected but we need city data
+    if not weather_mcp_connected and not mcp_master_enabled:
+        return {
+            "type": "need_mcp",
+            "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br>3. Click 🔗 Connect on the Weather MCP card",
+            "mcp_logs": all_logs
+        }
+
+    if not weather_mcp_connected:
+        # Weather MCP disconnected but needed — return LLM-only + connect prompt
+        llm_response = llm_generate_general(user_input)
+        full_response = f"{llm_response}\n\n---\n\n💡 **Want live data?** Connect the Weather MCP in Settings for real-time weather, AQI, and time data."
+        return {
+            "type": "need_connect_weather",
+            "response": full_response,
+            "mcp_logs": all_logs
+        }
+
+    # ======================
+    # STEP 4: Weather MCP is connected — proceed with MCP calls
     # ======================
     enabled_servers = [s for s in mcp_servers if s.get("enabled") == True]
     if not enabled_servers:
         return {
             "type": "need_mcp",
             "response": "🔌 No MCP servers are enabled.<br><br>To get weather, AQI, and location data, please enable at least one MCP server:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Find your MCP server in the list<br>3. Toggle it ON",
-            "mcp_logs": ["⚠️ No MCP servers enabled"]
+            "mcp_logs": all_logs
         }
 
     # ======================
     # MULTI-CITY: Compare mode
     # ======================
-    if len(cities) > 1:
+    if decision["is_compare"] or len(cities) > 1:
         results = []
         for c in cities:
             default_servers = [s for s in enabled_servers if s.get("isDefault") == True]
@@ -225,13 +274,8 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
                 "mcp_logs": all_logs
             }
 
-        llm_text = ""
-        if llm_enabled:
-            compare_prompt = f"""Compare these cities based on the data:
-{json.dumps(results, indent=2)}
-
-Provide a brief comparison (2-3 sentences) highlighting key differences."""
-            llm_text = generate_llm_text(compare_prompt)
+        # LLM generates comparison text
+        llm_text = llm_generate_with_data(user_input, results, decision["reasoning"])
 
         return {
             "type": "compare",
@@ -241,10 +285,10 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
         }
 
     # ======================
-    # SINGLE CITY: Call default + custom MCPs separately
+    # SINGLE CITY
     # ======================
     city = cities[0]
-    tool = choose_tool(user_input)
+    tool = decision["tools"][0] if decision["tools"] else "getFullInsights"
 
     default_servers = [s for s in enabled_servers if s.get("isDefault") == True]
     custom_servers = [s for s in enabled_servers if s.get("isDefault") != True]
@@ -315,43 +359,72 @@ Provide a brief comparison (2-3 sentences) highlighting key differences."""
             if key not in primary_data and value is not None:
                 primary_data[key] = value
 
-    custom_text = ""
-    if llm_enabled:
-        if custom_mcp_results:
-            custom_prompt = f"""You are GeoBot, a location intelligence assistant.
-
-The user asked: "{user_input}"
-
-Data for {primary_data.get('city', 'this city')}:
-{json.dumps(primary_data, indent=2)}
-
-External MCP data:
-{json.dumps(custom_mcp_results, indent=2)}
-
-Task: Answer the user's question directly.
-- If the External MCP data is relevant to "{user_input}", use it as the primary source.
-- If not relevant, answer based on the available data or your own general knowledge.
-- Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text. Max 100 words. No emojis unless the user used them."""
-        else:
-            custom_prompt = f"""You are GeoBot, a location intelligence assistant.
-
-The user asked: "{user_input}"
-
-Data for {primary_data.get('city', 'this city')}:
-{json.dumps(primary_data, indent=2)}
-
-Task: Answer the user's question directly based on the weather and location data above.
-- Describe the current conditions in plain, natural language.
-- Mention temperature, weather condition, and any notable metrics (AQI, humidity, wind, etc.).
-- Do NOT use bullet points, headers, or numbered lists. Write in plain flowing text. Max 100 words. No emojis unless the user used them."""
-
-        custom_text = generate_llm_text(custom_prompt)
+    # LLM generates final response with data
+    custom_text = llm_generate_with_data(user_input, primary_data, decision["reasoning"])
 
     return {
         "type": "hud_with_custom",
         "hud_data": primary_data,
         "custom_text": custom_text,
         "custom_mcp_results": custom_mcp_results,
+        "mcp_logs": all_logs
+    }
+
+
+def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled=False, all_logs=None):
+    """
+    Fallback when LLM is disabled. Uses old direct logic.
+    """
+    all_logs = all_logs or []
+    cities = extract_cities(user_input)
+    mcp_servers = mcp_servers or []
+
+    if not cities:
+        return {
+            "type": "need_llm",
+            "response": "I need a city name to fetch weather data. Please mention a city (e.g., 'Weather in Delhi').\n\nOr enable 🤖 LLM in Settings for AI-powered answers to general questions.",
+            "mcp_logs": all_logs
+        }
+
+    if not mcp_master_enabled:
+        return {
+            "type": "need_mcp",
+            "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br><br>Then enable at least one MCP server from the list.",
+            "mcp_logs": all_logs
+        }
+
+    enabled_servers = [s for s in mcp_servers if s.get("enabled") == True]
+    if not enabled_servers:
+        return {
+            "type": "need_mcp",
+            "response": "🔌 No MCP servers are enabled.<br><br>To get weather, AQI, and location data, please enable at least one MCP server:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Find your MCP server in the list<br>3. Toggle it ON",
+            "mcp_logs": all_logs
+        }
+
+    # Single city fallback
+    city = cities[0]
+    tool = choose_tool(user_input)
+
+    default_servers = [s for s in enabled_servers if s.get("isDefault") == True]
+    custom_servers = [s for s in enabled_servers if s.get("isDefault") != True]
+
+    default_data = None
+    if default_servers:
+        default_result = call_mcp(tool, city, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"))
+        all_logs.extend(default_result.get("logs", []))
+        if "error" not in default_result:
+            default_data = clean_data(default_result["data"])
+
+    if default_data is None:
+        return {
+            "type": "error",
+            "response": f"❌ No MCP server returned data for {city}.",
+            "mcp_logs": all_logs
+        }
+
+    return {
+        "type": "hud",
+        "response": default_data,
         "mcp_logs": all_logs
     }
 
