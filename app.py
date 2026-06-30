@@ -59,7 +59,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         return {
             "user_id": payload.get("sub"),
             "email": payload.get("email"),
-            "name": payload.get("name") or payload.get("email")
+            "name": payload.get("name") or payload.get("email"),
+            "token": credentials.credentials
         }
     except Exception:
         return None
@@ -139,8 +140,9 @@ async def chat(request: Request, user: Optional[dict] = Depends(get_current_user
                 content={"type": "error", "response": "❌ Empty message", "mcp_logs": []}
             )
 
+        clerk_token = user.get("token") if user else None
         result = await asyncio.to_thread(
-            process_query, user_input, llm_enabled, mcp_servers, mcp_enabled, user
+            process_query, user_input, llm_enabled, mcp_servers, mcp_enabled, user, clerk_token
         )
         return result
 
@@ -154,7 +156,7 @@ async def chat(request: Request, user: Optional[dict] = Depends(get_current_user
         )
 
 
-def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_master_enabled=False, user=None):
+def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_master_enabled=False, user=None, clerk_token=None):
     """
     NEW ORCHESTRATOR: LLM-first decision making.
     1. Ask LLM what the user needs
@@ -265,14 +267,14 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
 
             city_data = None
             if default_servers:
-                r = call_mcp("getFullInsights", c, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"))
+                r = call_mcp("getFullInsights", c, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"), auth_token=clerk_token)
                 all_logs.extend(r.get("logs", []))
                 if "error" not in r:
                     city_data = clean_data(r["data"])
 
             if city_data is None and custom_servers:
                 for server in custom_servers:
-                    r = call_mcp("getFullInsights", c, custom_url=server["url"], server_config=server.get("config"))
+                    r = call_mcp("getFullInsights", c, custom_url=server["url"], server_config=server.get("config"), auth_token=clerk_token)
                     all_logs.extend(r.get("logs", []))
                     if "error" not in r:
                         city_data = clean_data(r["data"])
@@ -309,7 +311,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
 
     default_data = None
     if default_servers:
-        default_result = call_mcp(tool, city, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"))
+        default_result = call_mcp(tool, city, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"), auth_token=clerk_token)
         all_logs.extend(default_result.get("logs", []))
         if "error" not in default_result:
             default_data = clean_data(default_result["data"])
@@ -320,7 +322,8 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
             tool,
             city,
             custom_url=server["url"],
-            server_config=server.get("config")
+            server_config=server.get("config"),
+            auth_token=clerk_token
         )
         all_logs.extend(result.get("logs", []))
         if "error" not in result:
@@ -385,7 +388,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
     }
 
 
-def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled=False, all_logs=None):
+def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled=False, all_logs=None, clerk_token=None):
     """
     Fallback when LLM is disabled. Uses old direct logic.
     """
@@ -424,7 +427,7 @@ def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled
 
     default_data = None
     if default_servers:
-        default_result = call_mcp(tool, city, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"))
+        default_result = call_mcp(tool, city, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"), auth_token=clerk_token)
         all_logs.extend(default_result.get("logs", []))
         if "error" not in default_result:
             default_data = clean_data(default_result["data"])

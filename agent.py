@@ -306,7 +306,7 @@ def build_mcp_payload(tool, city, mcp_format, available_tools=None, server_confi
 
 
 
-def call_mcp_stdio(tool, city, server_config, timeout=15):
+def call_mcp_stdio(tool, city, server_config, timeout=15, auth_token=None):
     """
     Call an MCP server via stdio (subprocess).
     Uses JSON-RPC 2.0 over stdin/stdout.
@@ -446,7 +446,7 @@ def call_mcp_stdio(tool, city, server_config, timeout=15):
 
 
 
-def call_mcp_streamable_http(url, tool, city, server_config, timeout=15):
+def call_mcp_streamable_http(url, tool, city, server_config, timeout=15, auth_token=None):
     """
     Call an MCP server using Streamable HTTP transport (MCP spec 2025-03-26).
     Used by Apify, Cloudflare, and other modern MCP hosts.
@@ -465,6 +465,8 @@ def call_mcp_streamable_http(url, tool, city, server_config, timeout=15):
             'Accept': 'application/json, text/event-stream',
             'MCP-Protocol-Version': '2025-03-26'
         }
+        if auth_token:
+            headers['Authorization'] = f'Bearer {auth_token}'
 
         auth_type = config.get('auth_type', 'none')
         auth_value = config.get('auth_value', '')
@@ -642,7 +644,7 @@ def call_mcp_streamable_http(url, tool, city, server_config, timeout=15):
         logs.append(f"❌ Streamable HTTP error: {str(e)}")
         return {"error": str(e), "logs": logs}
 
-def call_mcp_rest_api(url, tool, city, server_config, timeout=15):
+def call_mcp_rest_api(url, tool, city, server_config, timeout=15, auth_token=None):
     logs = []
     config = server_config or {}
 
@@ -661,6 +663,8 @@ def call_mcp_rest_api(url, tool, city, server_config, timeout=15):
         print(f"{Color.CYAN}🌐 REST API: {full_url}{Color.END}")
 
         headers = {'Content-Type': 'application/json'}
+        if auth_token:
+            headers['Authorization'] = f'Bearer {auth_token}'
         auth_type = config.get('auth_type', 'none')
         auth_key = config.get('auth_key', '')
         auth_value = config.get('auth_value', '')
@@ -978,7 +982,7 @@ def merge_mcp_data(primary_data, secondary_data):
     return merged
 
 
-def call_mcp_multi(tool, city, servers):
+def call_mcp_multi(tool, city, servers, auth_token=None):
     """
     Call multiple MCP servers with fallback/merge.
     servers: list of dicts with 'url', 'config', 'name'
@@ -993,7 +997,7 @@ def call_mcp_multi(tool, city, servers):
         name = server.get("name", f"Server-{i+1}")
 
         all_logs.append(f"🔄 [{i+1}/{len(servers)}] Trying {name} @ {url}")
-        result = call_mcp(tool, city, custom_url=url, server_config=config)
+        result = call_mcp(tool, city, custom_url=url, server_config=config, auth_token=auth_token)
         all_logs.extend(result.get("logs", []))
 
         if "error" not in result and result.get("data"):
@@ -1073,7 +1077,7 @@ def extract_cities(user_input):
 # ==============================
 # 🔧 SINGLE MCP CALL (backward compat)
 # ==============================
-def call_mcp(tool, city, custom_url=None, server_config=None):
+def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None):
     logs = []
     url = custom_url or MCP_URL
 
@@ -1084,13 +1088,13 @@ def call_mcp(tool, city, custom_url=None, server_config=None):
         logs.append(f"🌐 REST API mode: tool={tool}, city={city}")
         logs.append(f"📋 Config: {json.dumps(server_config, indent=2) if server_config else 'None'}")
         logs.append(f"🔗 URL: {url}")
-        return call_mcp_rest_api(url, tool, city, server_config, timeout=15)
+        return call_mcp_rest_api(url, tool, city, server_config, timeout=15, auth_token=auth_token)
 
     if mcp_format == MCPFormat.STDIO:
-        return call_mcp_stdio(tool, city, server_config, timeout=15)
+        return call_mcp_stdio(tool, city, server_config, timeout=15, auth_token=auth_token)
 
     if mcp_format == MCPFormat.STREAMABLE_HTTP:
-        return call_mcp_streamable_http(url, tool, city, server_config, timeout=15)
+        return call_mcp_streamable_http(url, tool, city, server_config, timeout=15, auth_token=auth_token)
 
     payload = build_mcp_payload(tool, city, mcp_format, available_tools, server_config)
     logs.append(f"📤 Payload ({mcp_format}): {json.dumps(payload, indent=2)}")
@@ -1100,7 +1104,10 @@ def call_mcp(tool, city, custom_url=None, server_config=None):
         logs.append(log_msg)
         print(f"{Color.CYAN}{log_msg}{Color.END}")
 
-        res = requests.post(url, json=payload, timeout=15)
+        headers = {"Content-Type": "application/json"}
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+        res = requests.post(url, json=payload, headers=headers, timeout=15)
 
         if res.status_code != 200:
             error_msg = f"❌ MCP failed: HTTP {res.status_code}"
