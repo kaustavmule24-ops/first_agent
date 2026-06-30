@@ -2705,14 +2705,23 @@ function saveServers(servers) {
 
 function getEnabledServers() {
     const servers = loadServers();
-    return servers.filter(s => {
+    const result = [];
+    for (const s of servers) {
         // For Weather MCP (default), check connection state
         if (s.isDefault) {
-            return isWeatherMCPConnected();
+            if (isWeatherMCPConnected()) {
+                // Create a copy with connected flag for backend
+                const connectedServer = {...s, enabled: true, connected: true};
+                result.push(connectedServer);
+            }
+        } else {
+            // For custom servers, use toggle
+            if (s.enabled) {
+                result.push(s);
+            }
         }
-        // For custom servers, use toggle
-        return s.enabled;
-    });
+    }
+    return result;
 }
 
 function generateId() {
@@ -3767,6 +3776,13 @@ async function send() {
         const headers = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
+        console.log("Sending to /chat:", {
+            message: text,
+            llm_enabled: settings.llmEnabled,
+            mcp_enabled: settings.mcpEnabled,
+            mcp_servers: enabledServers
+        });
+
         const res = await fetch("/chat", {
             method: "POST",
             headers: headers,
@@ -3777,6 +3793,8 @@ async function send() {
                 mcp_servers: enabledServers
             })
         });
+
+        console.log("/chat response status:", res.status);
 
         if (res.status === 401) {
             hideTyping();
@@ -3922,7 +3940,8 @@ if (!res.ok) throw new Error('Server error');
     } catch (err) {
         removeStatus();
         removeMCPLogs();
-        const errorDiv = addMsg("⚠️ Connection failed. Agent server may be offline.", "bot");
+        console.error("Send error:", err);
+        const errorDiv = addMsg("⚠️ Connection failed. Agent server may be offline. Check console for details.", "bot");
         errorDiv.classList.add('error-shake');
     } finally {
         setInputEnabled(true);

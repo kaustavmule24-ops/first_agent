@@ -17,7 +17,10 @@ from agent import (
     call_mcp_multi,
     clean_data,
     generate_general_response,
-    generate_llm_text
+    generate_llm_text,
+    llm_decide_needs_mcp,
+    llm_generate_with_data,
+    llm_generate_general
 )
 
 app = FastAPI(title="MCP AI Agent 🌍")
@@ -126,12 +129,8 @@ async def chat(request: Request, user: Optional[dict] = Depends(get_current_user
         mcp_servers = body.get("mcp_servers", [])
         
         # Inject Weather MCP connection state from frontend into server objects
-        # Frontend sends connected state via a separate field or we check isDefault servers
         for s in mcp_servers:
             if s.get("isDefault") == True:
-                # The frontend's getEnabledServers() only includes Weather MCP if connected
-                # So if it's in the list, it's connected. If not, it's disconnected.
-                # We also check for explicit 'connected' field if frontend sends it
                 s["connected"] = s.get("connected", s.get("enabled", False))
 
         if not user_input:
@@ -146,6 +145,9 @@ async def chat(request: Request, user: Optional[dict] = Depends(get_current_user
         return result
 
     except Exception as e:
+        import traceback
+        print(f"❌ CHAT ERROR: {str(e)}")
+        traceback.print_exc()
         return JSONResponse(
             status_code=500,
             content={"type": "error", "response": f"❌ Server error: {str(e)}", "mcp_logs": []}
@@ -159,6 +161,18 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
     2. If general chat → LLM answers directly
     3. If city data needed → Check Weather MCP connection → Call MCP → LLM synthesizes response
     """
+    # Safety check: ensure imports are available
+    try:
+        llm_decide_needs_mcp
+        llm_generate_with_data
+        llm_generate_general
+    except NameError as e:
+        return {
+            "type": "error",
+            "response": f"❌ Server config error: Missing import {e}. Please restart the server.",
+            "mcp_logs": []
+        }
+    
     all_logs = []
     mcp_servers = mcp_servers or []
 
