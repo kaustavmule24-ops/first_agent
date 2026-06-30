@@ -53,7 +53,7 @@ TOOLS_CACHE = {}
 # 🌐 PROTOCOL DETECTION ENGINE
 # ==============================
 
-def detect_mcp_format(url, timeout=10):
+def detect_mcp_format(url, timeout=10, auth_token=None):
     logs = []
 
     if url in FORMAT_CACHE:
@@ -66,10 +66,15 @@ def detect_mcp_format(url, timeout=10):
     detected_format = MCPFormat.UNKNOWN
     available_tools = []
 
+    # Build headers with auth if available
+    probe_headers = {"Content-Type": "application/json"}
+    if auth_token:
+        probe_headers["Authorization"] = f"Bearer {auth_token}"
+
     # Strategy 1: CUSTOM format probe
     try:
         custom_payload = {"tool": "healthCheck", "input": "test"}
-        res = requests.post(url, json=custom_payload, timeout=timeout)
+        res = requests.post(url, json=custom_payload, headers=probe_headers, timeout=timeout)
 
         if res.status_code == 200:
             data = res.json()
@@ -114,7 +119,7 @@ def detect_mcp_format(url, timeout=10):
                 "clientInfo": {"name": "geobot", "version": "1.0"}
             }
         }
-        res = requests.post(url, json=init_payload, timeout=timeout)
+        res = requests.post(url, json=init_payload, headers=probe_headers, timeout=timeout)
 
         if res.status_code == 200:
             data = res.json()
@@ -143,7 +148,7 @@ def detect_mcp_format(url, timeout=10):
             "method": "tools/list",
             "params": {}
         }
-        res = requests.post(url, json=jsonrpc_payload, timeout=timeout)
+        res = requests.post(url, json=jsonrpc_payload, headers=probe_headers, timeout=timeout)
 
         if res.status_code == 200:
             data = res.json()
@@ -171,7 +176,7 @@ def detect_mcp_format(url, timeout=10):
     # Strategy 3: REST API probe
     try:
         base_url = url.replace('/tool', '').replace('/mcp', '').rstrip('/')
-        res = requests.get(base_url, timeout=timeout)
+        res = requests.get(base_url, headers=probe_headers, timeout=timeout)
         if res.status_code in [200, 401, 403]:
             content_type = res.headers.get('Content-Type', '')
             if 'json' in content_type or 'application/json' in content_type:
@@ -203,7 +208,7 @@ def detect_mcp_format(url, timeout=10):
 
     # Strategy 4: Error response probe
     try:
-        res = requests.post(url, timeout=timeout)
+        res = requests.post(url, headers=probe_headers, timeout=timeout)
         if res.status_code in [400, 401, 403, 404, 405]:
             error_text = res.text.lower()
             if 'jsonrpc' in error_text or 'method' in error_text:
@@ -1085,14 +1090,13 @@ def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None):
     logs = []
     url = custom_url or MCP_URL
 
-    mcp_format, available_tools, detect_logs = detect_mcp_format(url)
+    mcp_format, available_tools, detect_logs = detect_mcp_format(url, auth_token=auth_token)
     logs.extend(detect_logs)
 
-    if mcp_format == MCPFormat.REST_API:
-        logs.append(f"🌐 REST API mode: tool={tool}, city={city}")
-        logs.append(f"📋 Config: {json.dumps(server_config, indent=2) if server_config else 'None'}")
-        logs.append(f"🔗 URL: {url}")
-        return call_mcp_rest_api(url, tool, city, server_config, timeout=15, auth_token=auth_token)
+        if auth_token:
+            masked = auth_token[:8] + "..." if len(auth_token) > 12 else "***"
+            logs.append(f"🔐 [AUTH] REST API Bearer: {masked}")
+            headers['Authorization'] = f'Bearer {auth_token}'
 
     if mcp_format == MCPFormat.STDIO:
         return call_mcp_stdio(tool, city, server_config, timeout=15, auth_token=auth_token)
