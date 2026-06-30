@@ -2739,14 +2739,14 @@ function generateId() {
 }
 
 async function checkServerStatus(url, protocol) {
-    if (protocol === 'stdio') return true; // Local stdio always "online" if backend can spawn it
+    if (protocol === 'stdio') return true;
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tool: 'healthCheck' }),
+        // Use /ping for custom MCPs too (public, no auth)
+        const pingUrl = url.replace('/tool', '/ping').replace('/mcp', '/ping');
+        const res = await fetch(pingUrl, {
+            method: 'GET',
             signal: controller.signal
         });
         clearTimeout(timeoutId);
@@ -2755,7 +2755,6 @@ async function checkServerStatus(url, protocol) {
         return false;
     }
 }
-
 async function renderServerList() {
     const list = document.getElementById('serverList');
     const servers = loadServers();
