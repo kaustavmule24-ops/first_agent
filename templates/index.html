@@ -2646,10 +2646,10 @@ async function checkWeatherMCPConnection(url) {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tool: 'healthCheck' }),
+        // Ping /ping (public, no auth) instead of /tool or /health (protected)
+        const pingUrl = url.replace('/tool', '/ping');
+        const res = await fetch(pingUrl, {
+            method: 'GET',
             signal: controller.signal
         });
         clearTimeout(timeoutId);
@@ -2658,7 +2658,6 @@ async function checkWeatherMCPConnection(url) {
         return false;
     }
 }
-
 async function connectWeatherMCP(serverId) {
     const servers = loadServers();
     const server = servers.find(s => s.id === serverId);
