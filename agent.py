@@ -1093,10 +1093,7 @@ def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None):
     mcp_format, available_tools, detect_logs = detect_mcp_format(url, auth_token=auth_token)
     logs.extend(detect_logs)
 
-        if auth_token:
-            masked = auth_token[:8] + "..." if len(auth_token) > 12 else "***"
-            logs.append(f"🔐 [AUTH] REST API Bearer: {masked}")
-            headers['Authorization'] = f'Bearer {auth_token}'
+
 
     if mcp_format == MCPFormat.STDIO:
         return call_mcp_stdio(tool, city, server_config, timeout=15, auth_token=auth_token)
