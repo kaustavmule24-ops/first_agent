@@ -16,6 +16,42 @@ class Color:
     BOLD = "\033[1m"
     END = "\033[0m"
 
+# ==============================
+# 📝 UNIFIED LOGGING
+# ==============================
+
+def log(msg, logs=None, level="info", console=True):
+    """
+    Unified logger. Always adds to logs list for frontend.
+    Optionally prints to console with color.
+    Levels: info, success, warning, error
+    """
+    # Auto-mask any token-like strings
+    masked_msg = _mask_tokens_in_str(msg)
+    
+    if logs is not None:
+        prefix = {"info": "ℹ️", "success": "✅", "warning": "⚠️", "error": "❌"}.get(level, "ℹ️")
+        logs.append(f"{prefix} {masked_msg}")
+    
+    if console:
+        color = {
+            "info": Color.CYAN,
+            "success": Color.GREEN,
+            "warning": Color.YELLOW,
+            "error": Color.RED
+        }.get(level, Color.CYAN)
+        print(f"{color}{masked_msg}{Color.END}")
+
+def _mask_tokens_in_str(text):
+    """Mask JWT tokens and API keys in log strings."""
+    import re
+    # Mask Bearer tokens
+    text = re.sub(r'Bearer\s+[A-Za-z0-9_-]{20,}', 'Bearer ***', text)
+    # Mask raw JWT-looking strings
+    text = re.sub(r'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}', '***jwt***', text)
+    # Mask long hex keys
+    text = re.sub(r'\b[a-f0-9]{32,}\b', '***key***', text)
+    return text
 
 # ==============================
 # 🔗 CONFIG
@@ -72,20 +108,23 @@ TOOLS_CACHE = {}
 # 🌐 PROTOCOL DETECTION ENGINE
 # ==============================
 
-def detect_mcp_format(url, timeout=10, auth_token=None):
-    logs = []
+def detect_mcp_format(url, timeout=10, auth_token=None, logs=None):
+    """
+    Detect MCP server format with unified logging.
+    All logs go to the provided logs list (for frontend) AND console.
+    """
+    if logs is None:
+        logs = []
 
     if url in FORMAT_CACHE:
-        logs.append(f"📋 Using cached format for {url}: {FORMAT_CACHE[url]}")
+        log(f"Using cached format for {url}: {FORMAT_CACHE[url]}", logs, "info")
         return FORMAT_CACHE[url], TOOLS_CACHE.get(url, []), logs
 
-    logs.append(f"🔍 Detecting MCP format for: {url}")
-    print(f"{Color.YELLOW}🔍 Detecting MCP format for: {url}{Color.END}")
+    log(f"Detecting MCP format: {url}", logs, "info")
 
     detected_format = MCPFormat.UNKNOWN
     available_tools = []
 
-    # Build headers with auth if available
     probe_headers = {"Content-Type": "application/json"}
     if auth_token:
         probe_headers["Authorization"] = f"Bearer {auth_token}"
@@ -99,8 +138,7 @@ def detect_mcp_format(url, timeout=10, auth_token=None):
             data = res.json()
             if "status" in data and "server" in data:
                 detected_format = MCPFormat.CUSTOM
-                logs.append("✅ Detected: CUSTOM format (GeoBot protocol)")
-                print(f"{Color.GREEN}✅ Detected: CUSTOM format{Color.END}")
+                log("Detected: CUSTOM format (GeoBot protocol)", logs, "success")
                 if "features" in data:
                     available_tools = list(data["features"].keys())
                 FORMAT_CACHE[url] = detected_format
@@ -108,26 +146,22 @@ def detect_mcp_format(url, timeout=10, auth_token=None):
                 return detected_format, available_tools, logs
             if "jsonrpc" in data:
                 detected_format = MCPFormat.JSONRPC
-                logs.append("✅ Detected: JSON-RPC format (from healthCheck response)")
-                print(f"{Color.GREEN}✅ Detected: JSON-RPC format{Color.END}")
+                log("Detected: JSON-RPC format (from healthCheck)", logs, "success")
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
-            # Echo server returns whatever we send - detect by echo pattern
             if data == custom_payload or (isinstance(data, dict) and data.get("tool") == "healthCheck"):
                 detected_format = MCPFormat.JSONRPC
-                logs.append("✅ Detected: JSON-RPC format (echo server - returns payload)")
-                print(f"{Color.GREEN}✅ Detected: JSON-RPC format (echo server){Color.END}")
+                log("Detected: JSON-RPC format (echo server)", logs, "success")
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
 
     except Exception as e:
-        logs.append(f"⚠️ CUSTOM probe failed: {str(e)}")
+        log(f"CUSTOM probe failed: {str(e)}", logs, "warning", console=False)
 
-    # Strategy 2: JSON-RPC format probe (with proper MCP initialize handshake)
+    # Strategy 2: JSON-RPC format probe
     try:
-        # First try initialize (proper MCP handshake)
         init_payload = {
             "jsonrpc": "2.0",
             "id": 1,
@@ -144,9 +178,7 @@ def detect_mcp_format(url, timeout=10, auth_token=None):
             data = res.json()
             if "jsonrpc" in data and ("result" in data or "error" in data):
                 detected_format = MCPFormat.JSONRPC
-                logs.append("✅ Detected: JSON-RPC format (MCP initialize handshake)")
-                print(f"{Color.GREEN}✅ Detected: JSON-RPC format{Color.END}")
-                # Try to get tools list
+                log("Detected: JSON-RPC format (MCP handshake)", logs, "success")
                 try:
                     tools_payload = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
                     tools_res = requests.post(url, json=tools_payload, timeout=timeout)
@@ -160,7 +192,6 @@ def detect_mcp_format(url, timeout=10, auth_token=None):
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
 
-        # Fallback: try tools/list directly (some servers don't need init)
         jsonrpc_payload = {
             "jsonrpc": "2.0",
             "id": 1,
@@ -173,8 +204,7 @@ def detect_mcp_format(url, timeout=10, auth_token=None):
             data = res.json()
             if "jsonrpc" in data and ("result" in data or "error" in data):
                 detected_format = MCPFormat.JSONRPC
-                logs.append("✅ Detected: JSON-RPC format (tools/list response)")
-                print(f"{Color.GREEN}✅ Detected: JSON-RPC format{Color.END}")
+                log("Detected: JSON-RPC format (tools/list)", logs, "success")
                 if "result" in data and "tools" in data["result"]:
                     available_tools = [t.get("name") for t in data["result"]["tools"] if t.get("name")]
                 FORMAT_CACHE[url] = detected_format
@@ -182,15 +212,14 @@ def detect_mcp_format(url, timeout=10, auth_token=None):
                 return detected_format, available_tools, logs
             if "tools" in data:
                 detected_format = MCPFormat.JSONRPC
-                logs.append("✅ Detected: JSON-RPC format (plain tools response)")
-                print(f"{Color.GREEN}✅ Detected: JSON-RPC format{Color.END}")
+                log("Detected: JSON-RPC format (plain tools)", logs, "success")
                 available_tools = [t.get("name") for t in data["tools"] if t.get("name")]
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
 
     except Exception as e:
-        logs.append(f"⚠️ JSON-RPC probe failed: {str(e)}")
+        log(f"JSON-RPC probe failed: {str(e)}", logs, "warning", console=False)
 
     # Strategy 3: REST API probe
     try:
@@ -200,30 +229,26 @@ def detect_mcp_format(url, timeout=10, auth_token=None):
             content_type = res.headers.get('Content-Type', '')
             if 'json' in content_type or 'application/json' in content_type:
                 detected_format = MCPFormat.REST_API
-                logs.append(f"✅ Detected: REST API format (GET returned JSON, status {res.status_code})")
-                print(f"{Color.GREEN}✅ Detected: REST API format{Color.END}")
+                log(f"Detected: REST API format (GET JSON, status {res.status_code})", logs, "success")
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
             text = res.text.lower()
             if any(x in text for x in ['api', 'documentation', 'endpoints', 'swagger', 'openapi']):
                 detected_format = MCPFormat.REST_API
-                logs.append("✅ Detected: REST API format (documentation page)")
-                print(f"{Color.GREEN}✅ Detected: REST API format{Color.END}")
+                log("Detected: REST API format (docs page)", logs, "success")
                 FORMAT_CACHE[url] = detected_format
                 TOOLS_CACHE[url] = available_tools
                 return detected_format, available_tools, logs
-        # Also detect REST API by URL patterns (e.g., api.mapbox.com, api.openweathermap.org)
         if any(domain in base_url for domain in ['api.', 'rest.', 'data.', 'maps.']):
             detected_format = MCPFormat.REST_API
-            logs.append(f"✅ Detected: REST API format (URL pattern match: {base_url})")
-            print(f"{Color.GREEN}✅ Detected: REST API format (URL pattern){Color.END}")
+            log(f"Detected: REST API format (URL pattern: {base_url})", logs, "success")
             FORMAT_CACHE[url] = detected_format
             TOOLS_CACHE[url] = available_tools
             return detected_format, available_tools, logs
 
     except Exception as e:
-        logs.append(f"⚠️ REST API probe failed: {str(e)}")
+        log(f"REST API probe failed: {str(e)}", logs, "warning", console=False)
 
     # Strategy 4: Error response probe
     try:
@@ -232,50 +257,42 @@ def detect_mcp_format(url, timeout=10, auth_token=None):
             error_text = res.text.lower()
             if 'jsonrpc' in error_text or 'method' in error_text:
                 detected_format = MCPFormat.JSONRPC
-                logs.append("✅ Detected: JSON-RPC format (from error response)")
-                print(f"{Color.GREEN}✅ Detected: JSON-RPC format (from error){Color.END}")
+                log("Detected: JSON-RPC format (error response)", logs, "success")
             elif 'tool' in error_text or 'input' in error_text:
                 detected_format = MCPFormat.CUSTOM
-                logs.append("✅ Detected: CUSTOM format (from error response)")
-                print(f"{Color.GREEN}✅ Detected: CUSTOM format (from error){Color.END}")
+                log("Detected: CUSTOM format (error response)", logs, "success")
             else:
                 detected_format = MCPFormat.REST_API
-                logs.append("✅ Detected: REST API format (from error response)")
-                print(f"{Color.GREEN}✅ Detected: REST API format (from error){Color.END}")
+                log("Detected: REST API format (error response)", logs, "success")
             FORMAT_CACHE[url] = detected_format
             TOOLS_CACHE[url] = available_tools
             return detected_format, available_tools, logs
 
     except Exception as e:
-        logs.append(f"⚠️ Error probe failed: {str(e)}")
+        log(f"Error probe failed: {str(e)}", logs, "warning", console=False)
 
     # Strategy 5: Stdio pseudo-URL
     if url.startswith("stdio://"):
         detected_format = MCPFormat.STDIO
-        logs.append("✅ Detected: STDIO format (local subprocess)")
-        print(f"{Color.GREEN}✅ Detected: STDIO format{Color.END}")
+        log("Detected: STDIO format (local subprocess)", logs, "success")
         FORMAT_CACHE[url] = detected_format
         TOOLS_CACHE[url] = available_tools
         return detected_format, available_tools, logs
 
-    # Strategy 6: Streamable HTTP (MCP 2025-03-26 spec)
-    # Apify, Cloudflare, and modern MCP servers use this
+    # Strategy 6: Streamable HTTP
     if any(domain in url for domain in ['mcp.apify.com', 'mcp.cloudflare.com']):
         detected_format = MCPFormat.STREAMABLE_HTTP
-        logs.append(f"✅ Detected: Streamable HTTP format ({url})")
-        print(f"{Color.GREEN}✅ Detected: Streamable HTTP format{Color.END}")
+        log(f"Detected: Streamable HTTP format ({url})", logs, "success")
         FORMAT_CACHE[url] = detected_format
         TOOLS_CACHE[url] = available_tools
         return detected_format, available_tools, logs
 
     # Fallback
-    logs.append("⚠️ Could not auto-detect format. Defaulting to CUSTOM.")
-    print(f"{Color.YELLOW}⚠️ Could not auto-detect format. Defaulting to CUSTOM.{Color.END}")
+    log("Could not auto-detect format. Defaulting to CUSTOM.", logs, "warning")
     detected_format = MCPFormat.CUSTOM
     FORMAT_CACHE[url] = detected_format
     TOOLS_CACHE[url] = available_tools
     return detected_format, available_tools, logs
-
 
 def build_mcp_payload(tool, city, mcp_format, available_tools=None, server_config=None):
     tool_mapping = {
@@ -1105,14 +1122,12 @@ def extract_cities(user_input):
 # ==============================
 # 🔧 SINGLE MCP CALL (backward compat)
 # ==============================
-def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None):
-    logs = []
+def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None, logs=None):
+    if logs is None:
+        logs = []
     url = custom_url or MCP_URL
 
-    mcp_format, available_tools, detect_logs = detect_mcp_format(url, auth_token=auth_token)
-    logs.extend(detect_logs)
-
-
+    mcp_format, available_tools, detect_logs = detect_mcp_format(url, auth_token=auth_token, logs=logs)
 
     if mcp_format == MCPFormat.STDIO:
         return call_mcp_stdio(tool, city, server_config, timeout=15, auth_token=auth_token)
@@ -1121,74 +1136,68 @@ def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None):
         return call_mcp_streamable_http(url, tool, city, server_config, timeout=15, auth_token=auth_token)
 
     payload = build_mcp_payload(tool, city, mcp_format, available_tools, server_config)
-    logs.append(f"📤 Payload ({mcp_format}): {json.dumps(payload, indent=2)}")
+    log(f"Payload ({mcp_format}): {json.dumps(payload)}", logs, "info", console=False)
 
     try:
-        log_msg = f"🔄 Calling MCP [{mcp_format}]: {tool} → {city} @ {url}"
-        logs.append(log_msg)
-        print(f"{Color.CYAN}{log_msg}{Color.END}")
+        log(f"Calling MCP [{mcp_format}]: {tool} → {city}", logs, "info")
 
         headers = {"Content-Type": "application/json"}
         if auth_token:
-            masked = auth_token[:8] + "..." if len(auth_token) > 12 else "***"
-            logs.append(f"🔐 [AUTH] Attaching Bearer token: {masked}")
             headers["Authorization"] = f"Bearer {auth_token}"
+            log("Auth: Bearer token attached", logs, "info", console=False)
+
         res = requests.post(url, json=payload, headers=headers, timeout=15)
 
         if res.status_code != 200:
-            error_msg = f"❌ MCP failed: HTTP {res.status_code}"
-            logs.append(error_msg)
+            log(f"MCP failed: HTTP {res.status_code}", logs, "error")
             return {"error": f"HTTP {res.status_code}", "logs": logs}
 
         raw_data = res.json()
         if not raw_data:
-            logs.append("❌ MCP failed: Empty response")
+            log("MCP failed: Empty response", logs, "error")
             return {"error": "Empty MCP response", "logs": logs}
 
         if mcp_format == MCPFormat.JSONRPC and "error" in raw_data:
             err = raw_data["error"]
-            logs.append(f"❌ MCP JSON-RPC error: {err}")
+            log(f"MCP JSON-RPC error: {err}", logs, "error")
             return {"error": str(err), "logs": logs}
 
         if "error" in raw_data and mcp_format != MCPFormat.JSONRPC:
-            logs.append(f"❌ MCP failed: {raw_data['error']}")
+            log(f"MCP failed: {raw_data['error']}", logs, "error")
             return {"error": raw_data["error"], "logs": logs}
 
-        # Handle echo servers (return payload back) - special case for testing
+        # Echo server detection
         is_echo = False
         if isinstance(raw_data, dict):
-            # Check if response echoes our request (various patterns)
             if raw_data == payload:
                 is_echo = True
             elif raw_data.get("tool") == payload.get("tool"):
                 is_echo = True
             elif raw_data.get("jsonrpc") == "2.0" and "error" in raw_data:
-                # Some test servers return errors for unknown tools - treat as echo
                 err_msg = str(raw_data.get("error", "")).lower()
                 if "tool" in err_msg or "method" in err_msg or "not found" in err_msg:
                     is_echo = True
-                    logs.append("📢 Test server returned tool error - treating as echo/mock")
+                    log("Test server returned tool error — treating as echo", logs, "warning", console=False)
             elif "content" in raw_data and "isError" in raw_data:
-                # JSON-RPC tool result format from some test servers
                 is_echo = True
-                logs.append("📢 Test server returned JSON-RPC result - treating as echo/mock")
+                log("Test server returned JSON-RPC result — treating as echo", logs, "warning", console=False)
 
         if is_echo:
-            logs.append("⚠️ Echo server detected - no real data available")
+            log("Echo server detected — no real data", logs, "warning")
             return {"error": "No data found", "logs": logs}
 
         parsed_data = parse_mcp_response(raw_data, mcp_format)
-        logs.append(f"✅ MCP success for {city} (format: {mcp_format})")
+        log(f"MCP success for {city} ({mcp_format})", logs, "success")
         return {"data": parsed_data, "logs": logs, "format": mcp_format}
 
     except requests.exceptions.Timeout:
-        logs.append("❌ MCP failed: Timeout")
+        log("MCP failed: Timeout", logs, "error")
         return {"error": "Request timeout", "logs": logs}
     except Exception as e:
-        logs.append(f"❌ MCP failed: {str(e)}")
+        log(f"MCP failed: {str(e)}", logs, "error")
         return {"error": str(e), "logs": logs}
-
-
+    
+    
 # ==============================
 # 🧹 CLEAN DATA
 # ==============================
@@ -1288,24 +1297,27 @@ def get_best_model(force_refresh=False):
     # Ultimate fallback if API is unreachable
     return MODEL_PRIORITY[0]
 
-def generate_llm_text(prompt, preferred_model=None):
+def generate_llm_text(prompt, preferred_model=None, logs=None):
     """
     Generate text using LLM with automatic model fallback.
-    If preferred_model is provided, tries that first, then falls through priority list.
+    Logs every attempt so you can see which model was used.
     """
-    # Determine which model to start with
+    if logs is None:
+        logs = []
+
     start_model = preferred_model or get_best_model()
-    
-    # Build ordered list: start_model first, then rest of priority list
+    log(f"LLM: Selected model '{start_model}'", logs, "info")
+
     try_list = [start_model]
     for m in MODEL_PRIORITY:
         if m != start_model and m not in try_list:
             try_list.append(m)
-    
+
     last_error = None
-    
-    for model in try_list:
+
+    for i, model in enumerate(try_list):
         try:
+            log(f"LLM: Trying '{model}'...", logs, "info", console=False)
             completion = client.chat.completions.create(
                 model=model,
                 messages=[
@@ -1316,30 +1328,26 @@ def generate_llm_text(prompt, preferred_model=None):
                 stream=False
             )
             response_text = completion.choices[0].message.content or ""
+            log(f"LLM: Success with '{model}'", logs, "success")
             return response_text
-            
+
         except Exception as e:
             error_msg = str(e).lower()
             last_error = e
-            
-            # Model deprecated / not found / invalid
-            if any(x in error_msg for x in ["model", "deprecated", "not found", "invalid", "does not exist", "no such model"]):
-                print(f"{Color.YELLOW}⚠️ Model '{model}' unavailable ({e}), trying next...{Color.END}")
-                continue
-            
-            # Rate limited
-            if "429" in error_msg or "rate limit" in error_msg or "too many requests" in error_msg:
-                print(f"{Color.YELLOW}⚠️ Model '{model}' rate limited, trying next...{Color.END}")
-                continue
-            
-            # Other error — still fallback to next model
-            print(f"{Color.RED}❌ Model '{model}' failed: {e}{Color.END}")
-            continue
-    
-    # All models failed
-    print(f"{Color.RED}❌ All models failed. Last error: {last_error}{Color.END}")
-    return ""
 
+            if any(x in error_msg for x in ["model", "deprecated", "not found", "invalid", "does not exist", "no such model"]):
+                log(f"LLM: Model '{model}' unavailable — {str(e)}", logs, "warning")
+            elif "429" in error_msg or "rate limit" in error_msg or "too many requests" in error_msg:
+                log(f"LLM: Model '{model}' rate limited", logs, "warning")
+            else:
+                log(f"LLM: Model '{model}' failed — {str(e)}", logs, "error")
+
+            if i < len(try_list) - 1:
+                log(f"LLM: Falling back to '{try_list[i + 1]}'...", logs, "info", console=False)
+            continue
+
+    log(f"LLM: All models failed. Last error: {last_error}", logs, "error")
+    return ""
 def generate_city_insights(user_query, mcp_data):
     prompt = build_city_prompt(user_query, mcp_data)
     return generate_llm_text(prompt)

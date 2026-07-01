@@ -292,14 +292,14 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
 
             city_data = None
             if default_servers:
-                r = call_mcp("getFullInsights", c, custom_url=MCP_GATEWAY_URL, server_config=default_servers[0].get("config"), auth_token=clerk_token)
+                r = call_mcp("getFullInsights", c, custom_url=MCP_GATEWAY_URL, server_config=default_servers[0].get("config"), auth_token=clerk_token, logs=all_logs)
                 all_logs.extend(r.get("logs", []))
                 if "error" not in r:
                     city_data = clean_data(r["data"])
 
             if city_data is None and custom_servers:
                 for server in custom_servers:
-                    r = call_mcp("getFullInsights", c, custom_url=server["url"], server_config=server.get("config"), auth_token=clerk_token)
+                    r = call_mcp("getFullInsights", c, custom_url=server["url"], server_config=server.get("config"), auth_token=clerk_token, logs=all_logs)
                     all_logs.extend(r.get("logs", []))
                     if "error" not in r:
                         city_data = clean_data(r["data"])
@@ -336,7 +336,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
 
     default_data = None
     if default_servers:
-        default_result = call_mcp(tool, city, custom_url=MCP_GATEWAY_URL, server_config=default_servers[0].get("config"), auth_token=clerk_token)
+        default_result = call_mcp(tool, city, custom_url=MCP_GATEWAY_URL, server_config=default_servers[0].get("config"), auth_token=clerk_token, logs=all_logs)
         all_logs.extend(default_result.get("logs", []))
         if "error" not in default_result:
             default_data = clean_data(default_result["data"])
@@ -348,7 +348,8 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
             city,
             custom_url=server["url"],
             server_config=server.get("config"),
-            auth_token=clerk_token
+            auth_token=clerk_token,
+            logs=all_logs
         )
         all_logs.extend(result.get("logs", []))
         if "error" not in result:
@@ -452,7 +453,7 @@ def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled
 
     default_data = None
     if default_servers:
-        default_result = call_mcp(tool, city, custom_url=MCP_GATEWAY_URL, server_config=default_servers[0].get("config"), auth_token=clerk_token)
+        default_result = call_mcp(tool, city, custom_url=MCP_GATEWAY_URL, server_config=default_servers[0].get("config"), auth_token=clerk_token, logs=all_logs)
         all_logs.extend(default_result.get("logs", []))
         if "error" not in default_result:
             default_data = clean_data(default_result["data"])
