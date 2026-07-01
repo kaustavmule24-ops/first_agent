@@ -10,6 +10,14 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from jwt import PyJWKClient
 
+# ==============================
+# 🔗 CLOUDFLARE GATEWAY URL
+# ==============================
+MCP_GATEWAY_URL = os.environ.get(
+    "MCP_GATEWAY_URL",
+    "https://geobot-mcp-gateway.kaustav-mule-24.workers.dev"
+)
+
 def _mask_token(token: str) -> str:
     """Mask a JWT/token for safe logging — show first 8 chars only."""
     if not token:
@@ -284,7 +292,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
 
             city_data = None
             if default_servers:
-                r = call_mcp("getFullInsights", c, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"), auth_token=clerk_token)
+                r = call_mcp("getFullInsights", c, custom_url=MCP_GATEWAY_URL, server_config=default_servers[0].get("config"), auth_token=clerk_token)
                 all_logs.extend(r.get("logs", []))
                 if "error" not in r:
                     city_data = clean_data(r["data"])
@@ -328,7 +336,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
 
     default_data = None
     if default_servers:
-        default_result = call_mcp(tool, city, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"), auth_token=clerk_token)
+        default_result = call_mcp(tool, city, custom_url=MCP_GATEWAY_URL, server_config=default_servers[0].get("config"), auth_token=clerk_token)
         all_logs.extend(default_result.get("logs", []))
         if "error" not in default_result:
             default_data = clean_data(default_result["data"])
@@ -444,7 +452,7 @@ def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled
 
     default_data = None
     if default_servers:
-        default_result = call_mcp(tool, city, custom_url=default_servers[0]["url"], server_config=default_servers[0].get("config"), auth_token=clerk_token)
+        default_result = call_mcp(tool, city, custom_url=MCP_GATEWAY_URL, server_config=default_servers[0].get("config"), auth_token=clerk_token)
         all_logs.extend(default_result.get("logs", []))
         if "error" not in default_result:
             default_data = clean_data(default_result["data"])
