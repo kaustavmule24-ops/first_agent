@@ -20,7 +20,7 @@ class Color:
 # ==============================
 # 🔗 CONFIG
 # ==============================
-DEFAULT_MCP_URL = "https://mcp-weather-s1s0.onrender.com/tool"
+DEFAULT_MCP_URL = "https://geobot-mcp-gateway.kaustav-mule-24.workers.dev"
 MCP_URL = DEFAULT_MCP_URL
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
@@ -30,7 +30,26 @@ if not GROQ_API_KEY:
     raise SystemExit(1)
 
 client = Groq(api_key=GROQ_API_KEY)
-MODEL = "llama-3.1-8b-instant"
+# ==============================
+# 🤖 DYNAMIC MODEL CONFIG
+# ==============================
+
+MODEL = "llama-3.1-8b-instant"  # Kept for backward compatibility
+
+MODEL_PRIORITY = [
+    "llama-3.1-8b-instant",      # Current model (deprecated Aug 16, 2026)
+    "openai/gpt-oss-20b",         # Official Groq replacement
+    "meta-llama/llama-4-scout-17b-16e-instruct",  # Free tier
+    "qwen/qwen3-32b",             # Free tier (deprecated July 17, 2026)
+    "openai/gpt-oss-120b",        # Best quality free tier
+]
+
+# Cache for available models from Groq
+_MODEL_CACHE = {
+    "models": [],
+    "timestamp": 0
+}
+_CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
 # ==============================
@@ -1223,22 +1242,103 @@ Provide a brief comparison (2-3 sentences) highlighting key differences in weath
 # ==============================
 # 🤖 GROQ RESPONSES
 # ==============================
-def generate_llm_text(prompt):
+def fetch_available_models():
+    """Fetch currently available models from Groq API."""
     try:
-        completion = client.chat.completions.create(
-            model=MODEL,
-            messages=[
-                {"role": "system", "content": "You are GeoBot, a friendly and knowledgeable location intelligence assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            stream=False
-        )
-        return completion.choices[0].message.content or ""
+        models_response = client.models.list()
+        available = []
+        # Handle different response formats safely
+        model_list = getattr(models_response, 'data', models_response)
+        if isinstance(model_list, list):
+            for m in model_list:
+                model_id = getattr(m, 'id', None)
+                if model_id:
+                    available.append(model_id)
+        return available
     except Exception as e:
-        print(f"{Color.RED}❌ Groq Error: {e}{Color.END}")
-        return ""
+        print(f"{Color.YELLOW}⚠️ Could not fetch models list: {e}{Color.END}")
+        return []
 
+def get_best_model(force_refresh=False):
+    """
+    Dynamically select the best available model from Groq.
+    Checks cache first, fetches if stale, falls back to MODEL_PRIORITY[0].
+    """
+    global _MODEL_CACHE
+    
+    now = time.time()
+    
+    # Return cached if fresh
+    if not force_refresh and (now - _MODEL_CACHE["timestamp"]) < _CACHE_TTL_SECONDS:
+        if _MODEL_CACHE["models"]:
+            for preferred in MODEL_PRIORITY:
+                if preferred in _MODEL_CACHE["models"]:
+                    return preferred
+    
+    # Refresh cache
+    available = fetch_available_models()
+    _MODEL_CACHE["models"] = available
+    _MODEL_CACHE["timestamp"] = now
+    
+    # Pick best available from priority list
+    for preferred in MODEL_PRIORITY:
+        if preferred in available:
+            return preferred
+    
+    # Ultimate fallback if API is unreachable
+    return MODEL_PRIORITY[0]
+
+def generate_llm_text(prompt, preferred_model=None):
+    """
+    Generate text using LLM with automatic model fallback.
+    If preferred_model is provided, tries that first, then falls through priority list.
+    """
+    # Determine which model to start with
+    start_model = preferred_model or get_best_model()
+    
+    # Build ordered list: start_model first, then rest of priority list
+    try_list = [start_model]
+    for m in MODEL_PRIORITY:
+        if m != start_model and m not in try_list:
+            try_list.append(m)
+    
+    last_error = None
+    
+    for model in try_list:
+        try:
+            completion = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "You are GeoBot, a friendly and knowledgeable location intelligence assistant."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                stream=False
+            )
+            response_text = completion.choices[0].message.content or ""
+            return response_text
+            
+        except Exception as e:
+            error_msg = str(e).lower()
+            last_error = e
+            
+            # Model deprecated / not found / invalid
+            if any(x in error_msg for x in ["model", "deprecated", "not found", "invalid", "does not exist", "no such model"]):
+                print(f"{Color.YELLOW}⚠️ Model '{model}' unavailable ({e}), trying next...{Color.END}")
+                continue
+            
+            # Rate limited
+            if "429" in error_msg or "rate limit" in error_msg or "too many requests" in error_msg:
+                print(f"{Color.YELLOW}⚠️ Model '{model}' rate limited, trying next...{Color.END}")
+                continue
+            
+            # Other error — still fallback to next model
+            print(f"{Color.RED}❌ Model '{model}' failed: {e}{Color.END}")
+            continue
+    
+    # All models failed
+    print(f"{Color.RED}❌ All models failed. Last error: {last_error}{Color.END}")
+    return ""
 
 def generate_city_insights(user_query, mcp_data):
     prompt = build_city_prompt(user_query, mcp_data)
