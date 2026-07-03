@@ -4351,9 +4351,7 @@ if (!res.ok) throw new Error('Server error');
                 addMsg(renderMcpDropdown(data.custom_mcp_results), "bot", true);
             }
         } else if (data.type === "compare") {
-            // Multi-city → Show compare strip + structured text + compact cards
-            const compareHTML = renderCompareStrip(data.response);
-            addMsg('<div style="margin-top:8px;">' + compareHTML + '</div>', "bot", true);
+            // Multi-city → Structured text + compact cards only (no top strip)
             
             // Show LLM comparison text as structured bullet points
             if (data.llm_text) {
