@@ -12,8 +12,7 @@
     --primary-glow: rgba(99, 102, 241, 0.4);
     --secondary: #8b5cf6;
     --accent: #06b6d4;
-    --bg-dark: #0a0f1c;
-    --bg-sidebar: #0d1321;
+    --bg-dark: #0f172a;
     --bg-card: rgba(30, 41, 59, 0.6);
     --bg-glass: rgba(255, 255, 255, 0.03);
     --text-primary: #f1f5f9;
@@ -38,6 +37,8 @@ body {
     color: var(--text-primary);
     height: 100vh;
     display: flex;
+    justify-content: center;
+    align-items: center;
     overflow: hidden;
     position: relative;
     margin: 0;
@@ -87,273 +88,74 @@ body {
     100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
 }
 
-/* ==============================
-   SIDEBAR
-   ============================== */
-.sidebar {
-    width: 260px;
-    min-width: 260px;
-    height: 100vh;
-    background: var(--bg-sidebar);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    z-index: 2;
-    position: relative;
-    transition: transform 0.3s ease;
-}
-
-.sidebar-header {
-    padding: 20px 20px 16px;
-    border-bottom: 1px solid var(--border);
-}
-
-.sidebar-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.sidebar-logo-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.sidebar-logo-text {
-    font-size: 18px;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.sidebar-new-btn {
-    width: 100%;
-    padding: 10px 14px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: rgba(255,255,255,0.03);
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-}
-
-.sidebar-new-btn:hover {
-    background: rgba(99, 102, 241, 0.1);
-    border-color: var(--primary);
-    color: var(--text-primary);
-}
-
-.sidebar-section {
-    padding: 16px 16px 8px;
-}
-
-.sidebar-section-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.sidebar-section-title .arrow {
-    font-size: 10px;
-    transition: transform 0.2s;
-}
-
-.sidebar-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-bottom: 2px;
-}
-
-.sidebar-item:hover {
-    background: rgba(255,255,255,0.03);
-    color: var(--text-primary);
-}
-
-.sidebar-item.active {
-    background: rgba(99, 102, 241, 0.1);
-    color: var(--primary);
-}
-
-.sidebar-item-icon {
-    font-size: 14px;
-    opacity: 0.7;
-}
-
-.sidebar-item-text {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.sidebar-item-time {
-    font-size: 10px;
-    color: var(--text-dim);
-    font-family: 'JetBrains Mono', monospace;
-}
-
-.sidebar-upgrade {
-    margin: 16px;
-    padding: 16px;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 16px;
-    text-align: center;
-}
-
-.sidebar-upgrade-icon {
-    font-size: 24px;
-    margin-bottom: 8px;
-}
-
-.sidebar-upgrade-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.sidebar-upgrade-desc {
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-bottom: 12px;
-    line-height: 1.4;
-}
-
-.sidebar-upgrade-btn {
-    width: 100%;
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: none;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.sidebar-upgrade-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.sidebar-footer {
-    margin-top: auto;
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-}
-
-.sidebar-footer-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.sidebar-footer-item:hover {
-    background: rgba(255,255,255,0.03);
-    color: var(--text-primary);
-}
-
-/* Mobile sidebar toggle */
-.sidebar-toggle {
-    display: none;
-    position: fixed;
-    top: 16px;
-    left: 16px;
-    z-index: 50;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid var(--border);
-    color: var(--text-primary);
-    font-size: 18px;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-    align-items: center;
-    justify-content: center;
-}
-
-/* ==============================
-   MAIN CONTENT AREA
-   ============================== */
-.main-wrapper {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
-    min-width: 0;
-}
-
 .app {
     position: relative;
+    z-index: 1;
     width: 100%;
-    height: 100vh;
-    max-width: 100%;
+    max-width: 100%;          /* full width on desktop */
+    height: 100vh;            /* full height on desktop */
     max-height: none;
     background: var(--bg-glass);
     backdrop-filter: blur(20px);
-    border: none;
-    border-radius: 0;
+    border: 1px solid var(--border);
+    border-radius: 0;         /* no radius on desktop */
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: none;
+    box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Mobile: card style */
+@media (max-width: 520px) {
+    .app {
+        max-width: 480px;     /* card width on mobile */
+        height: 95vh;
+        max-height: 900px;
+        border-radius: 28px;  /* rounded corners on mobile */
+        margin: auto;
+    }
+    
+    body {
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .bg-mesh, .particles {
+        display: none;
+    }
+    
+    .clear-btn, .settings-btn {
+        top: 12px;
+    }
+    
+    .settings-btn {
+        left: 12px;
+    }
+    
+    .clear-btn {
+        right: 12px;
+    }
+    
+    .hud-card {
+        max-width: 100%;
+    }
+    
+    .compare-mini {
+        min-width: 120px;
+        padding: 12px;
+    }
 }
 
 /* Header */
 .header {
-    padding: 16px 24px 12px;
+    padding: 20px 20px 12px;
     text-align: center;
     border-bottom: 1px solid var(--border);
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 64px;
-}
-
-.header-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
 }
 
 .header-badge {
@@ -369,6 +171,7 @@ body {
     color: var(--primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-bottom: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -397,16 +200,16 @@ body {
 }
 
 .header h1 {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 700;
     background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 0;
+    margin-bottom: 4px;
 }
 
 .header-sub {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
     font-weight: 400;
 }
@@ -414,9 +217,8 @@ body {
 /* Settings button */
 .settings-btn {
     position: absolute;
-    top: 50%;
-    left: 24px;
-    transform: translateY(-50%);
+    top: 20px;
+    left: 16px;
     background: rgba(255,255,255,0.05);
     border: 1px solid var(--border);
     color: var(--text-secondary);
@@ -440,7 +242,7 @@ body {
 .orb-container {
     display: flex;
     justify-content: center;
-    padding: 8px 0 4px;
+    padding: 6px 0 2px;
 }
 
 .orb {
@@ -482,7 +284,7 @@ body {
 /* Chat area */
 .chat {
     flex: 1;
-    padding: 16px 24px;
+    padding: 16px 20px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -576,9 +378,10 @@ body {
     line-height: 1.4;
     container-type: inline-size;
     container-name: pairtext;
-    overflow: hidden;
+    overflow: hidden; /* prevent text spill */
 }
 
+/* Paragraph text styling inside the text panel */
 .msg-pair-text {
     font-size: 13px;
     line-height: 1.6;
@@ -612,6 +415,7 @@ body {
     }
 }
 
+/* Wider text panel → more columns, bigger text */
 @container pairtext (min-width: 400px) {
     .msg-pair-text .section-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -621,10 +425,22 @@ body {
     .msg-pair-text .section-col li { font-size: 12px; }
 }
 
+/* Narrow text panel → fewer columns */
 @container pairtext (max-width: 260px) {
     .msg-pair-text .section-grid {
         grid-template-columns: 1fr;
         gap: 4px;
+    }
+}
+
+/* Mobile: stack vertically */
+@media (max-width: 768px) {
+    .msg-pair {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+    .msg-pair-card .hud-card {
+        max-width: 100%;
     }
 }
 
@@ -669,6 +485,7 @@ body {
     display: none;
 }
 
+/* Plain text styling for non-pair bot messages */
 .msg.bot {
     font-size: 13px;
     line-height: 1.6;
@@ -757,7 +574,7 @@ body {
 
 /* Input area */
 .input-area {
-    padding: 16px 24px 20px;
+    padding: 16px 20px 20px;
     border-top: 1px solid var(--border);
     background: rgba(15, 23, 42, 0.8);
 }
@@ -766,8 +583,6 @@ body {
     display: flex;
     gap: 10px;
     align-items: center;
-    max-width: 800px;
-    margin: 0 auto;
 }
 
 .input-wrapper {
@@ -890,9 +705,8 @@ body {
 /* Clear chat button */
 .clear-btn {
     position: absolute;
-    top: 50%;
-    right: 24px;
-    transform: translateY(-50%);
+    top: 20px;
+    right: 16px;
     background: rgba(255,255,255,0.05);
     border: 1px solid var(--border);
     color: var(--text-secondary);
@@ -944,6 +758,7 @@ body {
    FUTURISTIC HUD CARD STYLES
    ============================== */
 
+/* Compact HUD Card (Single City) */
 .hud-card {
     width: 100%;
     max-width: 380px;
@@ -957,6 +772,7 @@ body {
     font-family: 'Inter', sans-serif;
 }
 
+/* Desktop: allow cards to fill grid cell */
 @media (min-width: 521px) {
     .hud-card {
         max-width: none;
@@ -1028,6 +844,7 @@ body {
     margin-top: 2px;
 }
 
+/* Hero section with temp ring */
 .hud-hero {
     display: flex;
     align-items: center;
@@ -1105,6 +922,7 @@ body {
     padding-bottom: 14px;
 }
 
+/* AQI Bar */
 .hud-aqi-section {
     margin: 0 14px 8px;
     padding: 8px 10px;
@@ -1167,6 +985,7 @@ body {
     100% { background-position: -200% 0; }
 }
 
+/* Metrics grid */
 .hud-metrics {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1211,6 +1030,7 @@ body {
     margin-top: 3px;
 }
 
+/* Footer */
 .hud-footer {
     display: flex;
     justify-content: space-between;
@@ -1236,6 +1056,7 @@ body {
     animation: livePulse 2s infinite;
 }
 
+/* Expanded data grid (shown on click) */
 .hud-expanded {
     max-height: 0;
     overflow: hidden;
@@ -1311,15 +1132,14 @@ body {
     background: rgba(99, 102, 241, 0.15);
 }
 
-/* Compare strip */
+/* Horizontal Compare Cards */
 .compare-strip {
     display: flex;
     gap: 10px;
     overflow-x: auto;
-    padding: 8px 4px;
+    padding: 4px 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    margin-bottom: 12px;
 }
 
 .compare-strip::-webkit-scrollbar {
@@ -1327,16 +1147,15 @@ body {
 }
 
 .compare-mini {
-    min-width: 140px;
+    min-width: 130px;
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 16px;
+    padding: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    flex-shrink: 0;
 }
 
 .compare-mini::before {
@@ -1371,10 +1190,10 @@ body {
 }
 
 .compare-mini-temp {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     font-family: 'JetBrains Mono', monospace;
-    margin: 8px 0;
+    margin: 6px 0;
     background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1408,246 +1227,8 @@ body {
     text-align: right;
 }
 
-/* Compare grid */
-.compare-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-    width: 100%;
-}
-
-@media (min-width: 900px) {
-    .compare-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1400px) {
-    .compare-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-.compare-grid-item {
-    min-width: 0;
-}
-
-.compare-grid-item .hud-card {
-    max-width: none;
-    width: 100%;
-}
-
-@media (min-width: 521px) {
-    .compare-strip {
-        justify-content: center;
-        padding: 12px 0;
-    }
-    .compare-mini {
-        min-width: 160px;
-        padding: 20px;
-    }
-}
-
-/* MCP Dropdown */
-.mcp-dropdown {
-    width: 100%;
-    max-width: 380px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-    margin-top: 10px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.1) inset;
-    animation: hudEntry 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mcp-dropdown-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px;
-    cursor: pointer;
-    background: rgba(99, 102, 241, 0.05);
-    border-bottom: 1px solid transparent;
-    transition: all 0.3s ease;
-    user-select: none;
-}
-
-.mcp-dropdown-header:hover {
-    background: rgba(99, 102, 241, 0.1);
-}
-
-.mcp-dropdown-header.active {
-    border-bottom-color: var(--border);
-}
-
-.mcp-dropdown-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.mcp-dropdown-icon {
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, var(--secondary), var(--accent));
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-}
-
-.mcp-dropdown-arrow {
-    font-size: 12px;
-    color: var(--primary);
-    transition: transform 0.3s ease;
-}
-
-.mcp-dropdown-header.active .mcp-dropdown-arrow {
-    transform: rotate(180deg);
-}
-
-.mcp-dropdown-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-    opacity: 0;
-}
-
-.mcp-dropdown-body.open {
-    max-height: 600px;
-    opacity: 1;
-}
-
-.mcp-dropdown-content {
-    padding: 12px 16px 16px;
-}
-
-.mcp-server-section {
-    margin-bottom: 12px;
-}
-
-.mcp-server-section:last-child {
-    margin-bottom: 0;
-}
-
-.mcp-server-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--primary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
-}
-
-.mcp-server-header::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    background: var(--success);
-    border-radius: 50%;
-    box-shadow: 0 0 6px var(--success);
-}
-
-.mcp-data-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-}
-
-.mcp-data-cell {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: 10px;
-    padding: 10px;
-    transition: all 0.2s;
-}
-
-.mcp-data-cell:hover {
-    background: rgba(99, 102, 241, 0.04);
-    border-color: rgba(99, 102, 241, 0.15);
-}
-
-.mcp-data-label {
-    font-size: 9px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.mcp-data-value {
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text-primary);
-}
-
-.mcp-data-value.null {
-    color: var(--text-dim);
-    font-style: italic;
-}
-
-@media (min-width: 521px) {
-    .mcp-dropdown {
-        max-width: none;
-    }
-}
-
-/* LLM Insights */
-.Ai-Generated-Info {
-    padding: 14px 16px;
-    border-top: 1px solid var(--border);
-    background: rgba(99, 102, 241, 0.03);
-    animation: hudEntry 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.hud-llm-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--primary);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 8px;
-}
-
-.hud-llm-body {
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--text-secondary);
-}
-
-.hud-llm-body strong {
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.hud-llm-body em {
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-.hud-llm-body br {
-    display: block;
-    content: "";
-    margin-bottom: 6px;
-}
-
 /* ==============================
-   MODAL STYLES
+   MCP CONNECTOR MODAL STYLES
    ============================== */
 
 .modal-overlay {
@@ -1670,7 +1251,7 @@ body {
 
 .modal {
     width: 90%;
-    max-width: 480px;
+    max-width: 440px;
     max-height: 85vh;
     background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
     border: 1px solid var(--border);
@@ -1889,7 +1470,7 @@ body {
     font-weight: 500;
 }
 
-.form-group input, .form-group select, .form-group textarea {
+.form-group input {
     width: 100%;
     padding: 10px 14px;
     border-radius: 12px;
@@ -1902,7 +1483,7 @@ body {
     transition: all 0.3s ease;
 }
 
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+.form-group input:focus {
     border-color: var(--primary);
     background: rgba(99, 102, 241, 0.05);
 }
@@ -1945,7 +1526,10 @@ body {
     color: var(--text-secondary);
 }
 
-/* Connect button */
+/* ==============================
+   CONNECT BUTTON STYLES
+   ============================== */
+
 .connect-btn {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
@@ -1993,6 +1577,7 @@ body {
     cursor: wait;
 }
 
+/* Spinner animation */
 .connect-spinner {
     width: 14px;
     height: 14px;
@@ -2007,11 +1592,14 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* Live pulse for connected status dot */
 .server-status.online.pulse {
     animation: livePulse 2s infinite;
 }
+/* ==============================
+   SETTINGS MODAL NEW STYLES
+   ============================== */
 
-/* Settings sections */
 .settings-section { margin-bottom: 24px; }
 
 .settings-section-title {
@@ -2059,7 +1647,7 @@ body {
 
 .mcp-server-status.offline { background: var(--error); box-shadow: 0 0 6px var(--error); }
 
-/* Status messages */
+/* Temporary status messages */
 .msg.status {
     background: rgba(99, 102, 241, 0.05);
     border: 1px dashed rgba(99, 102, 241, 0.3);
@@ -2073,6 +1661,7 @@ body {
 
 .msg.status .status-icon { margin-right: 6px; }
 
+/* Temporary MCP logs */
 .msg.log {
     background: rgba(0, 0, 0, 0.3);
     border: 1px dashed rgba(99, 102, 241, 0.2);
@@ -2091,8 +1680,500 @@ body {
 .msg.log .log-entry.warning { color: var(--warning); }
 .msg.log .log-entry.info { color: var(--info); }
 
+/* Responsive */
+@media (max-width: 520px) {
+    .app {
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
+        border: none;
+    }
+    
+    body {
+        padding: 0;
+    }
+    
+    .bg-mesh, .particles {
+        display: none;
+    }
+    
+    .clear-btn, .settings-btn {
+        top: 12px;
+    }
+    
+    .settings-btn {
+        left: 12px;
+    }
+    
+    .clear-btn {
+        right: 12px;
+    }
+    
+    .hud-card {
+        max-width: 100%;
+    }
+    
+    .compare-mini {
+        min-width: 120px;
+        padding: 12px;
+    }
+}
+
+
+/* Compare strip enhancements */
+.compare-strip {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 8px 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin-bottom: 12px;
+}
+
+.compare-strip::-webkit-scrollbar {
+    display: none;
+}
+
+.compare-mini {
+    min-width: 140px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.compare-mini::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.compare-mini:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.compare-mini:hover::before {
+    opacity: 1;
+}
+
+.compare-mini-city {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.compare-mini-temp {
+    font-size: 28px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 8px 0;
+    background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.compare-mini-aqi {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.compare-mini-bar {
+    flex: 1;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.compare-mini-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s ease;
+}
+
+.compare-mini-value {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 24px;
+    text-align: right;
+}
+
 /* ==============================
-   LOGIN GATE
+   RESPONSIVE COMPARE GRID
+   ============================== */
+
+.compare-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Desktop: side by side */
+@media (min-width: 900px) {
+    .compare-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Large desktop: 3 columns if needed */
+@media (min-width: 1400px) {
+    .compare-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.compare-grid-item {
+    min-width: 0; /* prevent overflow */
+}
+
+.compare-grid-item .hud-card {
+    max-width: none;
+    width: 100%;
+}
+
+/* Center compare strip on desktop */
+@media (min-width: 521px) {
+    .compare-strip {
+        justify-content: center;
+        padding: 12px 0;
+    }
+    
+    .compare-mini {
+        min-width: 160px;
+        padding: 20px;
+    }
+}
+
+/* ==============================
+   FUTURISTIC MCP DROPDOWN
+   ============================== */
+
+.mcp-dropdown {
+    width: 100%;
+    max-width: 380px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.1) inset;
+    animation: hudEntry 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mcp-dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    background: rgba(99, 102, 241, 0.05);
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.mcp-dropdown-header:hover {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.mcp-dropdown-header.active {
+    border-bottom-color: var(--border);
+}
+
+.mcp-dropdown-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.mcp-dropdown-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.mcp-dropdown-arrow {
+    font-size: 12px;
+    color: var(--primary);
+    transition: transform 0.3s ease;
+}
+
+.mcp-dropdown-header.active .mcp-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.mcp-dropdown-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    opacity: 0;
+}
+
+.mcp-dropdown-body.open {
+    max-height: 600px;
+    opacity: 1;
+}
+
+.mcp-dropdown-content {
+    padding: 12px 16px 16px;
+}
+
+/* Server section inside dropdown */
+.mcp-server-section {
+    margin-bottom: 12px;
+}
+
+.mcp-server-section:last-child {
+    margin-bottom: 0;
+}
+
+.mcp-server-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.mcp-server-header::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--success);
+}
+
+/* Data grid inside dropdown */
+.mcp-data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+.mcp-data-cell {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 10px;
+    transition: all 0.2s;
+}
+
+.mcp-data-cell:hover {
+    background: rgba(99, 102, 241, 0.04);
+    border-color: rgba(99, 102, 241, 0.15);
+}
+
+.mcp-data-label {
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mcp-data-value {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+}
+
+.mcp-data-value.null {
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+/* Desktop: wider dropdown */
+@media (min-width: 521px) {
+    .mcp-dropdown {
+        max-width: none;
+    }
+}
+
+
+/* LLM Insights section inside HUD card */
+.Ai-Generated-Info {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    background: rgba(99, 102, 241, 0.03);
+    animation: hudEntry 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hud-llm-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+}
+
+.hud-llm-body {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.hud-llm-body strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.hud-llm-body em {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.hud-llm-body br {
+    display: block;
+    content: "";
+    margin-bottom: 6px;
+}
+
+</style>
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+
+<!-- Clerk Authentication SDK -->
+<script src="/config.js"></script>
+<script>
+  // Dynamically load Clerk from server config
+  (function() {
+    const config = window.GEOBOT_CONFIG || {};
+    const clerkDomain = config.clerkDomain || 'excited-ibex-65.clerk.accounts.dev';
+    const publishableKey = config.clerkPublishableKey || 'pk_test_ZXhjaXRlZC1pYmV4LTY1LmNsZXJrLmFjY291bnRzLmRldiQ';
+    
+    const clerkScript = document.createElement('script');
+    clerkScript.async = true;
+    clerkScript.crossOrigin = "anonymous";
+    clerkScript.setAttribute('data-clerk-publishable-key', publishableKey);
+    clerkScript.src = `https://${clerkDomain}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
+    clerkScript.type = "text/javascript";
+    document.head.appendChild(clerkScript);
+  })();
+</script>
+<script>
+  // Clerk auth state
+  let clerkUser = null;
+  let clerkToken = null;
+
+  async function initClerk() {
+    await window.Clerk.load();
+
+    // Listen for auth state changes
+    window.Clerk.addListener(({ user }) => {
+      clerkUser = user;
+      updateAuthUI();
+    });
+
+    // Initial state
+    clerkUser = window.Clerk.user;
+    updateAuthUI();
+  }
+
+  function updateAuthUI() {
+    const loginGate = document.getElementById('loginGate');
+    const app = document.querySelector('.app');
+    const authContainer = document.getElementById('authContainer');
+
+    if (!loginGate || !app) return;
+
+    if (clerkUser) {
+      // User is logged in — hide gate, show app
+      loginGate.style.opacity = '0';
+      loginGate.style.pointerEvents = 'none';
+      app.style.display = 'flex';
+      setTimeout(() => { loginGate.style.display = 'none'; }, 500);
+
+      // Update header auth area
+      if (authContainer) {
+        const name = clerkUser.firstName || clerkUser.username || clerkUser.emailAddresses?.[0]?.emailAddress || 'User';
+        const avatar = clerkUser.imageUrl || '';
+        authContainer.innerHTML = `
+          <div class="auth-user">
+            <img src="${avatar}" class="auth-avatar" alt="avatar" onerror="this.style.display='none'">
+            <span class="auth-name">${name}</span>
+            <button class="auth-btn" onclick="window.Clerk.openUserProfile()" title="Profile">👤</button>
+            <button class="auth-btn logout" onclick="window.Clerk.signOut(); clerkToken = null;" title="Logout">Logout</button>
+          </div>
+        `;
+      }
+    } else {
+      // User is logged out — show gate, hide app
+      loginGate.style.display = 'flex';
+      setTimeout(() => { loginGate.style.opacity = '1'; }, 10);
+      app.style.display = 'none';
+
+      if (authContainer) authContainer.innerHTML = '';
+    }
+  }
+
+  function _maskToken(token) {
+    if (!token) return "[none]";
+    if (token.length <= 12) return "***";
+    return token.substring(0, 8) + "...";
+  }
+
+  async function getClerkToken() {
+    if (!window.Clerk || !window.Clerk.session) {
+      console.log("🔐 [AUTH] No Clerk session available");
+      return null;
+    }
+    try {
+      clerkToken = await window.Clerk.session.getToken();
+      console.log("🔐 [AUTH] Got Clerk token: " + _maskToken(clerkToken));
+      return clerkToken;
+    } catch (e) {
+      console.log("🔐 [AUTH] Failed to get Clerk token: " + e.message);
+      return null;
+    }
+  }
+</script>
+
+<style>
+/* ==============================
+   LOGIN GATE (Full Screen Overlay)
    ============================== */
 .login-gate {
   position: fixed;
@@ -2237,12 +2318,13 @@ body {
   text-decoration: underline;
 }
 
-/* Auth header */
+/* ==============================
+   AUTH HEADER STYLES (Logged In)
+   ============================== */
 .auth-container {
   position: absolute;
-  top: 50%;
-  right: 24px;
-  transform: translateY(-50%);
+  top: 20px;
+  right: 16px;
   z-index: 10;
 }
 
@@ -2303,197 +2385,25 @@ body {
   border-color: var(--error);
 }
 
-/* ==============================
-   RESPONSIVE
-   ============================== */
-@media (max-width: 768px) {
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        transform: translateX(-100%);
-        z-index: 40;
-    }
-    .sidebar.open {
-        transform: translateX(0);
-    }
-    .sidebar-toggle {
-        display: flex;
-    }
-    .main-wrapper {
-        width: 100%;
-    }
-    .settings-btn {
-        left: 64px;
-    }
-    .msg-pair {
-        grid-template-columns: 1fr !important;
-        gap: 10px;
-    }
-    .msg-pair-card .hud-card {
-        max-width: 100%;
-    }
-    .auth-container {
-        right: 12px;
-    }
-    .clear-btn {
-        right: 12px;
-    }
-}
-
+/* Mobile */
 @media (max-width: 520px) {
-    .app {
-        height: 100vh;
-        max-height: none;
-        border-radius: 0;
-        border: none;
-    }
-    body {
-        padding: 0;
-    }
-    .bg-mesh, .particles {
-        display: none;
-    }
-    .clear-btn, .settings-btn {
-        top: 50%;
-        transform: translateY(-50%);
-    }
-    .settings-btn {
-        left: 12px;
-    }
-    .clear-btn {
-        right: 12px;
-    }
-    .hud-card {
-        max-width: 100%;
-    }
-    .compare-mini {
-        min-width: 120px;
-        padding: 12px;
-    }
-    .header {
-        padding: 12px 16px;
-    }
-    .chat {
-        padding: 12px 16px;
-    }
-    .input-area {
-        padding: 12px 16px 16px;
-    }
-    .auth-container {
-        top: 50%;
-        right: 70px;
-    }
-    .auth-name {
-        display: none;
-    }
-    .auth-avatar {
-        width: 20px;
-        height: 20px;
-    }
-    .login-card {
-        padding: 36px 24px;
-    }
+  .auth-container {
+    top: 12px;
+    right: 70px;
+  }
+  .auth-name {
+    display: none;
+  }
+  .auth-avatar {
+    width: 20px;
+    height: 20px;
+  }
+  .login-card {
+    padding: 36px 24px;
+  }
 }
 </style>
 
-<!-- Clerk Authentication SDK -->
-<script src="/config.js"></script>
-<script>
-  // Dynamically load Clerk from server config
-  (function() {
-    const config = window.GEOBOT_CONFIG || {};
-    const clerkDomain = config.clerkDomain || 'excited-ibex-65.clerk.accounts.dev';
-    const publishableKey = config.clerkPublishableKey || 'pk_test_ZXhjaXRlZC1pYmV4LTY1LmNsZXJrLmFjY291bnRzLmRldiQ';
-
-    const clerkScript = document.createElement('script');
-    clerkScript.async = true;
-    clerkScript.crossOrigin = "anonymous";
-    clerkScript.setAttribute('data-clerk-publishable-key', publishableKey);
-    clerkScript.src = `https://${clerkDomain}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
-    clerkScript.type = "text/javascript";
-    document.head.appendChild(clerkScript);
-  })();
-</script>
-<script>
-  // Clerk auth state
-  let clerkUser = null;
-  let clerkToken = null;
-
-  async function initClerk() {
-    await window.Clerk.load();
-
-    // Listen for auth state changes
-    window.Clerk.addListener(({ user }) => {
-      clerkUser = user;
-      updateAuthUI();
-    });
-
-    // Initial state
-    clerkUser = window.Clerk.user;
-    updateAuthUI();
-  }
-
-  function updateAuthUI() {
-    const loginGate = document.getElementById('loginGate');
-    const app = document.querySelector('.app');
-    const authContainer = document.getElementById('authContainer');
-
-    if (!loginGate || !app) return;
-
-    if (clerkUser) {
-      // User is logged in — hide gate, show app
-      loginGate.style.opacity = '0';
-      loginGate.style.pointerEvents = 'none';
-      app.style.display = 'flex';
-      setTimeout(() => { loginGate.style.display = 'none'; }, 500);
-
-      // Update header auth area
-      if (authContainer) {
-        const name = clerkUser.firstName || clerkUser.username || clerkUser.emailAddresses?.[0]?.emailAddress || 'User';
-        const avatar = clerkUser.imageUrl || '';
-        authContainer.innerHTML = `
-          <div class="auth-user">
-            <img src="${avatar}" class="auth-avatar" alt="avatar" onerror="this.style.display='none'">
-            <span class="auth-name">${name}</span>
-            <button class="auth-btn" onclick="window.Clerk.openUserProfile()" title="Profile">👤</button>
-            <button class="auth-btn logout" onclick="window.Clerk.signOut(); clerkToken = null;" title="Logout">Logout</button>
-          </div>
-        `;
-      }
-    } else {
-      // User is logged out — show gate, hide app
-      loginGate.style.display = 'flex';
-      setTimeout(() => { loginGate.style.opacity = '1'; }, 10);
-      app.style.display = 'none';
-
-      if (authContainer) authContainer.innerHTML = '';
-    }
-  }
-
-  function _maskToken(token) {
-    if (!token) return "[none]";
-    if (token.length <= 12) return "***";
-    return token.substring(0, 8) + "...";
-  }
-
-  async function getClerkToken() {
-    if (!window.Clerk || !window.Clerk.session) {
-      console.log("🔐 [AUTH] No Clerk session available");
-      return null;
-    }
-    try {
-      clerkToken = await window.Clerk.session.getToken();
-      console.log("🔐 [AUTH] Got Clerk token: " + _maskToken(clerkToken));
-      return clerkToken;
-    } catch (e) {
-      console.log("🔐 [AUTH] Failed to get Clerk token: " + e.message);
-      return null;
-    }
-  }
-</script>
-
-<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -2511,6 +2421,7 @@ body {
   </div>
 </div>
 
+
 <div class="bg-mesh"></div>
 <div class="particles" id="particles"></div>
 
@@ -2524,132 +2435,43 @@ body {
     </defs>
 </svg>
 
-<!-- Mobile sidebar toggle -->
-<button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle">☰</button>
+<div class="app">
+    <div class="header">
 
-<!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <div class="sidebar-logo">
-            <div class="sidebar-logo-icon">🌍</div>
-            <div class="sidebar-logo-text">GeoBot</div>
-        </div>
-        <button class="sidebar-new-btn" onclick="clearChat()">
-            <span>✨</span> New Conversation
-        </button>
+        <button class="settings-btn" onclick="openModal()" title="Settings">⚙️</button>
+        <div class="header-badge" id="statusBadge" onclick="checkConnection()">AI Mode</div>
+        <h1>GeoBot</h1>
+        <div class="header-sub">Location Intelligence Assistant</div>
+
+    <div class="auth-container" id="authContainer"></div>
     </div>
 
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">
-            <span>Conversations</span>
-            <span class="arrow">▾</span>
-        </div>
-        <div class="sidebar-item active" onclick="clearChat()">
-            <span class="sidebar-item-icon">💬</span>
-            <span class="sidebar-item-text">New Chat</span>
-            <span class="sidebar-item-time">Now</span>
-        </div>
+    <div class="orb-container">
+        <div class="orb"></div>
     </div>
 
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">
-            <span>Today</span>
-            <span class="arrow">▾</span>
-        </div>
-        <div class="sidebar-item" onclick="document.getElementById('msg').value='Weather in Tokyo';send();">
-            <span class="sidebar-item-icon">🌤️</span>
-            <span class="sidebar-item-text">Weather in Tokyo</span>
-            <span class="sidebar-item-time">03:45 PM</span>
-        </div>
-        <div class="sidebar-item" onclick="document.getElementById('msg').value='Compare Delhi vs Mumbai';send();">
-            <span class="sidebar-item-icon">⚖️</span>
-            <span class="sidebar-item-text">Compare Delhi vs Mumbai</span>
-            <span class="sidebar-item-time">03:20 PM</span>
-        </div>
-        <div class="sidebar-item" onclick="document.getElementById('msg').value='AQI in New York';send();">
-            <span class="sidebar-item-icon">😷</span>
-            <span class="sidebar-item-text">AQI in New York</span>
-            <span class="sidebar-item-time">02:40 PM</span>
-        </div>
+    <div id="chat" class="chat"></div>
+
+    <div class="typing-container" id="typing">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
     </div>
 
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">
-            <span>Yesterday</span>
-            <span class="arrow">▾</span>
-        </div>
-        <div class="sidebar-item" onclick="document.getElementById('msg').value='Weather in Paris';send();">
-            <span class="sidebar-item-icon">🌤️</span>
-            <span class="sidebar-item-text">Weather in Paris</span>
-            <span class="sidebar-item-time">09:15 PM</span>
-        </div>
-        <div class="sidebar-item" onclick="document.getElementById('msg').value='Time in London';send();">
-            <span class="sidebar-item-icon">🕒</span>
-            <span class="sidebar-item-text">Time in London</span>
-            <span class="sidebar-item-time">08:30 PM</span>
-        </div>
-    </div>
-
-    <div class="sidebar-upgrade">
-        <div class="sidebar-upgrade-icon">👑</div>
-        <div class="sidebar-upgrade-title">Upgrade to Pro</div>
-        <div class="sidebar-upgrade-desc">Unlock advanced insights & more MCP servers</div>
-        <button class="sidebar-upgrade-btn">Coming Soon</button>
-    </div>
-
-    <div class="sidebar-footer">
-        <div class="sidebar-footer-item" onclick="openModal()">
-            <span>⚙️</span>
-            <span>Settings</span>
-        </div>
-        <div class="sidebar-footer-item">
-            <span>❓</span>
-            <span>Help & Support</span>
-        </div>
-    </div>
-</aside>
-
-<!-- MAIN CONTENT -->
-<div class="main-wrapper">
-    <div class="app">
-        <div class="header">
-            <button class="settings-btn" onclick="openModal()" title="Settings">⚙️</button>
-            <div class="header-center">
-                <div class="header-badge" id="statusBadge" onclick="checkConnection()">AI Mode</div>
-                <h1>GeoBot</h1>
-                <div class="header-sub">Location Intelligence Assistant</div>
+    <div class="input-area">
+        <div class="input-box">
+            <button class="clear-btn-input" onclick="clearChat()" title="Clear conversation" id="clearChatBtn">🗑️</button>
+            <div class="input-wrapper">
+                <input id="msg" placeholder="Ask about weather, AQI, or anything..." autocomplete="off" />
             </div>
-            <div class="auth-container" id="authContainer"></div>
-            <button class="clear-btn" onclick="clearChat()" title="Clear conversation">🗑️</button>
+            <button class="send-btn" onclick="send()" id="sendBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                </svg>
+            </button>
         </div>
-
-        <div class="orb-container">
-            <div class="orb"></div>
-        </div>
-
-        <div id="chat" class="chat"></div>
-
-        <div class="typing-container" id="typing">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-        </div>
-
-        <div class="input-area">
-            <div class="input-box">
-                <button class="clear-btn-input" onclick="clearChat()" title="Clear conversation" id="clearChatBtn">🗑️</button>
-                <div class="input-wrapper">
-                    <input id="msg" placeholder="Ask about weather, AQI, or anything..." autocomplete="off" />
-                </div>
-                <button class="send-btn" onclick="send()" id="sendBtn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
-                    </svg>
-                </button>
-            </div>
-            <div class="input-hint" id="inputHint">AI Mode: LLM will analyze your query first</div>
-        </div>
+        <div class="input-hint" id="inputHint">AI Mode: LLM will analyze your query first</div>
     </div>
 </div>
 
@@ -2695,7 +2517,7 @@ body {
                 <div class="server-list" id="serverList">
                     <!-- Servers render here dynamically -->
                 </div>
-
+                
                 <div class="add-server-section">
                     <h3>➕ Add New Server</h3>
                     <div class="form-group">
@@ -2720,7 +2542,7 @@ body {
                         <label>Description (optional)</label>
                         <input type="text" id="newServerDesc" placeholder="Custom weather data source">
                     </div>
-
+                    
                     <!-- REST API Config (hidden by default) -->
                     <div id="restConfigSection" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
                         <h4 style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">🔧 REST API Configuration</h4>
@@ -2757,6 +2579,7 @@ body {
                             <textarea id="restMapping" rows="3" placeholder='{"city": "features.0.place_name", "latitude": "features.0.center.1"}' style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-primary);font-size:12px;font-family:'JetBrains Mono',monospace;resize:vertical;"></textarea>
                         </div>
                     </div>
+                    
 
                     <!-- STDIO Config (hidden by default) -->
                     <div id="stdioConfigSection" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
@@ -2801,25 +2624,6 @@ body {
 
 <script>
 // ==============================
-// SIDEBAR TOGGLE
-// ==============================
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('open');
-}
-
-// Close sidebar when clicking outside on mobile
-document.addEventListener('click', function(e) {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebarToggle');
-    if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
-        if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
-            sidebar.classList.remove('open');
-        }
-    }
-});
-
-// ==============================
 // MCP CONNECTOR MANAGER
 // ==============================
 
@@ -2854,6 +2658,7 @@ async function checkWeatherMCPConnection(url) {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
+        // Ping /ping (public, no auth) instead of /tool or /health (protected)
         const pingUrl = url.replace('/tool', '/ping');
         const res = await fetch(pingUrl, {
             method: 'GET',
@@ -2870,6 +2675,7 @@ async function connectWeatherMCP(serverId) {
     const server = servers.find(s => s.id === serverId);
     if (!server) return;
 
+    // Set connecting state in UI
     const btn = document.getElementById(`connect-btn-${serverId}`);
     if (btn) {
         btn.className = 'connect-btn connecting';
@@ -2923,12 +2729,15 @@ function getEnabledServers() {
     const servers = loadServers();
     const result = [];
     for (const s of servers) {
+        // For Weather MCP (default), check connection state
         if (s.isDefault) {
             if (isWeatherMCPConnected()) {
+                // Create a copy with connected flag for backend
                 const connectedServer = {...s, enabled: true, connected: true};
                 result.push(connectedServer);
             }
         } else {
+            // For custom servers, use toggle
             if (s.enabled) {
                 result.push(s);
             }
@@ -2946,6 +2755,7 @@ async function checkServerStatus(url, protocol) {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
+        // Use /ping for custom MCPs too (public, no auth)
         const pingUrl = url.replace('/tool', '/ping').replace('/mcp', '/ping');
         const res = await fetch(pingUrl, {
             method: 'GET',
@@ -2960,17 +2770,17 @@ async function checkServerStatus(url, protocol) {
 async function renderServerList() {
     const list = document.getElementById('serverList');
     const servers = loadServers();
-
+    
     if (servers.length === 0) {
         list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔌</div><div>No MCP servers configured</div></div>`;
         return;
     }
-
+    
     list.innerHTML = '';
     for (const server of servers) {
         const card = document.createElement('div');
         card.className = 'server-card';
-
+        
         const protocolEmoji = {
             'custom': '🤖',
             'jsonrpc': '📡',
@@ -2985,11 +2795,12 @@ async function renderServerList() {
             'rest_api': 'REST API',
             'stdio': 'Local Stdio'
         };
-
+        
+        // WEATHER MCP: Use Connect button instead of toggle
         if (server.isDefault) {
             const isConnected = isWeatherMCPConnected();
             const statusClass = isConnected ? 'online' : 'offline';
-
+            
             card.innerHTML = `
                 <div class="server-card-header">
                     <div class="server-name">
@@ -3011,17 +2822,20 @@ async function renderServerList() {
                 </div>
             `;
             list.appendChild(card);
-
+            
+            // Live status check for Weather MCP
             if (isConnected) {
                 const statusDot = document.getElementById(`status-${server.id}`);
                 const isOnline = await checkWeatherMCPConnection(server.url);
                 if (!isOnline) {
+                    // Auto-disconnect if server is actually down
                     disconnectWeatherMCP(server.id);
                 }
             }
         } else {
+            // CUSTOM MCP: Keep toggle switch
             const statusClass = server.enabled ? 'checking' : 'offline';
-
+            
             card.innerHTML = `
                 <div class="server-card-header">
                     <div class="server-name">
@@ -3044,7 +2858,7 @@ async function renderServerList() {
                 </div>
             `;
             list.appendChild(card);
-
+            
             if (server.enabled) {
                 const statusDot = document.getElementById(`status-${server.id}`);
                 const isOnline = await checkServerStatus(server.url, server.protocol);
@@ -3085,21 +2899,23 @@ function addServer() {
     const urlInput = document.getElementById('newServerUrl');
     const descInput = document.getElementById('newServerDesc');
     const protocolInput = document.getElementById('newServerProtocol');
-
+    
     const name = nameInput.value.trim();
     let url = urlInput.value.trim();
     const desc = descInput.value.trim();
     const protocol = protocolInput.value;
-
+    
     if (!name || !url) {
         showToast('Name and URL are required', '⚠️');
         return;
     }
-
+    
+    // Only auto-append /tool for custom MCP protocol
     if (protocol === 'custom' && !url.endsWith('/tool')) {
         url = url.replace(/\/$/, '') + '/tool';
     }
-
+    
+    // Build server object
     const server = {
         id: generateId(),
         name,
@@ -3110,12 +2926,13 @@ function addServer() {
         protocol: protocol
     };
 
+    // For stdio, command/args are the real "URL" equivalent
     if (protocol === 'stdio') {
         const cmd = document.getElementById('stdioCommand').value.trim() || 'tsx';
         const argsStr = document.getElementById('stdioArgs').value.trim();
         const cwd = document.getElementById('stdioCwd').value.trim();
         const args = argsStr ? argsStr.split(',').map(a => a.trim()) : [];
-        server.url = 'stdio://' + cmd;
+        server.url = 'stdio://' + cmd;  // pseudo-URL for identification
         server.config = {
             command: cmd,
             args: args,
@@ -3123,9 +2940,11 @@ function addServer() {
         };
     }
 
+    // For Streamable HTTP, auth is typically Bearer token
     if (protocol === 'streamable_http') {
         server.config = server.config || {};
         server.config._protocol = 'streamable_http';
+        // Auth can be set via the same REST auth fields if user fills them
         const authType = document.getElementById('restAuthType').value;
         const authKey = document.getElementById('restAuthKey').value.trim();
         const authValue = document.getElementById('restAuthValue').value.trim();
@@ -3135,7 +2954,8 @@ function addServer() {
             server.config.auth_value = authValue;
         }
     }
-
+    
+    // Add REST API config if applicable
     if (protocol === 'rest_api') {
         const endpoint = document.getElementById('restEndpoint').value.trim();
         const method = document.getElementById('restMethod').value;
@@ -3143,7 +2963,7 @@ function addServer() {
         const authKey = document.getElementById('restAuthKey').value.trim();
         const authValue = document.getElementById('restAuthValue').value.trim();
         const mappingStr = document.getElementById('restMapping').value.trim();
-
+        
         let mapping = {};
         if (mappingStr) {
             try {
@@ -3153,7 +2973,7 @@ function addServer() {
                 return;
             }
         }
-
+        
         server.config = {
             endpoint_template: endpoint || '/',
             method: method,
@@ -3163,36 +2983,33 @@ function addServer() {
             response_mapping: mapping
         };
     }
-
+    
     const servers = loadServers();
     if (servers.some(s => s.url === url)) {
         showToast('This URL already exists', '⚠️');
         return;
     }
-
+    
     servers.push(server);
     saveServers(servers);
-
+    
     nameInput.value = '';
     urlInput.value = '';
     descInput.value = '';
-
+    
     renderServerList();
     showToast('Server added successfully', '✅');
     updateActiveCount();
 }
 
 function updateActiveCount() {
-    // Kept for compatibility
+    // Mode badge is handled by updateModeBadge() - this function is for server count only
+    // Kept for compatibility but does not override AI/MCP mode badge
 }
 
 function openModal() {
     document.getElementById('modalOverlay').classList.add('active');
     renderServerList();
-    // Close sidebar on mobile when opening modal
-    if (window.innerWidth <= 768) {
-        document.getElementById('sidebar').classList.remove('open');
-    }
 }
 
 function closeModal() {
@@ -3212,7 +3029,7 @@ async function callAllMCPs(tool, city) {
     if (servers.length === 0) {
         throw new Error('No MCP servers enabled. Check MCP Connectors settings.');
     }
-
+    
     const promises = servers.map(async (server) => {
         try {
             const res = await fetch(server.url, {
@@ -3227,7 +3044,7 @@ async function callAllMCPs(tool, city) {
             return { server: server.name, error: err.message };
         }
     });
-
+    
     return await Promise.all(promises);
 }
 
@@ -3293,8 +3110,10 @@ function getAQIStatus(aqi) {
 }
 
 function formatValue(key, value, parentKey = '') {
+    // Handle null/undefined gracefully
     if (value === null || value === undefined) return '<span style="color:var(--text-dim);font-style:italic;">N/A</span>';
-
+    
+    // Format specific fields
     if (key === 'temperature' || key === 'temp' || key === 'temp2m') return `${Math.round(value)}°C`;
     if (key === 'windspeed' || key === 'wind_speed') return `${value} km/h`;
     if (key === 'winddirection' || key === 'wind_direction') return `${value}°`;
@@ -3313,6 +3132,7 @@ function formatValue(key, value, parentKey = '') {
     if (key === 'is_day') return value ? '☀️ Day' : '🌙 Night';
     if (key === 'elevation') return `${value} m`;
 
+        // Custom MCP V2 fields
     if (key === 'humidity_percent') return `${value}%`;
     if (key === 'uv_index') return `${value}`;
     if (key === 'uv_risk') return `${value}`;
@@ -3326,12 +3146,13 @@ function formatValue(key, value, parentKey = '') {
     if (key === 'dew_point_celsius') return `${value}°C`;
     if (key === 'cloud_cover_percent') return `${value}%`;
     if (key === 'is_waxing') return value ? '🌙 Waxing' : '🌙 Waning';
-
+    
+    // Time formatting
     if (key.includes('time') && typeof value === 'string' && value.includes('T')) {
         const date = new Date(value);
         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     }
-
+    
     return value;
 }
 
@@ -3352,6 +3173,7 @@ function getFieldIcon(key) {
         us_aqi: '😷',
         sunrise: '🌅', sunset: '🌇',
         latitude: '📍', longitude: '📍',
+        // Custom MCP V2 fields
         phase_name: '🌙',
         illumination_percent: '💡',
         age_days: '📅',
@@ -3372,44 +3194,52 @@ function renderHUDCard(data, serverName, llmText = '') {
     const aqi = data.aqi || {};
     const currentTime = data.current_time || '';
     const special = data.today_special || {};
-
+    
+    // Calculate AQI
     const aqiValue = aqi.us_aqi || aqi.pm2_5 || aqi.pm10 || 0;
     const aqiInfo = getAQIStatus(aqiValue);
-
+    
+    // Weather icon
     const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 0;
     const isDay = weather.is_day !== undefined ? weather.is_day : 1;
     const weatherIcon = getWeatherIcon(weatherCode, isDay);
     const weatherLabel = getWeatherLabel(weatherCode);
-
+    
+    // Temperature for ring
     const temp = weather.temperature !== undefined ? weather.temperature : 0;
-    const tempPercent = Math.min(Math.max((temp + 10) / 50 * 100, 0), 100);
+    const tempPercent = Math.min(Math.max((temp + 10) / 50 * 100, 0), 100); // Normalize -10 to 40°C
     const circumference = 2 * Math.PI * 46;
     const offset = circumference - (tempPercent / 100) * circumference;
-
+    
+    // Build metrics from weather + aqi (skip nulls, backfill with aqi)
     const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response', 'city', 'country', 'latitude', 'longitude', 'current_time'];
     const metrics = [];
-
+    
+    // Pull from weather object (skip nulls)
     for (const [key, value] of Object.entries(weather)) {
         if (excludeKeys.includes(key)) continue;
         if (value === null || value === undefined) continue;
         metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
     }
-
+    
+    // Backfill with aqi fields if weather metrics are sparse
     for (const [key, value] of Object.entries(aqi)) {
         if (excludeKeys.includes(key)) continue;
         if (key === 'us_aqi') continue;
         if (value === null || value === undefined) continue;
-        if (metrics.length >= 3) break;
+        if (metrics.length >= 3) break; // Grid maxes at 3
         metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
     }
-
+    
+    // Build expanded data from all other fields
     const expandedData = [];
     const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response'];
-
+    
     for (const [key, value] of Object.entries(data)) {
         if (expandedExclude.includes(key)) continue;
         if (value === null || value === undefined) continue;
         if (typeof value === 'object') {
+            // Flatten nested objects
             for (const [subKey, subValue] of Object.entries(value)) {
                 if (subValue === null || subValue === undefined) continue;
                 expandedData.push({
@@ -3428,7 +3258,8 @@ function renderHUDCard(data, serverName, llmText = '') {
             });
         }
     }
-
+    
+    // Generate metrics HTML (max 3)
     const metricsHTML = metrics.slice(0, 3).map(m => `
         <div class="hud-metric">
             <div class="hud-metric-icon">${m.icon}</div>
@@ -3436,16 +3267,17 @@ function renderHUDCard(data, serverName, llmText = '') {
             <div class="hud-metric-label">${m.label}</div>
         </div>
     `).join('');
-
+    
+    // Generate expanded data HTML
     const expandedHTML = expandedData.map(d => `
         <div class="hud-data-cell">
             <div class="hud-data-label">${d.icon} ${d.label}</div>
             <div class="hud-data-value small">${d.value}</div>
         </div>
     `).join('');
-
+    
     const cardId = 'hud-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
-
+    
     return `
     <div class="hud-card" id="${cardId}">
         <div class="hud-header">
@@ -3461,7 +3293,7 @@ function renderHUDCard(data, serverName, llmText = '') {
                 <div class="hud-time-sub">${currentTime.split(',')[0]?.trim() || ''}</div>
             </div>
         </div>
-
+        
         <div class="hud-hero">
             <div class="hud-temp-ring">
                 <svg width="100" height="100" viewBox="0 0 100 100">
@@ -3476,9 +3308,9 @@ function renderHUDCard(data, serverName, llmText = '') {
             </div>
             <div class="hud-weather-icon-main">${weatherIcon}</div>
         </div>
-
+        
         <div class="hud-condition-text">${weatherLabel}</div>
-
+        
         <div class="hud-aqi-section">
             <div class="hud-aqi-header">
                 <span class="hud-aqi-label">Air Quality</span>
@@ -3488,28 +3320,28 @@ function renderHUDCard(data, serverName, llmText = '') {
                 <div class="hud-aqi-fill" style="width: ${aqiValue > 0 ? Math.min(aqiValue / 3, 100) : 0}%;"></div>
             </div>
         </div>
-
+        
         <div class="hud-metrics">
             ${metricsHTML}
         </div>
-
+        
         <div class="hud-expanded" id="${cardId}-expanded">
             <div class="hud-data-grid">
                 ${expandedHTML}
             </div>
         </div>
-
+        
         <button class="hud-expand-btn" onclick="toggleExpanded('${cardId}')">
             <span id="${cardId}-btn-text">▼ Show All Data</span>
         </button>
-
+        
         ${llmText ? `
         <div class="Ai-Generated-Info">
             <div class="hud-llm-label">📝 Insights</div>
             <div class="hud-llm-body">${mdToHtml(llmText)}</div>
         </div>
         ` : ''}
-
+        
         <div class="hud-footer">
             <div class="hud-source">
                 <span class="hud-source-dot"></span>
@@ -3525,7 +3357,7 @@ function toggleExpanded(cardId) {
     const expanded = document.getElementById(cardId + '-expanded');
     const btnText = document.getElementById(cardId + '-btn-text');
     const isOpen = expanded.classList.contains('open');
-
+    
     if (isOpen) {
         expanded.classList.remove('open');
         btnText.textContent = '▼ Show All Data';
@@ -3537,20 +3369,22 @@ function toggleExpanded(cardId) {
 
 function renderMcpDropdown(customMcpResults) {
     if (!customMcpResults || customMcpResults.length === 0) return '';
-
+    
     const dropdownId = 'mcp-drop-' + Date.now();
-
+    
+    // Build server sections
     const sectionsHTML = customMcpResults.map(custom => {
         const data = custom.data || {};
         const serverName = custom.server_name || 'Custom MCP';
-
+        
+        // Build data cells
         const cells = [];
         for (const [key, value] of Object.entries(data)) {
             if (value === null || value === undefined) continue;
             if (typeof value === 'object') continue;
             if (key.startsWith('_')) continue;
             if (key === 'source') continue;
-
+            
             cells.push(`
                 <div class="mcp-data-cell">
                     <div class="mcp-data-label">${getFieldIcon(key)} ${key.replace(/_/g, ' ')}</div>
@@ -3558,7 +3392,7 @@ function renderMcpDropdown(customMcpResults) {
                 </div>
             `);
         }
-
+        
         return `
             <div class="mcp-server-section">
                 <div class="mcp-server-header">
@@ -3571,7 +3405,7 @@ function renderMcpDropdown(customMcpResults) {
             </div>
         `;
     }).join('');
-
+    
     return `
     <div class="mcp-dropdown" id="${dropdownId}">
         <div class="mcp-dropdown-header" onclick="toggleMcpDropdown('${dropdownId}')">
@@ -3594,7 +3428,7 @@ function toggleMcpDropdown(dropdownId) {
     const header = document.querySelector(`#${dropdownId} .mcp-dropdown-header`);
     const body = document.getElementById(dropdownId + '-body');
     const isOpen = body.classList.contains('open');
-
+    
     if (isOpen) {
         body.classList.remove('open');
         header.classList.remove('active');
@@ -3606,13 +3440,14 @@ function toggleMcpDropdown(dropdownId) {
 
 
 function renderCompareStrip(results) {
+    // Backend sends raw data array, not {error, data} wrappers
     const cards = results.map(d => {
         const temp = d.weather?.temperature || 0;
         const aqi = d.aqi?.us_aqi || d.aqi?.pm2_5 || 0;
         const aqiInfo = getAQIStatus(aqi);
-
+        
         return `
-        <div class="compare-mini" onclick="showCompareDetail('${(d.city || 'Unknown').replace(/'/g, "\'")}')">
+        <div class="compare-mini" onclick="showCompareDetail('${(d.city || 'Unknown').replace(/'/g, "\\'")}')">
             <div class="compare-mini-city">
                 <span>${getFlag(d.country)}</span>
                 ${d.city || 'Unknown'}
@@ -3627,7 +3462,7 @@ function renderCompareStrip(results) {
         </div>
         `;
     }).join('');
-
+    
     return `<div class="compare-strip">${cards}</div>`;
 }
 function getFlag(country) {
@@ -3640,22 +3475,24 @@ function getFlag(country) {
 }
 
 function showCompareDetail(city) {
+    // Find the city data from the last compare results
     const chat = document.getElementById('chat');
     const lastCompare = chat.querySelector('.compare-strip');
     if (!lastCompare) return;
-
+    
+    // Try to find matching HUD card already in chat
     const existingCards = chat.querySelectorAll('.hud-card');
     for (const card of existingCards) {
         const cityName = card.querySelector('.hud-city-name');
         if (cityName && cityName.textContent.trim() === city) {
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
             card.style.animation = 'none';
-            card.offsetHeight;
+            card.offsetHeight; // trigger reflow
             card.style.animation = 'hudEntry 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
             return;
         }
     }
-
+    
     showToast(`${city} — scroll down to see full details`, '📊');
 }
 
@@ -3713,10 +3550,6 @@ function clearChat() {
     chat.innerHTML = '';
     showToast('Conversation cleared', '🗑️');
     initWelcome();
-    // Close sidebar on mobile
-    if (window.innerWidth <= 768) {
-        document.getElementById('sidebar').classList.remove('open');
-    }
 }
 function initWelcome() {
     addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
@@ -3731,17 +3564,17 @@ function initWelcome() {
 
 function mdToHtml(text) {
     if (!text) return '';
-
+    
+    // Only convert bold/italic, no list or grid processing
     let html = text
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>');
-
+    
+    // Convert line breaks to <br>
     html = html
-        .replace(/
-{2,}/g, '<br><br>')
-        .replace(/
-/g, '<br>');
-
+        .replace(/\n{2,}/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+    
     return html;
 }
 
@@ -3755,23 +3588,23 @@ function addMsg(text, type, isCard = false) {
         div.style.background = 'transparent';
         div.style.border = 'none';
     }
-
+    
     const time = new Date().toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: true 
     });
-
+    
     const htmlContent = (type === 'bot' && !isCard) ? mdToHtml(text) : text;
     div.innerHTML = htmlContent + `<div class="msg-time">${time}</div>`;
     chat.appendChild(div);
-
+    
     setTimeout(() => {
         const chat = document.getElementById('chat');
         const targetScroll = div.offsetTop - chat.offsetTop;
         chat.scrollTo({ top: targetScroll, behavior: 'smooth' });
     }, 50);
-
+    
     return div;
 }
 function addSuggestions(options) {
@@ -3789,7 +3622,8 @@ function addSuggestions(options) {
         div.appendChild(chip);
     });
     chat.appendChild(div);
-
+    
+    // NEW: Scroll so suggestions top aligns with chat container top
     setTimeout(() => {
         const chat = document.getElementById('chat');
         const targetScroll = div.offsetTop - chat.offsetTop;
@@ -3799,6 +3633,7 @@ function addSuggestions(options) {
 
 function showTyping() {
     document.getElementById('typing').classList.add('active');
+    // Don't auto-scroll typing indicator to bottom
 }
 
 function hideTyping() {
@@ -3854,7 +3689,7 @@ function updateModeBadge() {
     const hint = document.getElementById('inputHint');
     const hasMcp = settings.mcpEnabled;
     const hasLlm = settings.llmEnabled;
-
+    
     if (hasLlm && hasMcp) {
         badge.textContent = 'AI + MCP';
         badge.classList.remove('offline');
@@ -3885,6 +3720,7 @@ function showStatus(text, icon) {
     div.id = 'active-status';
     div.innerHTML = '<span class="status-icon">' + icon + '</span>' + text;
     chat.appendChild(div);
+    // Don't auto-scroll status messages
 }
 
 function removeStatus() {
@@ -3908,6 +3744,7 @@ function showMCPLogs(logs) {
     }).join('');
     div.innerHTML = '<div class="log-title">🔧 MCP Call Log</div>' + logHTML;
     chat.appendChild(div);
+    // Don't auto-scroll logs
 }
 
 function removeMCPLogs() {
@@ -3923,8 +3760,11 @@ window.onload = async function() {
     if (window.Clerk) {
         try { await initClerk(); } catch(e) { console.log('Clerk init:', e); }
     }
-
+    
     // Ensure Weather MCP starts disconnected by default
+    // (unless user explicitly connected before and localStorage has it)
+    // We DON'T reset here — user must click Connect each session
+    // But if localStorage has no value, default to disconnected
     if (localStorage.getItem(WEATHER_MCP_CONNECTED_KEY) === null) {
         setWeatherMCPConnected(false);
         const servers = loadServers();
@@ -3934,14 +3774,14 @@ window.onload = async function() {
             saveServers(servers);
         }
     }
-
+    
     applySettings();
     addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
     addSuggestions([
         { text: "What is AQI?", icon: "❓" },
-        { text: "Weather in Delhi", icon: "🌤️" },
-        { text: "Compare Tokyo vs London", icon: "⚖️" },
-        { text: "Tell me about Kolkata", icon: "🌏" }
+        { text: "Weather in Tokyo", icon: "🌤️" },
+        { text: "Compare Delhi vs Mumbai", icon: "⚖️" },
+        { text: "Time in London", icon: "🕒" }
     ]);
     updateActiveCount();
     checkConnection();
@@ -3964,8 +3804,8 @@ async function send() {
 
     try {
         const enabledServers = getEnabledServers();
-
-        // Get Clerk token if user is logged in
+        
+                // Get Clerk token if user is logged in
         const token = await getClerkToken();
         const headers = { "Content-Type": "application/json" };
         if (token) {
@@ -4076,18 +3916,18 @@ if (!res.ok) throw new Error('Server error');
             // Multi-city → Show compare strip + full HUD cards in responsive grid
             const compareHTML = renderCompareStrip(data.response);
             addMsg('<div style="margin-top:8px;">' + compareHTML + '</div>', "bot", true);
-
+            
             // Show LLM comparison text if available
             if (data.llm_text) {
                 addMsg(data.llm_text, "bot");
             }
-
+            
             // Render HUD cards in a responsive grid container
             const gridId = 'compare-grid-' + Date.now();
             const gridContainer = document.createElement('div');
             gridContainer.className = 'compare-grid';
             gridContainer.id = gridId;
-
+            
             for (const cityData of data.response) {
                 const hudHTML = renderHUDCard(cityData, "Weather MCP");
                 const cardWrapper = document.createElement('div');
@@ -4095,7 +3935,7 @@ if (!res.ok) throw new Error('Server error');
                 cardWrapper.innerHTML = hudHTML;
                 gridContainer.appendChild(cardWrapper);
             }
-
+            
             const chat = document.getElementById('chat');
             const gridMsg = document.createElement('div');
             gridMsg.className = 'msg bot';
