@@ -2009,11 +2009,96 @@ body {
     margin-bottom: 6px;
 }
 
+/* ==============================
+   COLLAPSIBLE INSIGHTS PANEL
+   ============================== */
+
+.insights-panel {
+    margin-top: 8px;
+}
+
+.insights-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(167, 46, 229, 0.08));
+    border: 1px solid rgba(167, 46, 229, 0.2);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.insights-toggle:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(167, 46, 229, 0.15));
+    border-color: rgba(167, 46, 229, 0.35);
+    box-shadow: 0 0 20px rgba(167, 46, 229, 0.1);
+}
+
+.insights-icon {
+    font-size: 16px;
+}
+
+.insights-label {
+    flex: 1;
+    text-align: left;
+}
+
+.insights-arrow {
+    font-size: 11px;
+    color: var(--primary);
+    transition: transform 0.3s ease;
+}
+
+.insights-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.3s ease;
+    opacity: 0;
+    padding: 0 14px;
+}
+
+.insights-body.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 14px;
+}
+
+.insights-body:not(.collapsed) {
+    opacity: 1;
+    padding: 12px 14px;
+}
+
+.insights-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.insights-content strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
 </style>
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+
+
+
+
 
 <!-- Clerk Authentication SDK -->
 <script src="/config.js"></script>
@@ -3647,12 +3732,7 @@ function renderHUDCard(data, serverName, llmText = '') {
             <span id="${cardId}-btn-text">▼ Show All Data</span>
         </button>
         
-        ${llmText ? `
-        <div class="Ai-Generated-Info">
-            <div class="hud-llm-label">📝 Insights</div>
-            <div class="hud-llm-body">${mdToHtml(llmText)}</div>
-        </div>
-        ` : ''}
+                
         
         <div class="hud-footer">
             <div class="hud-source">
@@ -4222,12 +4302,30 @@ if (!res.ok) throw new Error('Server error');
             const hasDropdown = !settings.llmEnabled && data.custom_mcp_results && data.custom_mcp_results.length > 0;
 
             if (hasHud) {
-                // Render HUD card with LLM text embedded inside (after Hide Details)
-                const hudHTML = renderHUDCard(data.hud_data, "Weather MCP + Custom", data.custom_text || '');
+                // Render HUD card WITHOUT insights inside
+                const hudHTML = renderHUDCard(data.hud_data, "Weather MCP + Custom", '');
                 addMsg(hudHTML, "bot", true);
             } else if (hasText) {
                 // Fallback: text only if no HUD data
                 addMsg(data.custom_text, "bot");
+            }
+
+            // Render insights as separate collapsible panel (collapsed by default)
+            if (hasText) {
+                const insightsId = 'insights-' + Date.now();
+                const insightsHTML = `
+                <div class="msg bot insights-panel" style="max-width: 600px; padding: 0; background: transparent; border: none;">
+                    <button class="insights-toggle" onclick="toggleInsights('${insightsId}')" id="${insightsId}-btn">
+                        <span class="insights-icon">📝</span>
+                        <span class="insights-label">Insights</span>
+                        <span class="insights-arrow" id="${insightsId}-arrow">▼</span>
+                    </button>
+                    <div class="insights-body collapsed" id="${insightsId}">
+                        <div class="insights-content">${mdToHtml(data.custom_text)}</div>
+                    </div>
+                </div>
+                `;
+                addMsg(insightsHTML, "bot", true);
             }
 
             // If LLM is disabled and custom MCP results exist, show dropdown below
@@ -4309,6 +4407,22 @@ if (!res.ok) throw new Error('Server error');
     }
 }
 
+
+function toggleInsights(id) {
+    const body = document.getElementById(id);
+    const arrow = document.getElementById(id + '-arrow');
+    const isCollapsed = body.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+        body.classList.remove('collapsed');
+        body.style.maxHeight = body.scrollHeight + 'px';
+        arrow.textContent = '▲';
+    } else {
+        body.classList.add('collapsed');
+        body.style.maxHeight = '0px';
+        arrow.textContent = '▼';
+    }
+}
 
 
 document.getElementById("msg").addEventListener("keydown", function(e) {
