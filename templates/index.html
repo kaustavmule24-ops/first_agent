@@ -107,38 +107,7 @@ body {
         0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
-/* Mobile: card style */
-@media (max-width: 520px) {
-    .app {
-        max-width: 480px;     /* card width on mobile */
-        height: 95vh;
-        max-height: 900px;
-        border-radius: 28px;  /* rounded corners on mobile */
-        margin: auto;
-    }
-    
-    body {
-        padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    
-    .bg-mesh, .particles {
-        display: none;
-    }
-    
-    
-    
-    .hud-card {
-        max-width: 100%;
-    }
-    
-    .compare-mini {
-        min-width: 120px;
-        padding: 12px;
-    }
-}
+
 
 /* Header */
 .header {
@@ -1630,34 +1599,7 @@ body {
 .msg.log .log-entry.warning { color: var(--warning); }
 .msg.log .log-entry.info { color: var(--info); }
 
-/* Responsive */
-@media (max-width: 520px) {
-    .app {
-        height: 100vh;
-        max-height: none;
-        border-radius: 0;
-        border: none;
-    }
-    
-    body {
-        padding: 0;
-    }
-    
-    .bg-mesh, .particles {
-        display: none;
-    }
-    
-    
-    
-    .hud-card {
-        max-width: 100%;
-    }
-    
-    .compare-mini {
-        min-width: 120px;
-        padding: 12px;
-    }
-}
+
 
 
 /* Compare strip enhancements */
@@ -2118,147 +2060,10 @@ body {
     }
 }
 
-/* ==============================
-   MOBILE ONLY FIXES (<=520px)
-   ============================== */
-@media (max-width: 520px) {
-    /* Compare: stack to single column on mobile */
-    .compare-grid-compact {
-        grid-template-columns: 1fr !important;
-    }
 
-    /* HUD card: tighter, full-width, no overflow */
-    .hud-card {
-        max-width: 100% !important;
-        border-radius: 16px;
-    }
-
-    .hud-header {
-        padding: 12px 14px;
-    }
-
-    .hud-city-name {
-        font-size: 15px;
-    }
-
-    .hud-time-main {
-        font-size: 16px;
-    }
-
-    .hud-hero {
-        padding: 10px 14px;
-        gap: 8px;
-    }
-
-    .hud-temp-ring {
-        width: 85px;
-        height: 85px;
-    }
-
-    .hud-temp-value {
-        font-size: 22px;
-    }
-
-    .hud-weather-icon-main {
-        font-size: 32px;
-    }
-
-    .hud-condition-text {
-        font-size: 10px;
-        padding-bottom: 10px;
-    }
-
-    .hud-aqi-section {
-        margin: 0 12px 6px;
-        padding: 6px 8px;
-    }
-
-    .hud-metrics {
-        gap: 1px;
-    }
-
-    .hud-metric {
-        padding: 8px 2px;
-    }
-
-    .hud-metric-value {
-        font-size: 11px;
-    }
-
-    .hud-metric-label {
-        font-size: 7px;
-        letter-spacing: 0.5px;
-    }
-
-    .hud-footer {
-        padding: 6px 14px;
-        font-size: 8px;
-    }
-
-    .hud-expand-btn {
-        padding: 6px;
-        font-size: 9px;
-    }
-
-    .hud-data-grid {
-        gap: 6px;
-    }
-
-    .hud-data-cell {
-        padding: 8px;
-    }
-
-    .hud-data-value {
-        font-size: 11px;
-    }
-
-    .hud-data-value.small {
-        font-size: 10px;
-    }
-
-    /* Insights panel smaller text */
-    .insights-content {
-        font-size: 12px;
-        padding: 10px 12px;
-    }
-
-    /* Suggestion chips smaller */
-    .chip {
-        padding: 6px 10px;
-        font-size: 11px;
-    }
-
-    /* Messages use more width on mobile */
-    .msg {
-        max-width: 90%;
-    }
-
-    .msg.bot {
-        padding: 10px 12px;
-        font-size: 12px;
-    }
-
-    /* Input compact */
-    .input-area {
-        padding: 12px 14px 16px;
-    }
-
-    .input-wrapper input {
-        padding: 12px 14px;
-        font-size: 13px;
-    }
-
-    .send-btn {
-        width: 44px;
-        height: 44px;
-    }
-}
 
 </style>
-<base target="_blank">
-<base target="_blank">
-<base target="_blank">
-<base target="_blank">
+
 
 
 
@@ -2775,16 +2580,7 @@ document.addEventListener('click', function(e) {
   margin: 8px 0;
 }
 
-/* Mobile adjustments */
-@media (max-width: 520px) {
-  .auth-container {
-    right: 70px;
-  }
-  .auth-avatar-btn {
-    width: 36px;
-    height: 36px;
-  }
-}
+
 
 /* ==============================
    SETTINGS DROPDOWN
@@ -2879,49 +2675,222 @@ document.addEventListener('click', function(e) {
   color: var(--text-primary);
 }
 
-/* Fix header button positions so they don't overlap */
-.auth-container {
-  right: 72px;
-}
-.clear-btn {
-  right: 24px;
-}
 
-/* Mobile adjustments */
-@media (max-width: 520px) {
-  .settings-container {
-    right: 100px;
-  }
-  .auth-container {
-    right: 56px;
-  }
-  .settings-avatar-btn {
-    width: 36px;
-    height: 36px;
-  }
-}
 
-/* Mobile */
+
+</style>
+<style>
+/* ============================================
+   MOBILE FIXES (max-width: 520px)
+   Single consolidated block — replaces all
+   ============================================ */
 @media (max-width: 520px) {
-  .auth-container {
-    top: 12px;
-    right: 70px;
-  }
-  .auth-name {
-    display: none;
-  }
-  .auth-avatar {
-    width: 20px;
-    height: 20px;
-  }
-  .login-card {
-    padding: 36px 24px;
-  }
+    /* App shell */
+    .app {
+        max-width: 100%;
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
+        border: none;
+        margin: 0;
+    }
+    body {
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .bg-mesh, .particles {
+        display: none;
+    }
+
+    /* Header: fix button overlap & misalignment */
+    .header {
+        padding: 16px 16px 12px;
+    }
+    .header-center {
+        padding-right: 90px;
+    }
+    .header h1 {
+        font-size: 18px;
+    }
+    .header-badge {
+        margin-bottom: 6px;
+        font-size: 10px;
+        padding: 3px 10px;
+    }
+    .header-sub {
+        font-size: 12px;
+    }
+
+    /* Align both buttons to vertical center, prevent overlap */
+    .auth-container,
+    .settings-container {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    .auth-container {
+        right: 16px;
+    }
+    .settings-container {
+        right: 60px;
+    }
+    .auth-avatar-btn,
+    .settings-avatar-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Orb */
+    .orb {
+        width: 56px;
+        height: 56px;
+    }
+    .orb::after {
+        font-size: 22px;
+    }
+
+    /* Messages */
+    .msg {
+        max-width: 90%;
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+    .msg.bot {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    /* HUD Card */
+    .hud-card {
+        max-width: 100% !important;
+        border-radius: 16px;
+    }
+    .hud-header {
+        padding: 12px 14px;
+    }
+    .hud-city-name {
+        font-size: 15px;
+    }
+    .hud-time-main {
+        font-size: 16px;
+    }
+    .hud-hero {
+        padding: 10px 14px;
+        gap: 8px;
+    }
+    .hud-temp-ring {
+        width: 85px;
+        height: 85px;
+    }
+    .hud-temp-value {
+        font-size: 22px;
+    }
+    .hud-weather-icon-main {
+        font-size: 32px;
+    }
+    .hud-condition-text {
+        font-size: 10px;
+        padding-bottom: 10px;
+    }
+    .hud-aqi-section {
+        margin: 0 12px 6px;
+        padding: 6px 8px;
+    }
+    .hud-metrics {
+        gap: 1px;
+    }
+    .hud-metric {
+        padding: 8px 2px;
+    }
+    .hud-metric-value {
+        font-size: 11px;
+    }
+    .hud-metric-label {
+        font-size: 7px;
+        letter-spacing: 0.5px;
+    }
+    .hud-footer {
+        padding: 6px 14px;
+        font-size: 8px;
+    }
+    .hud-expand-btn {
+        padding: 6px;
+        font-size: 9px;
+    }
+    .hud-data-grid {
+        gap: 6px;
+    }
+    .hud-data-cell {
+        padding: 8px;
+    }
+    .hud-data-value {
+        font-size: 11px;
+    }
+    .hud-data-value.small {
+        font-size: 10px;
+    }
+
+    /* Compare */
+    .compare-grid-compact {
+        grid-template-columns: 1fr !important;
+    }
+    .compare-mini {
+        min-width: 120px;
+        padding: 12px;
+    }
+
+    /* Insights */
+    .insights-content {
+        font-size: 12px;
+        padding: 10px 12px;
+    }
+
+    /* Chips */
+    .chip {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    /* Input */
+    .input-area {
+        padding: 12px 14px 16px;
+    }
+    .input-wrapper input {
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+    .send-btn {
+        width: 44px;
+        height: 44px;
+    }
+    .clear-btn-input {
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Login */
+    .login-card {
+        padding: 36px 24px;
+        border-radius: 24px;
+    }
+    .login-orb {
+        width: 64px;
+        height: 64px;
+    }
+    .login-title {
+        font-size: 22px;
+    }
+
+    /* Modal */
+    .modal {
+        width: 95%;
+        border-radius: 20px;
+    }
 }
 </style>
 
-<base target="_blank">
-<base target="_blank">
 <base target="_blank">
 </head>
 <body>
