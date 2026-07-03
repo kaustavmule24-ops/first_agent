@@ -2112,42 +2112,94 @@ body {
     updateAuthUI();
   }
 
-  function updateAuthUI() {
-    const loginGate = document.getElementById('loginGate');
-    const app = document.querySelector('.app');
-    const authContainer = document.getElementById('authContainer');
+function updateAuthUI() {
+  const loginGate = document.getElementById('loginGate');
+  const app = document.querySelector('.app');
+  const authContainer = document.getElementById('authContainer');
 
-    if (!loginGate || !app) return;
+  if (!loginGate || !app) return;
 
-    if (clerkUser) {
-      // User is logged in — hide gate, show app
-      loginGate.style.opacity = '0';
-      loginGate.style.pointerEvents = 'none';
-      app.style.display = 'flex';
-      setTimeout(() => { loginGate.style.display = 'none'; }, 500);
+  if (clerkUser) {
+    // User is logged in — hide gate, show app
+    loginGate.style.opacity = '0';
+    loginGate.style.pointerEvents = 'none';
+    app.style.display = 'flex';
+    setTimeout(() => { loginGate.style.display = 'none'; }, 500);
 
-      // Update header auth area
-      if (authContainer) {
-        const name = clerkUser.firstName || clerkUser.username || clerkUser.emailAddresses?.[0]?.emailAddress || 'User';
-        const avatar = clerkUser.imageUrl || '';
-        authContainer.innerHTML = `
-          <div class="auth-user">
-            <img src="${avatar}" class="auth-avatar" alt="avatar" onerror="this.style.display='none'">
-            <span class="auth-name">${name}</span>
-            <button class="auth-btn" onclick="window.Clerk.openUserProfile()" title="Profile">👤</button>
-            <button class="auth-btn logout" onclick="window.Clerk.signOut(); clerkToken = null;" title="Logout">Logout</button>
+    // Update header auth area with dropdown
+    if (authContainer) {
+      const name = clerkUser.firstName || clerkUser.username || 'User';
+      const email = clerkUser.emailAddresses?.[0]?.emailAddress || '';
+      const avatar = clerkUser.imageUrl || '';
+      const initials = name.charAt(0).toUpperCase();
+
+      authContainer.innerHTML = `
+        <button class="auth-avatar-btn" onclick="toggleAuthDropdown(event)" id="authAvatarBtn" title="${name}">
+          ${avatar ? `<img src="${avatar}" alt="avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+          <div class="avatar-fallback" style="${avatar ? 'display:none' : ''}">${initials}</div>
+          <div class="auth-status-ring"></div>
+        </button>
+        
+        <div class="auth-dropdown-menu" id="authDropdown">
+          <div class="auth-dropdown-header">
+            ${avatar ? `<img src="${avatar}" alt="avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+            <div class="header-fallback" style="${avatar ? 'display:none' : ''}">${initials}</div>
+            <div class="header-info">
+              <div class="header-name">${name}</div>
+              <div class="header-email">${email}</div>
+            </div>
           </div>
-        `;
-      }
-    } else {
-      // User is logged out — show gate, hide app
-      loginGate.style.display = 'flex';
-      setTimeout(() => { loginGate.style.opacity = '1'; }, 10);
-      app.style.display = 'none';
+          
+          <button class="auth-dropdown-item" onclick="window.Clerk.openUserProfile(); closeAuthDropdown();">
+            <span class="item-icon">👤</span>
+            <span>Profile</span>
+          </button>
+          
+          <button class="auth-dropdown-item" onclick="openModal(); closeAuthDropdown();">
+            <span class="item-icon">⚙️</span>
+            <span>Settings</span>
+          </button>
+          
+          <div class="auth-dropdown-divider"></div>
+          
+          <button class="auth-dropdown-item logout" onclick="window.Clerk.signOut(); clerkToken = null; closeAuthDropdown();">
+            <span class="item-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </div>
+      `;
+    }
+  } else {
+    // User is logged out — show gate, hide app
+    loginGate.style.display = 'flex';
+    setTimeout(() => { loginGate.style.opacity = '1'; }, 10);
+    app.style.display = 'none';
+    if (authContainer) authContainer.innerHTML = '';
+  }
+}
 
-      if (authContainer) authContainer.innerHTML = '';
+function toggleAuthDropdown(e) {
+  e.stopPropagation();
+  const dropdown = document.getElementById('authDropdown');
+  if (!dropdown) return;
+  dropdown.classList.toggle('open');
+}
+
+function closeAuthDropdown() {
+  const dropdown = document.getElementById('authDropdown');
+  if (dropdown) dropdown.classList.remove('open');
+}
+
+// Click outside to close
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('authDropdown');
+  const btn = document.getElementById('authAvatarBtn');
+  if (dropdown && dropdown.classList.contains('open')) {
+    if (!dropdown.contains(e.target) && (!btn || !btn.contains(e.target))) {
+      closeAuthDropdown();
     }
   }
+});
 
   function _maskToken(token) {
     if (!token) return "[none]";
@@ -2319,70 +2371,198 @@ body {
 }
 
 /* ==============================
-   AUTH HEADER STYLES (Logged In)
+   AUTH DROPDOWN
    ============================== */
 .auth-container {
   position: absolute;
-  top: 20px;
-  right: 16px;
+  top: 50%;
+  right: 24px;
+  transform: translateY(-50%);
   z-index: 10;
 }
 
-.auth-user {
+.auth-avatar-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(99, 102, 241, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  padding: 6px 12px;
-  border-radius: 24px;
-  backdrop-filter: blur(10px);
+  justify-content: center;
 }
 
-.auth-avatar {
-  width: 24px;
-  height: 24px;
+.auth-avatar-btn:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  transform: scale(1.05);
+}
+
+.auth-avatar-btn:active {
+  transform: scale(0.95);
+}
+
+.auth-avatar-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.auth-avatar-btn .avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+
+.auth-status-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--success);
+  animation: livePulse 2s infinite;
+  pointer-events: none;
+}
+
+.auth-dropdown-menu {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: 220px;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.99));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 12px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.1) inset;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.96);
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-dropdown-menu.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+.auth-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.auth-dropdown-header img {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid var(--primary);
+  border: 2px solid rgba(99, 102, 241, 0.3);
 }
 
-.auth-name {
-  font-size: 12px;
-  font-weight: 500;
+.auth-dropdown-header .header-fallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+}
+
+.auth-dropdown-header .header-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.auth-dropdown-header .header-name {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-primary);
-  max-width: 80px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.auth-btn {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 5px 10px;
-  border-radius: 8px;
+.auth-dropdown-header .header-email {
   font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
   font-family: inherit;
 }
 
-.auth-btn:hover {
-  background: rgba(99, 102, 241, 0.15);
-  border-color: var(--primary);
-  color: var(--primary);
+.auth-dropdown-item:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--text-primary);
 }
 
-.auth-btn.logout {
+.auth-dropdown-item .item-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.auth-dropdown-item.logout {
   color: var(--error);
-  border-color: rgba(239, 68, 68, 0.2);
 }
 
-.auth-btn.logout:hover {
+.auth-dropdown-item.logout:hover {
   background: rgba(239, 68, 68, 0.1);
-  border-color: var(--error);
+}
+
+.auth-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+/* Mobile adjustments */
+@media (max-width: 520px) {
+  .auth-container {
+    right: 70px;
+  }
+  .auth-avatar-btn {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 /* Mobile */
