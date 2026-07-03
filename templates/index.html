@@ -1784,16 +1784,10 @@ body {
 
 /* Compact compare grid for compact cards */
 .compare-grid-compact {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 12px;
     width: 100%;
-}
-
-@media (min-width: 768px) {
-    .compare-grid-compact {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
 }
 
 .compare-grid-compact > div {
@@ -4530,7 +4524,7 @@ function renderCompactCard(data) {
     `).join('');
     
     return `
-    <div class="compare-mini" style="min-width:0;max-width:none;width:100%;padding:16px;">
+    <div style="min-width:0;max-width:none;width:100%;padding:16px;background:linear-gradient(135deg, rgba(14,22,41,0.92), rgba(24,28,43,0.88));border:1px solid var(--border);border-radius:16px;position:relative;overflow:hidden;">
         <div class="compare-mini-city">
             <span>${getFlag(country)}</span>
             ${city}
