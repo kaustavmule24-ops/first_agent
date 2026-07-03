@@ -2118,6 +2118,142 @@ body {
     }
 }
 
+/* ==============================
+   MOBILE ONLY FIXES (<=520px)
+   ============================== */
+@media (max-width: 520px) {
+    /* Compare: stack to single column on mobile */
+    .compare-grid-compact {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* HUD card: tighter, full-width, no overflow */
+    .hud-card {
+        max-width: 100% !important;
+        border-radius: 16px;
+    }
+
+    .hud-header {
+        padding: 12px 14px;
+    }
+
+    .hud-city-name {
+        font-size: 15px;
+    }
+
+    .hud-time-main {
+        font-size: 16px;
+    }
+
+    .hud-hero {
+        padding: 10px 14px;
+        gap: 8px;
+    }
+
+    .hud-temp-ring {
+        width: 85px;
+        height: 85px;
+    }
+
+    .hud-temp-value {
+        font-size: 22px;
+    }
+
+    .hud-weather-icon-main {
+        font-size: 32px;
+    }
+
+    .hud-condition-text {
+        font-size: 10px;
+        padding-bottom: 10px;
+    }
+
+    .hud-aqi-section {
+        margin: 0 12px 6px;
+        padding: 6px 8px;
+    }
+
+    .hud-metrics {
+        gap: 1px;
+    }
+
+    .hud-metric {
+        padding: 8px 2px;
+    }
+
+    .hud-metric-value {
+        font-size: 11px;
+    }
+
+    .hud-metric-label {
+        font-size: 7px;
+        letter-spacing: 0.5px;
+    }
+
+    .hud-footer {
+        padding: 6px 14px;
+        font-size: 8px;
+    }
+
+    .hud-expand-btn {
+        padding: 6px;
+        font-size: 9px;
+    }
+
+    .hud-data-grid {
+        gap: 6px;
+    }
+
+    .hud-data-cell {
+        padding: 8px;
+    }
+
+    .hud-data-value {
+        font-size: 11px;
+    }
+
+    .hud-data-value.small {
+        font-size: 10px;
+    }
+
+    /* Insights panel smaller text */
+    .insights-content {
+        font-size: 12px;
+        padding: 10px 12px;
+    }
+
+    /* Suggestion chips smaller */
+    .chip {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    /* Messages use more width on mobile */
+    .msg {
+        max-width: 90%;
+    }
+
+    .msg.bot {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    /* Input compact */
+    .input-area {
+        padding: 12px 14px 16px;
+    }
+
+    .input-wrapper input {
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+
+    .send-btn {
+        width: 44px;
+        height: 44px;
+    }
+}
+
 </style>
 <base target="_blank">
 <base target="_blank">
