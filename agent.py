@@ -56,7 +56,7 @@ def _mask_tokens_in_str(text):
 # ==============================
 # 🔗 CONFIG
 # ==============================
-DEFAULT_MCP_URL = "https://geobot-mcp-gateway.kaustav-mule-24.workers.dev"
+DEFAULT_MCP_URL = os.getenv("MCP_GATEWAY_URL", "")
 MCP_URL = DEFAULT_MCP_URL
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
