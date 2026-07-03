@@ -3110,6 +3110,9 @@ function getAQIStatus(aqi) {
 }
 
 function formatValue(key, value, parentKey = '') {
+    // Handle null/undefined gracefully
+    if (value === null || value === undefined) return '<span style="color:var(--text-dim);font-style:italic;">N/A</span>';
+    
     // Format specific fields
     if (key === 'temperature' || key === 'temp' || key === 'temp2m') return `${Math.round(value)}°C`;
     if (key === 'windspeed' || key === 'wind_speed') return `${value} km/h`;
@@ -3208,13 +3211,23 @@ function renderHUDCard(data, serverName, llmText = '') {
     const circumference = 2 * Math.PI * 46;
     const offset = circumference - (tempPercent / 100) * circumference;
     
-    // Build metrics from weather data (excluding already shown fields)
+    // Build metrics from weather + aqi (skip nulls, backfill with aqi)
     const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response', 'city', 'country', 'latitude', 'longitude', 'current_time'];
     const metrics = [];
     
+    // Pull from weather object (skip nulls)
     for (const [key, value] of Object.entries(weather)) {
         if (excludeKeys.includes(key)) continue;
         if (value === null || value === undefined) continue;
+        metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
+    }
+    
+    // Backfill with aqi fields if weather metrics are sparse
+    for (const [key, value] of Object.entries(aqi)) {
+        if (excludeKeys.includes(key)) continue;
+        if (key === 'us_aqi') continue;
+        if (value === null || value === undefined) continue;
+        if (metrics.length >= 3) break; // Grid maxes at 3
         metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
     }
     
