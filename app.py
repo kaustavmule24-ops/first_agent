@@ -13,10 +13,7 @@ from jwt import PyJWKClient
 # ==============================
 # 🔗 CLOUDFLARE GATEWAY URL
 # ==============================
-MCP_GATEWAY_URL = os.environ.get(
-    "MCP_GATEWAY_URL",
-    "https://geobot-mcp-gateway.kaustav-mule-24.workers.dev"
-)
+MCP_GATEWAY_URL = os.environ.get("MCP_GATEWAY_URL", "")
 
 def _mask_token(token: str) -> str:
     """Mask a JWT/token for safe logging — show first 8 chars only."""
@@ -52,8 +49,8 @@ app.add_middleware(
 # ==============================
 # CLERK AUTH CONFIG
 # ==============================
-CLERK_JWKS_URL = "https://excited-ibex-65.clerk.accounts.dev/.well-known/jwks.json"
-CLERK_ISSUER = "https://excited-ibex-65.clerk.accounts.dev"
+CLERK_JWKS_URL = os.environ.get("CLERK_JWKS_URL", "...")
+CLERK_ISSUER = os.environ.get("CLERK_ISSUER", "...")
 
 jwks_client = PyJWKClient(CLERK_JWKS_URL)
 security = HTTPBearer(auto_error=False)
