@@ -2076,13 +2076,23 @@ body {
 <base target="_blank">
 
 <!-- Clerk Authentication SDK -->
-<script
-  async
-  crossorigin="anonymous"
-  data-clerk-publishable-key="pk_test_ZXhjaXRlZC1pYmV4LTY1LmNsZXJrLmFjY291bnRzLmRldiQ"
-  src="https://excited-ibex-65.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
-  type="text/javascript"
-></script>
+<script src="/config.js"></script>
+<script>
+  // Dynamically load Clerk from server config
+  (function() {
+    const config = window.GEOBOT_CONFIG || {};
+    const clerkDomain = config.clerkDomain || 'excited-ibex-65.clerk.accounts.dev';
+    const publishableKey = config.clerkPublishableKey || 'pk_test_ZXhjaXRlZC1pYmV4LTY1LmNsZXJrLmFjY291bnRzLmRldiQ';
+    
+    const clerkScript = document.createElement('script');
+    clerkScript.async = true;
+    clerkScript.crossOrigin = "anonymous";
+    clerkScript.setAttribute('data-clerk-publishable-key', publishableKey);
+    clerkScript.src = `https://${clerkDomain}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
+    clerkScript.type = "text/javascript";
+    document.head.appendChild(clerkScript);
+  })();
+</script>
 <script>
   // Clerk auth state
   let clerkUser = null;
@@ -2625,7 +2635,9 @@ const DEFAULT_SERVERS = [
     {
         id: 'default-weather',
         name: 'Weather MCP',
-        url: 'https://mcp-weather-s1s0.onrender.com/tool',
+        url: (window.GEOBOT_CONFIG && window.GEOBOT_CONFIG.defaultMcpUrl) 
+             ? window.GEOBOT_CONFIG.defaultMcpUrl 
+             : 'https://mcp-weather-s1s0.onrender.com/tool',
         description: 'Weather, AQI, time & holiday data',
         enabled: false,
         isDefault: true,

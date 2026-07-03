@@ -474,6 +474,19 @@ def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled
 def health():
     return {"status": "ok"}
 
+@app.get("/config.js")
+def config_js():
+    from fastapi.responses import Response
+    return Response(
+        content=f"""
+window.GEOBOT_CONFIG = {{
+    clerkPublishableKey: "{os.environ.get('CLERK_PUBLISHABLE_KEY', '')}",
+    clerkDomain: "{os.environ.get('CLERK_ISSUER', '').replace('https://', '')}",
+    defaultMcpUrl: "{os.environ.get('MCP_SERVER_URL', '')}"
+}};
+""",
+        media_type="application/javascript"
+    )
 
 if __name__ == "__main__":
     import uvicorn
