@@ -1782,6 +1782,24 @@ body {
     }
 }
 
+/* Compact compare grid for compact cards */
+.compare-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .compare-grid-compact {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+.compare-grid-compact > div {
+    min-width: 0;
+}
+
 .compare-grid-item {
     min-width: 0; /* prevent overflow */
 }
@@ -4333,26 +4351,30 @@ if (!res.ok) throw new Error('Server error');
                 addMsg(renderMcpDropdown(data.custom_mcp_results), "bot", true);
             }
         } else if (data.type === "compare") {
-            // Multi-city → Show compare strip + full HUD cards in responsive grid
+            // Multi-city → Show compare strip + structured text + compact cards
             const compareHTML = renderCompareStrip(data.response);
             addMsg('<div style="margin-top:8px;">' + compareHTML + '</div>', "bot", true);
             
-            // Show LLM comparison text if available
+            // Show LLM comparison text as structured bullet points
             if (data.llm_text) {
-                addMsg(data.llm_text, "bot");
+                const formattedHTML = formatCompareText(data.llm_text);
+                const textDiv = document.createElement('div');
+                textDiv.className = 'msg bot';
+                textDiv.style.padding = '4px';
+                textDiv.style.maxWidth = '95%';
+                textDiv.style.background = 'transparent';
+                textDiv.style.border = 'none';
+                textDiv.innerHTML = formattedHTML;
+                document.getElementById('chat').appendChild(textDiv);
             }
             
-            // Render HUD cards in a responsive grid container
-            const gridId = 'compare-grid-' + Date.now();
+            // Render compact cards in a responsive grid
             const gridContainer = document.createElement('div');
-            gridContainer.className = 'compare-grid';
-            gridContainer.id = gridId;
+            gridContainer.className = 'compare-grid-compact';
             
             for (const cityData of data.response) {
-                const hudHTML = renderHUDCard(cityData, "Weather MCP");
                 const cardWrapper = document.createElement('div');
-                cardWrapper.className = 'compare-grid-item';
-                cardWrapper.innerHTML = hudHTML;
+                cardWrapper.innerHTML = renderCompactCard(cityData);
                 gridContainer.appendChild(cardWrapper);
             }
             
@@ -4365,10 +4387,6 @@ if (!res.ok) throw new Error('Server error');
             gridMsg.style.border = 'none';
             gridMsg.appendChild(gridContainer);
             chat.appendChild(gridMsg);
-            setTimeout(() => {
-                const targetScroll = gridMsg.offsetTop - chat.offsetTop;
-                chat.scrollTo({ top: targetScroll, behavior: 'smooth' });
-            }, 50);
         } else if (data.type === "text") {
             // General LLM response (no city needed)
             addMsg(data.response, "bot");
@@ -4422,6 +4440,119 @@ function toggleInsights(id) {
         body.style.maxHeight = '0px';
         arrow.textContent = '▼';
     }
+}
+
+function formatCompareText(text) {
+    if (!text) return '';
+    
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    
+    const groups = {
+        '🌡️ Temperature & Weather': [],
+        '😷 Air Quality': [],
+        '💨 Wind & Conditions': [],
+        '🕒 Time & Location': [],
+        '📌 Other': []
+    };
+    
+    sentences.forEach(s => {
+        const str = s.trim();
+        if (!str) return;
+        const lower = str.toLowerCase();
+        
+        if (/temperature|degrees|celsius|fahrenheit|hot|cold|warm|cool|weather|sunny|cloudy|rain|snow|clear|overcast|drizzle|thunderstorm|fog|humid|dry|mild/i.test(lower)) {
+            groups['🌡️ Temperature & Weather'].push(str);
+        } else if (/aqi|air quality|pollution|pm2|pm10|ozone|clean|unhealthy|hazardous|moderate|good.*air|bad.*air/i.test(lower)) {
+            groups['😷 Air Quality'].push(str);
+        } else if (/wind|speed|direction|km\/h|mph|gust|breeze/i.test(lower)) {
+            groups['💨 Wind & Conditions'].push(str);
+        } else if (/time|am|pm|hour|clock|date|local|gmt|utc|timezone|july|january|february|march|april|may|june|august|september|october|november|december/i.test(lower)) {
+            groups['🕒 Time & Location'].push(str);
+        } else {
+            groups['📌 Other'].push(str);
+        }
+    });
+    
+    let html = '<div style="padding:14px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:18px;">';
+    let hasContent = false;
+    
+    for (const [title, items] of Object.entries(groups)) {
+        if (items.length === 0) continue;
+        hasContent = true;
+        html += `<div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">${title}</div>`;
+        
+        items.forEach(item => {
+            let formatted = item
+                .replace(/(\d+(?:\.\d+)?)\s*(°C|°F|degrees? Celsius|degrees? Fahrenheit|km\/h|mph|µg\/m³|hPa|%|mm|AQI|aqi|ppm|W\/m²)/gi, '<strong style="color:var(--text-primary);">$1$2</strong>')
+                .replace(/\b(Tokyo|London|Delhi|Mumbai|Paris|New York|Beijing|Sydney|Dubai|Singapore|Berlin|Rome|Madrid|Toronto|Chicago|Los Angeles|San Francisco|Seattle|Boston|Miami|Atlanta|Denver|Phoenix|Houston|Philadelphia|Detroit|Minneapolis|Portland|Vancouver|Montreal|Calgary|Ottawa|Mexico City|São Paulo|Buenos Aires|Cairo|Lagos|Nairobi|Johannesburg|Moscow|Istanbul|Tehran|Karachi|Dhaka|Bangkok|Jakarta|Manila|Seoul|Osaka|Kyoto|Shanghai|Guangzhou|Shenzhen|Hong Kong|Taipei|Kuala Lumpur|Hanoi)\b/g, '<strong style="color:var(--accent);">$1</strong>');
+            
+            html += `<div style="position:relative;padding-left:16px;margin-bottom:6px;font-size:13px;line-height:1.6;color:var(--text-secondary);">
+                <span style="position:absolute;left:0;color:var(--primary);font-weight:700;">•</span>
+                ${formatted}
+            </div>`;
+        });
+        
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    return hasContent ? html : `<div style="padding:14px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:18px;font-size:13px;line-height:1.6;color:var(--text-secondary);">${text}</div>`;
+}
+
+function renderCompactCard(data) {
+    const city = data.city || 'Unknown';
+    const country = data.country || '';
+    const weather = data.weather || {};
+    const aqi = data.aqi || {};
+    
+    const temp = weather.temperature !== undefined ? weather.temperature : 0;
+    const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 0;
+    const isDay = weather.is_day !== undefined ? weather.is_day : 1;
+    const weatherIcon = getWeatherIcon(weatherCode, isDay);
+    const weatherLabel = getWeatherLabel(weatherCode);
+    
+    const aqiValue = aqi.us_aqi || aqi.pm2_5 || aqi.pm10 || 0;
+    const aqiInfo = getAQIStatus(aqiValue);
+    
+    const metrics = [];
+    if (weather.humidity !== undefined) metrics.push({ icon: '💧', value: weather.humidity + '%', label: 'Humidity' });
+    if (weather.windspeed !== undefined) metrics.push({ icon: '💨', value: weather.windspeed + ' km/h', label: 'Wind' });
+    if (weather.pressure !== undefined) metrics.push({ icon: '📊', value: weather.pressure + ' hPa', label: 'Pressure' });
+    if (weather.uv_index !== undefined) metrics.push({ icon: '☀️', value: weather.uv_index, label: 'UV' });
+    if (aqi.pm2_5 !== undefined) metrics.push({ icon: '🌫️', value: aqi.pm2_5 + ' µg/m³', label: 'PM2.5' });
+    if (aqi.pm10 !== undefined) metrics.push({ icon: '🌫️', value: aqi.pm10 + ' µg/m³', label: 'PM10' });
+    
+    const metricsHTML = metrics.slice(0, 3).map(m => `
+        <div style="text-align:center;padding:6px 2px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.04);">
+            <div style="font-size:10px;margin-bottom:2px;">${m.icon}</div>
+            <div style="font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text-primary);">${m.value}</div>
+            <div style="font-size:7px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">${m.label}</div>
+        </div>
+    `).join('');
+    
+    return `
+    <div class="compare-mini" style="min-width:0;max-width:none;width:100%;padding:16px;">
+        <div class="compare-mini-city">
+            <span>${getFlag(country)}</span>
+            ${city}
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0;">
+            <div class="compare-mini-temp" style="font-size:32px;margin:0;">${Math.round(temp)}°</div>
+            <div style="font-size:28px;filter:drop-shadow(0 0 8px rgba(255,255,255,0.1));">${weatherIcon}</div>
+        </div>
+        <div style="text-align:center;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;">${weatherLabel}</div>
+        <div class="compare-mini-aqi" style="margin-bottom:10px;">
+            <div class="compare-mini-bar">
+                <div class="compare-mini-fill" style="width: ${Math.min(aqiValue / 3, 100)}%; background: ${aqiInfo.color};"></div>
+            </div>
+            <span class="compare-mini-value" style="color: ${aqiInfo.color};">${aqiValue}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">
+            ${metricsHTML}
+        </div>
+    </div>
+    `;
 }
 
 
