@@ -8,18 +8,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-    --primary: #6366f1;
-    --primary-glow: rgba(99, 102, 241, 0.4);
-    --secondary: #8b5cf6;
-    --accent: #06b6d4;
-    --bg-dark: #0f172a;
-    --bg-card: rgba(30, 41, 59, 0.6);
-    --bg-glass: rgba(255, 255, 255, 0.03);
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-dim: #475569;
-    --border: rgba(255, 255, 255, 0.08);
-    --success: #10b981;
+    --primary: #a72ee5;
+    --primary-glow: rgba(167, 46, 229, 0.4);
+    --secondary: #7c3aed;
+    --accent: #379bf6;
+    --bg-dark: #0e1629;
+    --bg-card: rgba(24, 28, 43, 0.85);
+    --bg-glass: rgba(255, 255, 255, 0.02);
+    --text-primary: #e1e1e6;
+    --text-secondary: #90939c;
+    --text-dim: #5a5d66;
+    --border: rgba(255, 255, 255, 0.06);
+    --success: #22c55e;
     --warning: #f59e0b;
     --error: #ef4444;
     --info: #3b82f6;
@@ -51,9 +51,9 @@ body {
     inset: 0;
     z-index: 0;
     background: 
-        radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+        radial-gradient(ellipse at 20% 20%, rgba(167, 46, 229, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(124, 58, 237, 0.10) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(55, 155, 246, 0.06) 0%, transparent 70%);
     animation: meshMove 20s ease-in-out infinite;
 }
 
@@ -95,7 +95,7 @@ body {
     max-width: 100%;          /* full width on desktop */
     height: 100vh;            /* full height on desktop */
     max-height: none;
-    background: var(--bg-glass);
+    background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(20px);
     border: 1px solid var(--border);
     border-radius: 0;         /* no radius on desktop */
@@ -576,7 +576,7 @@ body {
 .input-area {
     padding: 16px 20px 20px;
     border-top: 1px solid var(--border);
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(14, 22, 41, 0.85);
 }
 
 .input-box {
@@ -762,7 +762,7 @@ body {
 .hud-card {
     width: 100%;
     max-width: 380px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
+    background: linear-gradient(135deg, rgba(14, 22, 41, 0.95), rgba(24, 28, 43, 0.92));
     border: 1px solid var(--border);
     border-radius: 20px;
     overflow: hidden;
@@ -1148,7 +1148,7 @@ body {
 
 .compare-mini {
     min-width: 130px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+    background: linear-gradient(135deg, rgba(14, 22, 41, 0.92), rgba(24, 28, 43, 0.88));
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 14px;
@@ -1253,7 +1253,7 @@ body {
     width: 90%;
     max-width: 440px;
     max-height: 85vh;
-    background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+    background: linear-gradient(180deg, rgba(24, 28, 43, 0.95), rgba(14, 22, 41, 0.98));
     border: 1px solid var(--border);
     border-radius: 24px;
     overflow: hidden;
@@ -1318,7 +1318,7 @@ body {
 }
 
 .server-card {
-    background: var(--bg-glass);
+    background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 14px 16px;
@@ -1609,7 +1609,7 @@ body {
 
 .setting-item {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 16px; background: var(--bg-glass);
+    padding: 14px 16px; background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border); border-radius: 14px;
     margin-bottom: 10px; transition: all 0.3s ease;
 }
@@ -1737,7 +1737,7 @@ body {
 
 .compare-mini {
     min-width: 140px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+    background: linear-gradient(135deg, rgba(14, 22, 41, 0.92), rgba(24, 28, 43, 0.88));
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 16px;
@@ -1871,7 +1871,7 @@ body {
 .mcp-dropdown {
     width: 100%;
     max-width: 380px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
+    background: linear-gradient(135deg, rgba(14, 22, 41, 0.95), rgba(24, 28, 43, 0.92));
     border: 1px solid var(--border);
     border-radius: 16px;
     overflow: hidden;
@@ -2192,9 +2192,9 @@ body {
   position: absolute;
   inset: 0;
   background: 
-    radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+    radial-gradient(ellipse at 20% 20%, rgba(167, 46, 229, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(124, 58, 237, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(55, 155, 246, 0.06) 0%, transparent 70%);
   animation: meshMove 20s ease-in-out infinite;
 }
 
@@ -2203,7 +2203,7 @@ body {
   z-index: 1;
   width: 90%;
   max-width: 420px;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+  background: linear-gradient(135deg, rgba(26, 24, 85, 0.95), rgba(14, 22, 41, 0.98));
   border: 1px solid var(--border);
   border-radius: 28px;
   padding: 48px 36px;
