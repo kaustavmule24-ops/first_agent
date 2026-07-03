@@ -250,10 +250,21 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
     any_mcp_available = weather_mcp_connected or custom_mcp_connected
 
     # If NO MCP is available at all but we need city data
-    if not any_mcp_available and not mcp_master_enabled:
+    if not mcp_master_enabled:
         return {
             "type": "need_mcp",
             "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br>3. Enable at least one MCP server",
+            "mcp_logs": all_logs
+        }
+
+    any_mcp_available = weather_mcp_connected or custom_mcp_connected
+
+    if not any_mcp_available:
+        llm_response = llm_generate_general(user_input)
+        full_response = f"{llm_response}\n\n---\n\n💡 **Want live data?** Enable an MCP server in Settings for real-time weather, AQI, and time data."
+        return {
+            "type": "need_connect_weather",
+            "response": full_response,
             "mcp_logs": all_logs
         }
 

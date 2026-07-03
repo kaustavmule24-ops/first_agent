@@ -3582,18 +3582,21 @@ function saveServers(servers) {
 }
 
 function getEnabledServers() {
+    // ⛔ MASTER MCP TOGGLE IS OFF — return empty, no MCP calls at all
+    if (!settings.mcpEnabled) {
+        console.log("🔌 [MCP] Master toggle OFF — returning empty server list");
+        return [];
+    }
+    
     const servers = loadServers();
     const result = [];
     for (const s of servers) {
-        // For Weather MCP (default), check connection state
         if (s.isDefault) {
             if (isWeatherMCPConnected()) {
-                // Create a copy with connected flag for backend
                 const connectedServer = {...s, enabled: true, connected: true};
                 result.push(connectedServer);
             }
         } else {
-            // For custom servers, use toggle
             if (s.enabled) {
                 result.push(s);
             }
@@ -3601,6 +3604,8 @@ function getEnabledServers() {
     }
     return result;
 }
+
+
 
 function generateId() {
     return 'mcp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -4693,7 +4698,7 @@ async function send() {
             headers: headers,
             body: JSON.stringify({ 
                 message: text, 
-                llm_enabled: settings.llmEnabled,
+                llm_enabled: true, 
                 mcp_enabled: settings.mcpEnabled,
                 mcp_servers: enabledServers
             })
