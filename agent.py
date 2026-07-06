@@ -1245,8 +1245,11 @@ def build_compare_prompt_multi(results, sources_list):
 
 Sources used: {json.dumps(sources_list)}
 
-Provide a brief comparison (2-3 sentences) highlighting key differences in weather, air quality, and any interesting observations."""
-
+Provide a brief comparison (3-5 sentences) highlighting key differences in weather, air quality, and any interesting observations. 
+IMPORTANT FORMATTING RULES:
+- Always put a space between numbers and units: "22.95 degrees Celsius" NOT "22.95degrees Celsius"
+- Use "°C" instead of spelling out "degrees Celsius" when possible
+- Keep sentences short and clear"""
 
 # ==============================
 # 🤖 GROQ RESPONSES

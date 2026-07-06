@@ -4597,7 +4597,9 @@ function toggleInsights(id) {
 function formatCompareText(text) {
     if (!text) return '';
     
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    // BUG #1 FIX: Protect decimal numbers before splitting sentences
+    const protectedText = text.replace(/(\d)\.(\d)/g, '$1##DECIMAL##$2');
+    const sentences = protectedText.match(/[^.!?]+[.!?]+/g) || [protectedText];
     
     const groups = {
         '🌡️ Temperature & Weather': [],
@@ -4608,7 +4610,8 @@ function formatCompareText(text) {
     };
     
     sentences.forEach(s => {
-        const str = s.trim();
+        // Restore decimal points
+        const str = s.trim().replace(/##DECIMAL##/g, '.');
         if (!str) return;
         const lower = str.toLowerCase();
         
@@ -4618,7 +4621,7 @@ function formatCompareText(text) {
             groups['😷 Air Quality'].push(str);
         } else if (/wind|speed|direction|km\/h|mph|gust|breeze/i.test(lower)) {
             groups['💨 Wind & Conditions'].push(str);
-        } else if (/time|am|pm|hour|clock|date|local|gmt|utc|timezone|july|january|february|march|april|may|june|august|september|october|november|december/i.test(lower)) {
+        } else if (/time|am|pm|hour|clock|date|local|gmt|utc|timezone/i.test(lower)) {
             groups['🕒 Time & Location'].push(str);
         } else {
             groups['📌 Other'].push(str);
@@ -4635,8 +4638,9 @@ function formatCompareText(text) {
             <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">${title}</div>`;
         
         items.forEach(item => {
+            // BUG #2 FIX: Added space in replacement ($1 $2 instead of $1$2)
             let formatted = item
-                .replace(/(\d+(?:\.\d+)?)\s*(°C|°F|degrees? Celsius|degrees? Fahrenheit|km\/h|mph|µg\/m³|hPa|%|mm|AQI|aqi|ppm|W\/m²)/gi, '<strong style="color:var(--text-primary);">$1$2</strong>')
+                .replace(/(\d+(?:\.\d+)?)\s*(°C|°F|degrees? Celsius|degrees? Fahrenheit|km\/h|mph|µg\/m³|hPa|%|mm|AQI|aqi|ppm|W\/m²)/gi, '<strong style="color:var(--text-primary);">$1 $2</strong>')
                 .replace(/\b(Tokyo|London|Delhi|Mumbai|Paris|New York|Beijing|Sydney|Dubai|Singapore|Berlin|Rome|Madrid|Toronto|Chicago|Los Angeles|San Francisco|Seattle|Boston|Miami|Atlanta|Denver|Phoenix|Houston|Philadelphia|Detroit|Minneapolis|Portland|Vancouver|Montreal|Calgary|Ottawa|Mexico City|São Paulo|Buenos Aires|Cairo|Lagos|Nairobi|Johannesburg|Moscow|Istanbul|Tehran|Karachi|Dhaka|Bangkok|Jakarta|Manila|Seoul|Osaka|Kyoto|Shanghai|Guangzhou|Shenzhen|Hong Kong|Taipei|Kuala Lumpur|Hanoi)\b/g, '<strong style="color:var(--accent);">$1</strong>');
             
             html += `<div style="position:relative;padding-left:16px;margin-bottom:6px;font-size:13px;line-height:1.6;color:var(--text-secondary);">
@@ -4651,6 +4655,7 @@ function formatCompareText(text) {
     html += '</div>';
     return hasContent ? html : `<div style="padding:14px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:18px;font-size:13px;line-height:1.6;color:var(--text-secondary);">${text}</div>`;
 }
+
 
 function renderCompactCard(data) {
     const city = data.city || 'Unknown';
