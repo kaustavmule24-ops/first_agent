@@ -3584,28 +3584,56 @@ async function callAllMCPs(tool, city) {
 
 function getWeatherIcon(code, isDay = 1) {
     const icons = {
+        // Clear skies — day/night variation
         0: isDay ? '☀️' : '🌙',
         1: isDay ? '🌤️' : '☁️',
-        2: '⛅',
+        
+        // Partly cloudy — day/night variation  
+        2: isDay ? '⛅' : '☁️',
+        
+        // Overcast — same day & night
         3: '☁️',
+        
+        // Fog — same day & night
         45: '🌫️',
         48: '🌫️',
-        51: '🌦️',
-        53: '🌧️',
-        55: '🌧️',
-        61: '🌧️',
-        63: '🌧️',
-        65: '🌧️',
-        71: '🌨️',
-        73: '🌨️',
-        75: '🌨️',
-        95: '⛈️',
-        96: '⛈️',
-        99: '⛈️'
+        
+        // Drizzle — day/night variation
+        51: isDay ? '🌦️' : '🌧️',
+        53: isDay ? '🌦️' : '🌧️',
+        55: isDay ? '🌧️' : '🌧️',
+        
+        // Rain — day/night variation
+        61: isDay ? '🌧️' : '🌧️',
+        63: isDay ? '🌧️' : '⛈️',
+        65: isDay ? '🌧️' : '⛈️',
+        
+        // Freezing rain — same
+        66: '🌨️',
+        67: '🌨️',
+        
+        // Snow — day/night variation
+        71: isDay ? '🌨️' : '❄️',
+        73: isDay ? '🌨️' : '❄️',
+        75: isDay ? '🌨️' : '❄️',
+        77: '🌨️',
+        
+        // Rain showers — day/night variation
+        80: isDay ? '🌦️' : '🌧️',
+        81: isDay ? '🌧️' : '🌧️',
+        82: isDay ? '🌧️' : '⛈️',
+        
+        // Snow showers — day/night variation
+        85: isDay ? '🌨️' : '❄️',
+        86: isDay ? '🌨️' : '❄️',
+        
+        // Thunderstorm — day/night variation
+        95: isDay ? '⛈️' : '🌩️',
+        96: isDay ? '⛈️' : '🌩️',
+        99: isDay ? '⛈️' : '🌩️'
     };
     return icons[code] || (isDay ? '☀️' : '🌙');
 }
-
 function getWeatherLabel(code) {
     const labels = {
         0: 'Clear Sky',
@@ -3617,18 +3645,29 @@ function getWeatherLabel(code) {
         51: 'Light Drizzle',
         53: 'Moderate Drizzle',
         55: 'Dense Drizzle',
+        56: 'Light Freezing Drizzle',
+        57: 'Dense Freezing Drizzle',
         61: 'Slight Rain',
         63: 'Moderate Rain',
         65: 'Heavy Rain',
+        66: 'Light Freezing Rain',
+        67: 'Heavy Freezing Rain',
         71: 'Slight Snow',
         73: 'Moderate Snow',
         75: 'Heavy Snow',
+        77: 'Snow Grains',
+        80: 'Slight Rain Showers',
+        81: 'Moderate Rain Showers',
+        82: 'Violent Rain Showers',
+        85: 'Slight Snow Showers',
+        86: 'Heavy Snow Showers',
         95: 'Thunderstorm',
         96: 'Thunderstorm & Hail',
         99: 'Heavy Thunderstorm'
     };
     return labels[code] || 'Unknown';
 }
+
 
 function getAQIStatus(aqi) {
     if (aqi <= 50) return { label: 'Good', class: 'good', color: 'var(--success)' };
