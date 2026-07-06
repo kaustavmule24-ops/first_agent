@@ -3583,58 +3583,96 @@ async function callAllMCPs(tool, city) {
 // ==============================
 
 function getWeatherIcon(code, isDay = 1) {
+    // Handle string codes from 7Timer fallback
+    if (typeof code === 'string') {
+        const stringMap = {
+            'clear': isDay ? '☀️' : '🌙',
+            'cloudy': '☁️',
+            'rain': '🌧️',
+            'lightrainday': '🌦️',
+            'lightrainnight': '🌧️',
+            'oshowerday': isDay ? '🌦️' : '🌧️',
+            'oshowernight': '🌧️',
+            'ishowerday': isDay ? '🌦️' : '🌧️',
+            'ishowernight': '🌧️',
+            'snow': '🌨️',
+            'lightsnow': '🌨️',
+            'rainsnow': '🌨️',
+            'ts': '⛈️',
+            'tsrain': '⛈️',
+            'mcloudyday': isDay ? '⛅' : '☁️',
+            'mcloudynight': '☁️',
+            'pcloudyday': isDay ? '🌤️' : '☁️',
+            'pcloudynight': '☁️',
+            'humid': '🌫️',
+            'fog': '🌫️'
+        };
+        return stringMap[code.toLowerCase()] || (isDay ? '☀️' : '🌙');
+    }
+    
+    // Numeric codes from Open-Meteo (primary)
     const icons = {
-        // Clear skies — day/night variation
         0: isDay ? '☀️' : '🌙',
         1: isDay ? '🌤️' : '☁️',
-        
-        // Partly cloudy — day/night variation  
         2: isDay ? '⛅' : '☁️',
-        
-        // Overcast — same day & night
         3: '☁️',
-        
-        // Fog — same day & night
         45: '🌫️',
         48: '🌫️',
-        
-        // Drizzle — day/night variation
         51: isDay ? '🌦️' : '🌧️',
         53: isDay ? '🌦️' : '🌧️',
         55: isDay ? '🌧️' : '🌧️',
-        
-        // Rain — day/night variation
+        56: '🌨️',
+        57: '🌨️',
         61: isDay ? '🌧️' : '🌧️',
         63: isDay ? '🌧️' : '⛈️',
         65: isDay ? '🌧️' : '⛈️',
-        
-        // Freezing rain — same
         66: '🌨️',
         67: '🌨️',
-        
-        // Snow — day/night variation
         71: isDay ? '🌨️' : '❄️',
         73: isDay ? '🌨️' : '❄️',
         75: isDay ? '🌨️' : '❄️',
         77: '🌨️',
-        
-        // Rain showers — day/night variation
         80: isDay ? '🌦️' : '🌧️',
         81: isDay ? '🌧️' : '🌧️',
         82: isDay ? '🌧️' : '⛈️',
-        
-        // Snow showers — day/night variation
         85: isDay ? '🌨️' : '❄️',
         86: isDay ? '🌨️' : '❄️',
-        
-        // Thunderstorm — day/night variation
         95: isDay ? '⛈️' : '🌩️',
         96: isDay ? '⛈️' : '🌩️',
         99: isDay ? '⛈️' : '🌩️'
     };
     return icons[code] || (isDay ? '☀️' : '🌙');
 }
+
+
 function getWeatherLabel(code) {
+    // Handle string codes from 7Timer fallback
+    if (typeof code === 'string') {
+        const stringMap = {
+            'clear': 'Clear Sky',
+            'cloudy': 'Cloudy',
+            'rain': 'Rain',
+            'lightrainday': 'Light Rain',
+            'lightrainnight': 'Light Rain',
+            'oshowerday': 'Occasional Showers',
+            'oshowernight': 'Occasional Showers',
+            'ishowerday': 'Isolated Showers',
+            'ishowernight': 'Isolated Showers',
+            'snow': 'Snow',
+            'lightsnow': 'Light Snow',
+            'rainsnow': 'Rain & Snow',
+            'ts': 'Thunderstorm',
+            'tsrain': 'Thunderstorm & Rain',
+            'mcloudyday': 'Mostly Cloudy',
+            'mcloudynight': 'Mostly Cloudy',
+            'pcloudyday': 'Partly Cloudy',
+            'pcloudynight': 'Partly Cloudy',
+            'humid': 'Humid',
+            'fog': 'Foggy'
+        };
+        return stringMap[code.toLowerCase()] || 'Unknown';
+    }
+    
     const labels = {
         0: 'Clear Sky',
         1: 'Mainly Clear',
@@ -3669,6 +3707,7 @@ function getWeatherLabel(code) {
 }
 
 
+
 function getAQIStatus(aqi) {
     if (aqi <= 50) return { label: 'Good', class: 'good', color: 'var(--success)' };
     if (aqi <= 100) return { label: 'Moderate', class: 'moderate', color: 'var(--warning)' };
@@ -3685,7 +3724,10 @@ function formatValue(key, value, parentKey = '') {
     // Format specific fields
     if (key === 'temperature' || key === 'temp' || key === 'temp2m') return `${Math.round(value)}°C`;
     if (key === 'windspeed' || key === 'wind_speed') return `${value} km/h`;
-    if (key === 'winddirection' || key === 'wind_direction') return `${value}°`;
+    if (key === 'winddirection' || key === 'wind_direction') {
+        // 7Timer returns string like "NE", Open-Meteo returns number
+        return typeof value === 'string' ? value : `${value}°`;
+    }
     if (key === 'humidity' || key === 'relative_humidity') return `${value}%`;
     if (key === 'pressure' || key === 'surface_pressure') return `${value} hPa`;
     if (key === 'visibility') return `${value} km`;
@@ -3730,6 +3772,7 @@ function getFieldIcon(key) {
         temperature: '🌡️', temp: '🌡️', temp2m: '🌡️',
         windspeed: '💨', wind_speed: '💨',
         winddirection: '↗️', wind_direction: '↗️',
+        weather_code: '☁️', weather_description: '📝',
         humidity: '💧', relative_humidity: '💧', humidity_percent: '💧',
         pressure: '📊', surface_pressure: '📊', pressure_hpa: '📊',
         visibility: '👁️', visibility_km: '👁️', visibility_meters: '👁️',
@@ -3769,7 +3812,8 @@ function renderHUDCard(data, serverName, llmText = '') {
     const aqiInfo = getAQIStatus(aqiValue);
     
     // Weather icon
-    const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 0;
+    const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 
+                       weather.weather_code !== undefined ? weather.weather_code : 0;
     const isDay = weather.is_day !== undefined ? weather.is_day : 1;
     const weatherIcon = getWeatherIcon(weatherCode, isDay);
     const weatherLabel = getWeatherLabel(weatherCode);
@@ -3788,6 +3832,9 @@ function renderHUDCard(data, serverName, llmText = '') {
     for (const [key, value] of Object.entries(weather)) {
         if (excludeKeys.includes(key)) continue;
         if (value === null || value === undefined) continue;
+        // Skip string weather codes in metrics grid
+        if (key === 'weather_code' && typeof value === 'string') continue;
+        if (key === 'weathercode' && typeof value === 'string') continue;
         metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
     }
     
@@ -4664,8 +4711,10 @@ function renderCompactCard(data) {
     const aqi = data.aqi || {};
     
     const temp = weather.temperature !== undefined ? weather.temperature : 0;
-    const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 0;
+    const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 
+                       weather.weather_code !== undefined ? weather.weather_code : 0;
     const isDay = weather.is_day !== undefined ? weather.is_day : 1;
+
     const weatherIcon = getWeatherIcon(weatherCode, isDay);
     const weatherLabel = getWeatherLabel(weatherCode);
     
@@ -4674,6 +4723,7 @@ function renderCompactCard(data) {
     
     const metrics = [];
     if (weather.humidity !== undefined) metrics.push({ icon: '💧', value: weather.humidity + '%', label: 'Humidity' });
+    if (weather.wind_speed !== undefined) metrics.push({ icon: '💨', value: weather.wind_speed + ' km/h', label: 'Wind' });
     if (weather.windspeed !== undefined) metrics.push({ icon: '💨', value: weather.windspeed + ' km/h', label: 'Wind' });
     if (weather.pressure !== undefined) metrics.push({ icon: '📊', value: weather.pressure + ' hPa', label: 'Pressure' });
     if (weather.uv_index !== undefined) metrics.push({ icon: '☀️', value: weather.uv_index, label: 'UV' });
