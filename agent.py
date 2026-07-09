@@ -1136,7 +1136,83 @@ def extract_cities(user_input):
 def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None, logs=None):
     if logs is None:
         logs = []
-    url = DEFAULT_MCP_URL + (custom_url or "")
+    
+    # FIX: Use custom_url when provided, fall back to default
+    url = custom_url or DEFAULT_MCP_URL or MCP_URL
+    
+    if not url:
+        log("No MCP URL configured", logs, "error")
+        return {"error": "No MCP URL configured", "logs": logs}
+
+    mcp_format, available_tools, detect_logs = detect_mcp_format(url, auth_token=auth_token, logs=logs)
+
+    if mcp_format == MCPFormat.STDIO:
+        return call_mcp_stdio(tool, city, server_config, timeout=15, auth_token=auth_token)
+
+    if mcp_format == MCPFormat.STREAMABLE_HTTP:
+        return call_mcp_streamable_http(url, tool, city, server_config, timeout=15, auth_token=auth_token)
+
+    payload = build_mcp_payload(tool, city, mcp_format, available_tools, server_config)
+    log(f"Payload ({mcp_format}): {json.dumps(payload)}", logs, "info", console=False)
+
+    try:
+        log(f"Calling MCP [{mcp_format}]: {tool} → {city} @ {url}", logs, "info")
+
+        headers = {"Content-Type": "application/json"}
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+            log("Auth: Bearer token attached", logs, "info", console=False)
+
+        res = requests.post(url, json=payload, headers=headers, timeout=15)
+
+        if res.status_code != 200:
+            log(f"MCP failed: HTTP {res.status_code}", logs, "error")
+            return {"error": f"HTTP {res.status_code}", "logs": logs}
+
+        raw_data = res.json()
+        if not raw_data:
+            log("MCP failed: Empty response", logs, "error")
+            return {"error": "Empty MCP response", "logs": logs}
+
+        if mcp_format == MCPFormat.JSONRPC and "error" in raw_data:
+            err = raw_data["error"]
+            log(f"MCP JSON-RPC error: {err}", logs, "error")
+            return {"error": str(err), "logs": logs}
+
+        if "error" in raw_data and mcp_format != MCPFormat.JSONRPC:
+            log(f"MCP failed: {raw_data['error']}", logs, "error")
+            return {"error": raw_data["error"], "logs": logs}
+
+        # Echo server detection
+        is_echo = False
+        if isinstance(raw_data, dict):
+            if raw_data == payload:
+                is_echo = True
+            elif raw_data.get("tool") == payload.get("tool"):
+                is_echo = True
+            elif raw_data.get("jsonrpc") == "2.0" and "error" in raw_data:
+                err_msg = str(raw_data.get("error", "")).lower()
+                if "tool" in err_msg or "method" in err_msg or "not found" in err_msg:
+                    is_echo = True
+                    log("Test server returned tool error — treating as echo", logs, "warning", console=False)
+            elif "content" in raw_data and "isError" in raw_data:
+                is_echo = True
+                log("Test server returned JSON-RPC result — treating as echo", logs, "warning", console=False)
+
+        if is_echo:
+            log("Echo server detected — no real data", logs, "warning")
+            return {"error": "No data found", "logs": logs}
+
+        parsed_data = parse_mcp_response(raw_data, mcp_format)
+        log(f"MCP success for {city} ({mcp_format})", logs, "success")
+        return {"data": parsed_data, "logs": logs, "format": mcp_format}
+
+    except requests.exceptions.Timeout:
+        log("MCP failed: Timeout", logs, "error")
+        return {"error": "Request timeout", "logs": logs}
+    except Exception as e:
+        log(f"MCP failed: {str(e)}", logs, "error")
+        return {"error": str(e), "logs": logs} 
 
     mcp_format, available_tools, detect_logs = detect_mcp_format(url, auth_token=auth_token, logs=logs)
 

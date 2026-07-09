@@ -270,7 +270,15 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
             city_data = None
             # Try each enabled server until one succeeds
             for server in enabled_servers:
-                r = call_mcp("getFullInsights", c, custom_url=server["url"], server_config=server.get("config"), auth_token=clerk_token, logs=all_logs)
+                all_logs.append(f"🔄 [{c}] Trying {server.get('name', 'Unknown')} @ {server.get('url')}")
+                r = call_mcp(
+                    "getFullInsights",
+                    c,
+                    custom_url=server.get("url"),
+                    server_config=server.get("config"),
+                    auth_token=clerk_token,
+                    logs=all_logs
+                )
                 all_logs.extend(r.get("logs", []))
                 if "error" not in r:
                     city_data = clean_data(r["data"])
@@ -308,10 +316,11 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
     # Try each enabled server, merge ALL data together
     all_raw_results = []
     for server in enabled_servers:
+        all_logs.append(f"🔄 Calling MCP: {server.get('name', 'Unknown')} @ {server.get('url')}")
         result = call_mcp(
             tool,
             city,
-            custom_url=server["url"],
+            custom_url=server.get("url"),
             server_config=server.get("config"),
             auth_token=clerk_token,
             logs=all_logs
@@ -402,32 +411,32 @@ def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled
             "mcp_logs": all_logs
         }
 
-        enabled_servers = [s for s in mcp_servers if s.get("enabled") == True]
+    enabled_servers = [s for s in mcp_servers if s.get("enabled") == True]
 
     if not mcp_master_enabled:
         return {
             "type": "need_mcp",
-            "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br>3. Enable at least one MCP server",
+            "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br><br>Then enable at least one MCP server from the list.",
             "mcp_logs": all_logs
         }
 
     # Fallback to default MCP from environment if no custom servers configured
-    if not enabled_servers and DEFAULT_MCP_URL:
+    default_mcp_url = os.getenv("MCP_GATEWAY_URL", "").strip()
+    if not enabled_servers and default_mcp_url:
         enabled_servers = [{
-            "url": DEFAULT_MCP_URL,
+            "url": default_mcp_url,
             "name": "Default MCP",
             "config": {},
             "enabled": True
         }]
-        all_logs.append("🌐 Using default MCP from environment (fallback mode)")
+        all_logs.append(f"🌐 Using default MCP (fallback mode): {default_mcp_url}")
 
     if not enabled_servers:
         return {
             "type": "need_mcp",
             "response": "🔌 No MCP servers are enabled.<br><br>To get weather, AQI, and location data, please enable at least one MCP server:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Find your MCP server in the list<br>3. Toggle it ON",
             "mcp_logs": all_logs
-        }
-    
+        }   
     
     # Single city fallback
     city = cities[0]
