@@ -3553,10 +3553,6 @@ function formatValue(key, value, parentKey = '') {
     if (key === 'winddirection' || key === 'wind_direction') return `${value}°`;
     if (key === 'humidity' || key === 'relative_humidity') return `${value}%`;
     if (key === 'pressure' || key === 'surface_pressure') return `${value} hPa`;
-    if (key === 'apparent_temperature') return `${value}°C`;
-    if (key === 'windgusts' || key === 'wind_gusts_10m') return `${value} km/h`;
-    if (key === 'snowfall') return `${value} cm`;
-    if (key === 'showers') return `${value} mm`;
     if (key === 'visibility') return `${value} km`;
     if (key === 'uv_index' || key === 'uvi') {
         const levels = ['Low', 'Moderate', 'High', 'Very High', 'Extreme'];
@@ -3606,10 +3602,6 @@ function getFieldIcon(key) {
         precipitation: '🌧️', rain: '🌧️',
         cloudcover: '☁️', cloud_cover: '☁️', cloud_cover_percent: '☁️',
         is_day: '🌅',
-        apparent_temperature: '🌡️',
-    windgusts: '💨',
-    snowfall: '❄️',
-    showers: '🌦️',
         elevation: '⛰️',
         pm10: '🌫️', pm2_5: '🌫️',
         us_aqi: '😷',
