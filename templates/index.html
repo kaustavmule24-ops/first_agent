@@ -2084,14 +2084,6 @@ body {
     clerkScript.setAttribute('data-clerk-publishable-key', publishableKey);
     clerkScript.src = `https://${clerkDomain}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
     clerkScript.type = "text/javascript";
-    
-    // FIX: Initialize Clerk as soon as script loads
-    clerkScript.onload = function() {
-      if (window.Clerk) {
-        initClerk().catch(function(e) { console.log('Clerk init:', e); });
-      }
-    };
-    
     document.head.appendChild(clerkScript);
   })();
 </script>
@@ -3593,10 +3585,8 @@ function formatValue(key, value, parentKey = '') {
     if (key === 'cloud_cover_percent') return `${value}%`;
     if (key === 'is_waxing') return value ? '🌙 Waxing' : '🌙 Waning';
     
-    // Generic fallback for unknown numeric fields
-    if (typeof value === 'number' && !key.includes('time') && !key.includes('date')) {
-        return value;
-    }
+    // Time formatting
+    if (key.includes('time') && typeof value === 'string' && value.includes('T')) {
         const date = new Date(value);
         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     }
@@ -3636,74 +3626,62 @@ function getFieldIcon(key) {
         next_new_moon: '🌑',
         days_since_new: '📅'
     };
-    return icons[key] || '•';
+    return icons[key] || '📊';
 }
 
 function renderHUDCard(data, serverName, llmText = '') {
-    const city = data.city || data.name || data.location || 'Unknown';
-    const country = data.country || data.country_code || '';
+    const city = data.city || 'Unknown';
+    const country = data.country || '';
     const weather = data.weather || {};
     const aqi = data.aqi || {};
-    const currentTime = data.current_time || data.time || data.local_time || '';
+    const currentTime = data.current_time || '';
+    const special = data.today_special || {};
     
-    // Detect what data we actually received
-    const hasWeather = data.weather && typeof data.weather === 'object' && Object.keys(data.weather).length > 0;
-    const hasAQI = data.aqi && typeof data.aqi === 'object' && Object.keys(data.aqi).length > 0;
-    const hasTime = currentTime;
-    
-    // AQI calc (only if present)
+    // Calculate AQI
     const aqiValue = aqi.us_aqi || aqi.pm2_5 || aqi.pm10 || 0;
     const aqiInfo = getAQIStatus(aqiValue);
     
-    // Weather calc (only if present)
+    // Weather icon
     const weatherCode = weather.weathercode !== undefined ? weather.weathercode : 0;
     const isDay = weather.is_day !== undefined ? weather.is_day : 1;
     const weatherIcon = getWeatherIcon(weatherCode, isDay);
     const weatherLabel = getWeatherLabel(weatherCode);
-    const temp = weather.temperature !== undefined ? weather.temperature : null;
     
-    // Build dynamic metrics from ALL available data fields
+    // Temperature for ring
+    const temp = weather.temperature !== undefined ? weather.temperature : 0;
+    const tempPercent = Math.min(Math.max((temp + 10) / 50 * 100, 0), 100); // Normalize -10 to 40°C
+    const circumference = 2 * Math.PI * 46;
+    const offset = circumference - (tempPercent / 100) * circumference;
+    
+    // Build metrics from weather + aqi (skip nulls, backfill with aqi)
     const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response', 'city', 'country', 'latitude', 'longitude', 'current_time'];
+    const metrics = [];
     
-    const allMetrics = [];
-    
-    // Pull from weather object
-    if (hasWeather) {
-        for (const [key, value] of Object.entries(weather)) {
-            if (excludeKeys.includes(key)) continue;
-            if (value === null || value === undefined) continue;
-            allMetrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
-        }
-    }
-    
-    // Pull from aqi object
-    if (hasAQI) {
-        for (const [key, value] of Object.entries(aqi)) {
-            if (excludeKeys.includes(key)) continue;
-            if (value === null || value === undefined) continue;
-            allMetrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
-        }
-    }
-    
-    // Pull from top-level scalar fields
-    for (const [key, value] of Object.entries(data)) {
+    // Pull from weather object (skip nulls)
+    for (const [key, value] of Object.entries(weather)) {
         if (excludeKeys.includes(key)) continue;
         if (value === null || value === undefined) continue;
-        if (typeof value === 'object' && !Array.isArray(value)) continue;
-        if (Array.isArray(value)) continue;
-        allMetrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
+        metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
     }
     
-    const mainMetrics = allMetrics.slice(0, 3);
+    // Backfill with aqi fields if weather metrics are sparse
+    for (const [key, value] of Object.entries(aqi)) {
+        if (excludeKeys.includes(key)) continue;
+        if (key === 'us_aqi') continue;
+        if (value === null || value === undefined) continue;
+        if (metrics.length >= 3) break; // Grid maxes at 3
+        metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
+    }
     
-    // Build expanded data grid from everything else
+    // Build expanded data from all other fields
     const expandedData = [];
     const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response'];
     
     for (const [key, value] of Object.entries(data)) {
         if (expandedExclude.includes(key)) continue;
         if (value === null || value === undefined) continue;
-        if (typeof value === 'object' && !Array.isArray(value)) {
+        if (typeof value === 'object') {
+            // Flatten nested objects
             for (const [subKey, subValue] of Object.entries(value)) {
                 if (subValue === null || subValue === undefined) continue;
                 expandedData.push({
@@ -3713,7 +3691,7 @@ function renderHUDCard(data, serverName, llmText = '') {
                     label: `${key}.${subKey}`.replace(/_/g, ' ')
                 });
             }
-        } else if (typeof value !== 'object') {
+        } else {
             expandedData.push({
                 key,
                 value: formatValue(key, value),
@@ -3723,60 +3701,8 @@ function renderHUDCard(data, serverName, llmText = '') {
         }
     }
     
-    // === CONDITIONAL HERO SECTION ===
-    let heroHTML = '';
-    if (hasWeather && temp !== null) {
-        const tempPercent = Math.min(Math.max((temp + 10) / 50 * 100, 0), 100);
-        const circumference = 2 * Math.PI * 46;
-        const offset = circumference - (tempPercent / 100) * circumference;
-        heroHTML = `
-        <div class="hud-hero">
-            <div class="hud-temp-ring">
-                <svg width="100" height="100" viewBox="0 0 100 100">
-                    <circle class="ring-bg" cx="50" cy="50" r="46"/>
-                    <circle class="ring-fill" cx="50" cy="50" r="46" 
-                        stroke-dasharray="${circumference}" 
-                        stroke-dashoffset="${offset}"/>
-                </svg>
-                <div class="hud-temp-value">
-                    ${Math.round(temp)}<span class="hud-temp-unit">°C</span>
-                </div>
-            </div>
-            <div class="hud-weather-icon-main">${weatherIcon}</div>
-        </div>
-        <div class="hud-condition-text">${weatherLabel}</div>`;
-    } else if (hasWeather) {
-        heroHTML = `
-        <div class="hud-hero" style="padding: 20px;">
-            <div class="hud-weather-icon-main" style="font-size: 60px;">${weatherIcon}</div>
-        </div>
-        <div class="hud-condition-text">${weatherLabel}</div>`;
-    } else {
-        // Generic data — no weather
-        heroHTML = `
-        <div class="hud-hero" style="padding: 20px;">
-            <div style="font-size: 48px; filter: drop-shadow(0 0 12px rgba(255,255,255,0.15));">📊</div>
-        </div>
-        <div class="hud-condition-text">DATA RECEIVED</div>`;
-    }
-    
-    // === CONDITIONAL AQI SECTION ===
-    let aqiHTML = '';
-    if (hasAQI) {
-        aqiHTML = `
-        <div class="hud-aqi-section">
-            <div class="hud-aqi-header">
-                <span class="hud-aqi-label">Air Quality</span>
-                <span class="hud-aqi-status ${aqiInfo.class}">${aqiInfo.label} • ${aqiValue}</span>
-            </div>
-            <div class="hud-aqi-track">
-                <div class="hud-aqi-fill" style="width: ${aqiValue > 0 ? Math.min(aqiValue / 3, 100) : 0}%;"></div>
-            </div>
-        </div>`;
-    }
-    
-    // === METRICS GRID (dynamic) ===
-    const metricsHTML = mainMetrics.map(m => `
+    // Generate metrics HTML (max 3)
+    const metricsHTML = metrics.slice(0, 3).map(m => `
         <div class="hud-metric">
             <div class="hud-metric-icon">${m.icon}</div>
             <div class="hud-metric-value">${formatValue(m.key, m.value)}</div>
@@ -3784,7 +3710,7 @@ function renderHUDCard(data, serverName, llmText = '') {
         </div>
     `).join('');
     
-    // === EXPANDED DATA GRID ===
+    // Generate expanded data HTML
     const expandedHTML = expandedData.map(d => `
         <div class="hud-data-cell">
             <div class="hud-data-label">${d.icon} ${d.label}</div>
@@ -3801,36 +3727,57 @@ function renderHUDCard(data, serverName, llmText = '') {
                 <div class="hud-city-icon">📍</div>
                 <div>
                     <div class="hud-city-name">${city}</div>
-                    <div class="hud-city-sub">${country}${country ? ' • ' : ''}${serverName}</div>
+                    <div class="hud-city-sub">${country} • ${serverName}</div>
                 </div>
             </div>
-            ${hasTime ? `
             <div class="hud-time">
-                <div class="hud-time-main">${currentTime.split(',')[1]?.trim() || currentTime}</div>
+                <div class="hud-time-main">${currentTime.split(',')[1]?.trim() || '--:--'}</div>
                 <div class="hud-time-sub">${currentTime.split(',')[0]?.trim() || ''}</div>
             </div>
-            ` : ''}
         </div>
         
-        ${heroHTML}
-        ${aqiHTML}
+        <div class="hud-hero">
+            <div class="hud-temp-ring">
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                    <circle class="ring-bg" cx="50" cy="50" r="46"/>
+                    <circle class="ring-fill" cx="50" cy="50" r="46" 
+                        stroke-dasharray="${circumference}" 
+                        stroke-dashoffset="${offset}"/>
+                </svg>
+                <div class="hud-temp-value">
+                    ${Math.round(temp)}<span class="hud-temp-unit">°C</span>
+                </div>
+            </div>
+            <div class="hud-weather-icon-main">${weatherIcon}</div>
+        </div>
         
-        ${metricsHTML ? `
+        <div class="hud-condition-text">${weatherLabel}</div>
+        
+        <div class="hud-aqi-section">
+            <div class="hud-aqi-header">
+                <span class="hud-aqi-label">Air Quality</span>
+                <span class="hud-aqi-status ${aqiInfo.class}">${aqiInfo.label} • ${aqiValue}</span>
+            </div>
+            <div class="hud-aqi-track">
+                <div class="hud-aqi-fill" style="width: ${aqiValue > 0 ? Math.min(aqiValue / 3, 100) : 0}%;"></div>
+            </div>
+        </div>
+        
         <div class="hud-metrics">
             ${metricsHTML}
         </div>
-        ` : ''}
         
-        ${expandedHTML ? `
         <div class="hud-expanded" id="${cardId}-expanded">
             <div class="hud-data-grid">
                 ${expandedHTML}
             </div>
         </div>
+        
         <button class="hud-expand-btn" onclick="toggleExpanded('${cardId}')">
             <span id="${cardId}-btn-text">▼ Show All Data</span>
         </button>
-        ` : ''}
+        
+                
         
         <div class="hud-footer">
             <div class="hud-source">
@@ -3842,7 +3789,6 @@ function renderHUDCard(data, serverName, llmText = '') {
     </div>
     `;
 }
-
 
 function toggleExpanded(cardId) {
     const expanded = document.getElementById(cardId + '-expanded');
@@ -4257,10 +4203,16 @@ function removeMCPLogs() {
 // INIT
 // ==============================
 window.onload = async function() {
-    // Fallback: if Clerk loaded before window.onload, init now
-    if (window.Clerk && !clerkUser) {
+    // Initialize Clerk auth (mandatory login gate)
+    if (window.Clerk) {
         try { await initClerk(); } catch(e) { console.log('Clerk init:', e); }
     }
+    
+    // Ensure Weather MCP starts disconnected by default
+    // (unless user explicitly connected before and localStorage has it)
+    // We DON'T reset here — user must click Connect each session
+    // But if localStorage has no value, default to disconnected
+ 
     
     applySettings();
     addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
@@ -4367,7 +4319,7 @@ if (!res.ok) throw new Error('Server error');
                 } else if (data.type === "hud_with_custom") {
             const hasHud = data.hud_data;
             const hasText = data.custom_text;
-            const hasDropdown = data.custom_mcp_results && data.custom_mcp_results.length > 0;
+            const hasDropdown = !settings.llmEnabled && data.custom_mcp_results && data.custom_mcp_results.length > 0;
 
             if (hasHud) {
                 // Render HUD card WITHOUT insights inside
