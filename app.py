@@ -347,7 +347,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
 
     # Collect extra results from servers beyond the first (for dropdown)
     mcp_results = []
-    for i in range(1, len(all_raw_results)):
+    for i, raw_result in enumerate(all_raw_results):
         extra = all_raw_results[i]
         # Flatten for dropdown display only
         flattened = {}
@@ -440,7 +440,8 @@ def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled
 
     primary_data = None
     for server in enabled_servers:
-        result = call_mcp(tool, city, custom_url=server["url"], server_config=server.get("config"), auth_token=clerk_token, logs=all_logs)
+        all_logs.append(f"🔄 [Fallback] Calling {server.get('name', 'Unknown')} @ {server.get('url')}")
+        result = call_mcp(tool, city, custom_url=server.get("url"), server_config=server.get("config"), auth_token=clerk_token, logs=all_logs)
         all_logs.extend(result.get("logs", []))
         if "error" not in result:
             primary_data = clean_data(result["data"])
