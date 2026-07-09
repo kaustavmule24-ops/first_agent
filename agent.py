@@ -834,13 +834,21 @@ def parse_mcp_response(data, mcp_format):
 
     weather = data.get("weather") or data.get("current_weather") or data.get("current")
     if weather and isinstance(weather, dict):
+        def _w(key, *fallbacks):
+            if key in weather and weather[key] is not None:
+                return weather[key]
+            for fb in fallbacks:
+                if fb in weather and weather[fb] is not None:
+                    return weather[fb]
+            return None
+
         normalized["weather"] = {
-            "temperature": weather.get("temperature") or weather.get("temp") or weather.get("temp2m"),
-            "windspeed": weather.get("windspeed") or weather.get("wind_speed"),
-            "winddirection": weather.get("winddirection") or weather.get("wind_direction"),
-            "weathercode": weather.get("weathercode") or weather.get("weather_code", 0),
+            "temperature": _w("temperature", "temp", "temp2m"),
+            "windspeed": _w("windspeed", "wind_speed"),
+            "winddirection": _w("winddirection", "wind_direction"),
+            "weathercode": _w("weathercode", "weather_code"),
             "is_day": weather.get("is_day", 1),
-            "time": weather.get("time") or data.get("current_time")
+            "time": _w("time") or data.get("current_time")
         }
 
     aqi = data.get("aqi") or data.get("air_quality")
@@ -1128,7 +1136,7 @@ def extract_cities(user_input):
 def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None, logs=None):
     if logs is None:
         logs = []
-        url = custom_url or DEFAULT_MCP_URL or MCP_URLRL
+    url = (custom_url and DEFAULT_MCP_URL) or DEFAULT_MCP_URL  
 
     mcp_format, available_tools, detect_logs = detect_mcp_format(url, auth_token=auth_token, logs=logs)
 
