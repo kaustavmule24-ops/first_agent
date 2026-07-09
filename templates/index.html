@@ -2084,6 +2084,14 @@ body {
     clerkScript.setAttribute('data-clerk-publishable-key', publishableKey);
     clerkScript.src = `https://${clerkDomain}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
     clerkScript.type = "text/javascript";
+    
+    // FIX: Initialize Clerk as soon as script loads
+    clerkScript.onload = function() {
+      if (window.Clerk) {
+        initClerk().catch(function(e) { console.log('Clerk init:', e); });
+      }
+    };
+    
     document.head.appendChild(clerkScript);
   })();
 </script>
@@ -4249,16 +4257,10 @@ function removeMCPLogs() {
 // INIT
 // ==============================
 window.onload = async function() {
-    // Initialize Clerk auth (mandatory login gate)
-    if (window.Clerk) {
+    // Fallback: if Clerk loaded before window.onload, init now
+    if (window.Clerk && !clerkUser) {
         try { await initClerk(); } catch(e) { console.log('Clerk init:', e); }
     }
-    
-    // Ensure Weather MCP starts disconnected by default
-    // (unless user explicitly connected before and localStorage has it)
-    // We DON'T reset here — user must click Connect each session
-    // But if localStorage has no value, default to disconnected
- 
     
     applySettings();
     addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
