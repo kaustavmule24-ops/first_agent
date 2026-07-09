@@ -371,11 +371,7 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
             "mcp_logs": all_logs
         }
 
-    # Merge extra data from additional servers
-    for extra in mcp_results:
-        for key, value in extra.get("data", {}).items():
-            if key not in primary_data and value is not None:
-                primary_data[key] = value
+
 
     # LLM generates final response with data
     custom_text = llm_generate_with_data(user_input, primary_data, decision["reasoning"])
