@@ -245,20 +245,12 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
         llm_response = llm_generate_general(user_input)
         full_response = f"{llm_response}\n\n---\n\n💡 **Want live data?** Enable an MCP server in Settings for real-time weather, AQI, and time data."
         return {
-            "type": "need_connect_weather",
+            "type": "text",
             "response": full_response,
             "mcp_logs": all_logs
         }
 
-    # ======================
-    # STEP 4: MCP servers enabled — proceed with MCP calls
-    # ======================
-    if not enabled_servers:
-        return {
-            "type": "need_mcp",
-            "response": "🔌 No MCP servers are enabled.<br><br>To get weather, AQI, and location data, please enable at least one MCP server:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Find your MCP server in the list<br>3. Toggle it ON",
-            "mcp_logs": all_logs
-        }
+
 
     # ======================
     # MULTI-CITY: Compare mode
