@@ -835,12 +835,22 @@ def parse_mcp_response(data, mcp_format):
     weather = data.get("weather") or data.get("current_weather") or data.get("current")
     if weather and isinstance(weather, dict):
         normalized["weather"] = {
-            "temperature": weather.get("temperature") or weather.get("temp") or weather.get("temp2m"),
-            "windspeed": weather.get("windspeed") or weather.get("wind_speed"),
-            "winddirection": weather.get("winddirection") or weather.get("wind_direction"),
+            "temperature": weather.get("temperature") or weather.get("temp") or weather.get("temp2m") or weather.get("temperature_2m"),
+            "windspeed": weather.get("windspeed") or weather.get("wind_speed") or weather.get("wind_speed_10m"),
+            "winddirection": weather.get("winddirection") or weather.get("wind_direction") or weather.get("wind_direction_10m"),
             "weathercode": weather.get("weathercode") or weather.get("weather_code", 0),
             "is_day": weather.get("is_day", 1),
-            "time": weather.get("time") or data.get("current_time")
+            "time": weather.get("time") or data.get("current_time"),
+            "humidity": weather.get("relative_humidity") or weather.get("relative_humidity_2m"),
+            "precipitation": weather.get("precipitation"),
+            "rain": weather.get("rain"),
+            "showers": weather.get("showers"),
+            "snowfall": weather.get("snowfall"),
+            "cloudcover": weather.get("cloudcover") or weather.get("cloud_cover"),
+            "pressure": weather.get("pressure_msl") or weather.get("surface_pressure"),
+            "windgusts": weather.get("windgusts") or weather.get("wind_gusts_10m"),
+            "visibility": weather.get("visibility"),
+            "apparent_temperature": weather.get("apparent_temperature")
         }
 
     aqi = data.get("aqi") or data.get("air_quality")
