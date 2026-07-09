@@ -4319,7 +4319,7 @@ if (!res.ok) throw new Error('Server error');
                 } else if (data.type === "hud_with_custom") {
             const hasHud = data.hud_data;
             const hasText = data.custom_text;
-            const hasDropdown = !settings.llmEnabled && data.custom_mcp_results && data.custom_mcp_results.length > 0;
+            const hasDropdown = data.custom_mcp_results && data.custom_mcp_results.length > 0;
 
             if (hasHud) {
                 // Render HUD card WITHOUT insights inside
