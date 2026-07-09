@@ -3567,7 +3567,9 @@ function formatValue(key, value, parentKey = '') {
     if (key === 'elevation') return `${value} m`;
 
         // Custom MCP V2 fields
-    if (key === 'humidity_percent') return `${value}%`;
+    if (key === 'source' || key === 'humidity_source') {
+        return typeof value === 'string' ? value : String(value);
+    }
     if (key === 'uv_index') return `${value}`;
     if (key === 'uv_risk') return `${value}`;
     if (key === 'phase_name') return `${value}`;
@@ -3645,7 +3647,7 @@ function renderHUDCard(data, serverName, llmText = '') {
     const circumference = 2 * Math.PI * 46;
     const offset = circumference - (tempPercent / 100) * circumference;
     
-    // Build metrics from weather + aqi (skip nulls, backfill with aqi)
+        // Build metrics from weather + aqi (skip nulls)
     const excludeKeys = ['weathercode', 'is_day', 'time', 'interval', 'source', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response', 'city', 'country', 'latitude', 'longitude', 'current_time'];
     const metrics = [];
     
@@ -3665,6 +3667,17 @@ function renderHUDCard(data, serverName, llmText = '') {
         metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
     }
     
+    // If still no metrics, try to find any numeric data from other fields
+    if (metrics.length === 0) {
+        for (const [key, value] of Object.entries(data)) {
+            if (excludeKeys.includes(key)) continue;
+            if (typeof value === 'number') {
+                metrics.push({ key, value, icon: getFieldIcon(key), label: key.replace(/_/g, ' ') });
+                if (metrics.length >= 3) break;
+            }
+        }
+    }
+    
     // Build expanded data from all other fields
     const expandedData = [];
     const expandedExclude = ['city', 'country', 'weather', 'aqi', 'current_time', 'today_special', 'source', 'latitude', 'longitude', '_needs_mapping', '_raw_keys', '_raw_preview', '_raw', '_sources', '_source', '_format', '_tool', '_city', '_config', 'api', 'needs_mapping', 'raw_keys', 'content', 'isError', 'type', 'text', '_text_response'];
@@ -3672,18 +3685,20 @@ function renderHUDCard(data, serverName, llmText = '') {
     for (const [key, value] of Object.entries(data)) {
         if (expandedExclude.includes(key)) continue;
         if (value === null || value === undefined) continue;
-        if (typeof value === 'object') {
-            // Flatten nested objects
+        
+        if (typeof value === 'object' && !Array.isArray(value)) {
+            // Flatten nested objects with clean labels
             for (const [subKey, subValue] of Object.entries(value)) {
                 if (subValue === null || subValue === undefined) continue;
+                if (subKey === 'source') continue; // Skip internal source keys
                 expandedData.push({
                     key: subKey,
-                    value: formatValue(subKey, subValue, key),
+                    value: formatValue(subKey, subValue),
                     icon: getFieldIcon(subKey),
-                    label: `${key}.${subKey}`.replace(/_/g, ' ')
+                    label: subKey.replace(/_/g, ' ') // Clean label without parent prefix
                 });
             }
-        } else {
+        } else if (!Array.isArray(value)) {
             expandedData.push({
                 key,
                 value: formatValue(key, value),
@@ -3723,8 +3738,8 @@ function renderHUDCard(data, serverName, llmText = '') {
                 </div>
             </div>
             <div class="hud-time">
-                <div class="hud-time-main">${currentTime.split(',')[1]?.trim() || '--:--'}</div>
-                <div class="hud-time-sub">${currentTime.split(',')[0]?.trim() || ''}</div>
+                <div class="hud-time-main">${currentTime && currentTime.includes(',') ? currentTime.split(',')[1].trim() : (currentTime || '--:--')}</div>
+                <div class="hud-time-sub">${currentTime && currentTime.includes(',') ? currentTime.split(',')[0].trim() : ''}</div>
             </div>
         </div>
         
