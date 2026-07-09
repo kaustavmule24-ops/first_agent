@@ -960,6 +960,7 @@ def merge_mcp_data(primary_data, secondary_data):
     """
     Merge two MCP responses. Primary takes precedence.
     Secondary fills only missing/null fields.
+    Deep-merges nested objects like weather, aqi, today_special.
     Preserves all source names across chained merges.
     """
     if not primary_data and not secondary_data:
@@ -986,35 +987,38 @@ def merge_mcp_data(primary_data, secondary_data):
             if field in secondary_data and secondary_data[field] is not None:
                 merged[field] = secondary_data[field]
 
-    # Weather: merge individual sub-fields
-    if "weather" in secondary_data and isinstance(secondary_data["weather"], dict):
-        if "weather" not in merged or not isinstance(merged.get("weather"), dict):
-            merged["weather"] = secondary_data["weather"]
-        else:
-            for wkey in ["temperature", "windspeed", "winddirection", "weathercode", "is_day", "time"]:
-                if wkey not in merged["weather"] or merged["weather"][wkey] is None:
-                    if wkey in secondary_data["weather"]:
-                        merged["weather"][wkey] = secondary_data["weather"][wkey]
+    # Deep-merge nested objects
+    NESTED_KEYS = ["weather", "aqi", "today_special"]
+    for nested_key in NESTED_KEYS:
+        if nested_key in secondary_data and isinstance(secondary_data[nested_key], dict):
+            if nested_key not in merged or not isinstance(merged.get(nested_key), dict):
+                merged[nested_key] = dict(secondary_data[nested_key])
+            else:
+                # Merge sub-fields: secondary fills only missing ones
+                for sub_key, sub_value in secondary_data[nested_key].items():
+                    if sub_value is not None and sub_value != "":
+                        if sub_key not in merged[nested_key] or merged[nested_key][sub_key] is None or merged[nested_key][sub_key] == "":
+                            merged[nested_key][sub_key] = sub_value
 
-    # AQI: merge individual sub-fields
-    if "aqi" in secondary_data and isinstance(secondary_data["aqi"], dict):
-        if "aqi" not in merged or not isinstance(merged.get("aqi"), dict):
-            merged["aqi"] = secondary_data["aqi"]
-        else:
-            for akey in ["us_aqi", "pm10", "pm2_5"]:
-                if akey not in merged["aqi"] or merged["aqi"][akey] is None:
-                    if akey in secondary_data["aqi"]:
-                        merged["aqi"][akey] = secondary_data["aqi"][akey]
-
-    # Today Special: merge holiday/fact
-    if "today_special" in secondary_data and isinstance(secondary_data["today_special"], dict):
-        if "today_special" not in merged or not isinstance(merged.get("today_special"), dict):
-            merged["today_special"] = secondary_data["today_special"]
-        else:
-            for skey in ["holiday", "fact"]:
-                if skey not in merged["today_special"] or not merged["today_special"][skey]:
-                    if skey in secondary_data["today_special"] and secondary_data["today_special"][skey]:
-                        merged["today_special"][skey] = secondary_data["today_special"][skey]
+    # Merge any OTHER top-level objects (for custom MCPs with unknown nested data)
+    for key, value in secondary_data.items():
+        if key in NESTED_KEYS or key in fill_fields:
+            continue  # Already handled above
+        if key.startswith('_') or key in ['source', '_source']:
+            continue
+        if isinstance(value, dict):
+            # Deep merge unknown nested objects too
+            if key not in merged or not isinstance(merged.get(key), dict):
+                merged[key] = dict(value)
+            else:
+                for sub_key, sub_value in value.items():
+                    if sub_value is not None:
+                        if sub_key not in merged[key] or merged[key][sub_key] is None:
+                            merged[key][sub_key] = sub_value
+        elif value is not None and value != "":
+            # Scalar field: fill if missing
+            if key not in merged or merged[key] is None or merged[key] == "" or merged[key] == "Unknown":
+                merged[key] = value
 
     # Merge and deduplicate sources
     all_sources = list(existing_sources)
@@ -1025,7 +1029,6 @@ def merge_mcp_data(primary_data, secondary_data):
         merged["_sources"] = all_sources
 
     return merged
-
 
 def call_mcp_multi(tool, city, servers, auth_token=None):
     """

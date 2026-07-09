@@ -303,7 +303,8 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
     mcp_results = []
     primary_data = None
     
-    # Try each enabled server until one succeeds
+    # Try each enabled server, merge ALL data together
+    all_raw_results = []
     for server in enabled_servers:
         result = call_mcp(
             tool,
@@ -315,26 +316,42 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
         )
         all_logs.extend(result.get("logs", []))
         if "error" not in result:
-            raw_data = result["data"]
-            if primary_data is None:
-                # First successful server becomes primary (HUD data)
-                primary_data = clean_data(raw_data)
-            else:
-                # Additional servers contribute extra fields
-                flattened = {}
-                for key, value in raw_data.items():
-                    if isinstance(value, dict):
-                        for sub_key, sub_value in value.items():
-                            if not sub_key.startswith('_') and sub_key != 'source':
-                                flattened[sub_key] = sub_value
-                    elif not key.startswith('_') and key not in ['source', 'city', 'country', 'latitude', 'longitude']:
-                        flattened[key] = value
+            all_raw_results.append({
+                "data": result["data"],
+                "name": server["name"],
+                "format": result.get("format", "unknown")
+            })
 
-                mcp_results.append({
-                    "server_name": server["name"],
-                    "data": flattened,
-                    "format": result.get("format", "unknown")
-                })
+    if not all_raw_results:
+        return {
+            "type": "error",
+            "response": f"❌ No MCP server returned data for {city}.",
+            "mcp_logs": all_logs
+        }
+
+    # Merge all results using agent.py's merge_mcp_data
+    primary_data = clean_data(all_raw_results[0]["data"])
+    for i in range(1, len(all_raw_results)):
+        primary_data = merge_mcp_data(primary_data, all_raw_results[i]["data"])
+
+    # Collect extra results from servers beyond the first (for dropdown)
+    mcp_results = []
+    for i in range(1, len(all_raw_results)):
+        extra = all_raw_results[i]
+        # Flatten for dropdown display only
+        flattened = {}
+        for key, value in extra["data"].items():
+            if isinstance(value, dict):
+                for sub_key, sub_value in value.items():
+                    if not sub_key.startswith('_') and sub_key != 'source':
+                        flattened[sub_key] = sub_value
+            elif not key.startswith('_') and key not in ['source', 'city', 'country', 'latitude', 'longitude']:
+                flattened[key] = value
+        mcp_results.append({
+            "server_name": extra["name"],
+            "data": flattened,
+            "format": extra["format"]
+        })
 
     if primary_data is None:
         return {
