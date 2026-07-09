@@ -1128,7 +1128,7 @@ def extract_cities(user_input):
 def call_mcp(tool, city, custom_url=None, server_config=None, auth_token=None, logs=None):
     if logs is None:
         logs = []
-    url =  DEFAULT_MCP_URL or custom_url and MCP_URL
+        url = custom_url or DEFAULT_MCP_URL or MCP_URLRL
 
     mcp_format, available_tools, detect_logs = detect_mcp_format(url, auth_token=auth_token, logs=logs)
 
