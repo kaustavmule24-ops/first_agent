@@ -3159,10 +3159,16 @@ document.addEventListener('click', function(e) {
 
 const MCP_STORAGE_KEY = 'geobot_mcp_servers';
 
+const DEFAULT_SERVERS = [];
+
+
+
+
 function loadServers() {
     const stored = localStorage.getItem(MCP_STORAGE_KEY);
     if (stored) return JSON.parse(stored);
-    return [];
+    saveServers(DEFAULT_SERVERS);  // Now empty array []
+    return DEFAULT_SERVERS;
 }
 
 function saveServers(servers) {
@@ -3170,8 +3176,10 @@ function saveServers(servers) {
 }
 
 function getEnabledServers() {
-    return loadServers().filter(s => s.enabled);
+    const servers = loadServers();
+    return servers.filter(s => s.enabled === true);
 }
+
 
 function generateId() {
     return 'mcp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -3242,7 +3250,7 @@ async function renderServerList() {
             <div class="server-url">${server.url}</div>
             ${server.description ? `<div class="server-desc">${server.description}</div>` : ''}
             <div class="server-actions">
-                <span style="font-size:11px;color:var(--text-secondary)">${server.protocol || 'custom'}</span>
+                <span style="font-size:11px;color:var(--text-secondary)">Custom</span>
                 <button class="delete-btn" onclick="deleteServer('${server.id}')">🗑️ Delete</button>
             </div>
         `;
@@ -3255,7 +3263,6 @@ async function renderServerList() {
         }
     }
 }
-
 function toggleServer(id, enabled) {
     const servers = loadServers();
     const server = servers.find(s => s.id === id);
@@ -4125,7 +4132,7 @@ function updateModeBadge() {
     if (hasLlm && hasMcp) {
         badge.textContent = 'AI + MCP';
         badge.classList.remove('offline');
-        hint.textContent = 'AI + MCP Mode: LLM decides when to call MCP servers';
+        hint.textContent = 'AI + MCP Mode: LLM decides which MCP to call';
     } else if (hasLlm && !hasMcp) {
         badge.textContent = 'AI Only';
         badge.classList.remove('offline');
@@ -4193,7 +4200,11 @@ window.onload = async function() {
         try { await initClerk(); } catch(e) { console.log('Clerk init:', e); }
     }
     
-
+    // Ensure Weather MCP starts disconnected by default
+    // (unless user explicitly connected before and localStorage has it)
+    // We DON'T reset here — user must click Connect each session
+    // But if localStorage has no value, default to disconnected
+ 
     
     applySettings();
     addMsg("👋 Welcome to GeoBot! I can provide weather, air quality, and location insights for any city worldwide.", "bot");
@@ -4289,10 +4300,9 @@ if (!res.ok) throw new Error('Server error');
                 });
             }, 100);
         }
-
         else if (data.type === "hud") {
             // City query → Show HUD card (legacy fallback)
-            const hudHTML = renderHUDCard(data.response, "MCP");
+            const hudHTML = renderHUDCard(data.response, "MCP Data");
             addMsg(hudHTML, "bot", true);
             // Show LLM insights if available
             if (data.llm_text) {
@@ -4305,7 +4315,7 @@ if (!res.ok) throw new Error('Server error');
 
             if (hasHud) {
                 // Render HUD card WITHOUT insights inside
-                const hudHTML = renderHUDCard(data.hud_data, "MCP", '');
+                const hudHTML = renderHUDCard(data.hud_data, "MCP Data", '');
                 addMsg(hudHTML, "bot", true);
             } else if (hasText) {
                 // Fallback: text only if no HUD data
