@@ -4274,7 +4274,15 @@ async function send() {
             return;
         }
 
-if (!res.ok) throw new Error('Server error');
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({ response: `HTTP ${res.status}` }));
+            removeStatus();
+            removeMCPLogs();
+            const errorDiv = addMsg(errorData.response || `Server error: ${res.status}`, "bot");
+            errorDiv.classList.add('error-shake');
+            setInputEnabled(true);
+            return;
+        }
 
         const data = await res.json();
         removeStatus();
