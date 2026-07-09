@@ -33,7 +33,8 @@ from agent import (
     generate_llm_text,
     llm_decide_needs_mcp,
     llm_generate_with_data,
-    llm_generate_general
+    llm_generate_general,
+    merge_mcp_data
 )
 
 app = FastAPI(title="MCP AI Agent 🌍")
