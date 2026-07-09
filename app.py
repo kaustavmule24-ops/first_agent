@@ -34,7 +34,8 @@ from agent import (
     llm_decide_needs_mcp,
     llm_generate_with_data,
     llm_generate_general,
-    merge_mcp_data
+    merge_mcp_data,
+    DEFAULT_MCP_URL
 )
 
 app = FastAPI(title="MCP AI Agent 🌍")
@@ -241,16 +242,24 @@ def process_query(user_input: str, llm_enabled: bool, mcp_servers=None, mcp_mast
             "mcp_logs": all_logs
         }
 
+    # Fallback to default MCP from environment if no custom servers configured
+    if not enabled_servers and DEFAULT_MCP_URL:
+        enabled_servers = [{
+            "url": DEFAULT_MCP_URL,
+            "name": "Default MCP",
+            "config": {},
+            "enabled": True
+        }]
+        all_logs.append("🌐 Using default MCP from environment (no custom servers configured)")
+
     if not enabled_servers:
         llm_response = llm_generate_general(user_input)
-        full_response = f"{llm_response}\n\n---\n\n💡 **Want live data?** Enable an MCP server in Settings for real-time weather, AQI, and time data."
+        full_response = f"{llm_response}\n\n---\n\n💡 **Want live data?** Add an MCP server in Settings for real-time weather, AQI, and time data."
         return {
             "type": "text",
             "response": full_response,
             "mcp_logs": all_logs
         }
-
-
 
     # ======================
     # MULTI-CITY: Compare mode
@@ -393,14 +402,33 @@ def process_query_fallback(user_input: str, mcp_servers=None, mcp_master_enabled
             "mcp_logs": all_logs
         }
 
-    enabled_servers = [s for s in mcp_servers if s.get("enabled") == True]
+        enabled_servers = [s for s in mcp_servers if s.get("enabled") == True]
+
+    if not mcp_master_enabled:
+        return {
+            "type": "need_mcp",
+            "response": "🔌 MCP is disabled.<br><br>To get weather, AQI, and location data, please enable MCP:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Toggle ON the 🌐 MCP Server switch<br>3. Enable at least one MCP server",
+            "mcp_logs": all_logs
+        }
+
+    # Fallback to default MCP from environment if no custom servers configured
+    if not enabled_servers and DEFAULT_MCP_URL:
+        enabled_servers = [{
+            "url": DEFAULT_MCP_URL,
+            "name": "Default MCP",
+            "config": {},
+            "enabled": True
+        }]
+        all_logs.append("🌐 Using default MCP from environment (fallback mode)")
+
     if not enabled_servers:
         return {
             "type": "need_mcp",
             "response": "🔌 No MCP servers are enabled.<br><br>To get weather, AQI, and location data, please enable at least one MCP server:<br><br>1. Click ⚙️ Settings (top-left)<br>2. Find your MCP server in the list<br>3. Toggle it ON",
             "mcp_logs": all_logs
         }
-
+    
+    
     # Single city fallback
     city = cities[0]
     tool = choose_tool(user_input)
